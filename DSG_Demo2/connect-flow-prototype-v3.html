@@ -1,1 +1,1494 @@
-placeholder — download full prototype from Claude outputs
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridModel — Add + Connect Flow Prototype v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: #FFFFFF; --foreground: #0A0A0A; --primary: #171717; --primary-foreground: #FAFAFA;
+  --muted: #F5F5F5; --muted-foreground: #737373; --border: #E5E5E5;
+  --neutral-50: #FAFAFA; --neutral-100: #F5F5F5; --neutral-200: #E5E5E5; --neutral-300: #D4D4D4;
+  --neutral-400: #A3A3A3; --neutral-500: #737373; --neutral-600: #525252; --neutral-700: #404040;
+  --neutral-800: #262626; --neutral-900: #171717;
+  --destructive: #DC2626; --destructive-wash: #FEF2F2;
+  --success: #16A34A; --success-wash: #F0FDF4;
+  --warning: #EA580C; --warning-wash: #FFF7ED;
+  --orange-500: #F97316;
+  --radius-sm: 4px; --radius-md: 6px;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: var(--background); color: var(--foreground); font-size: 14px; line-height: 20px; overflow: hidden; height: 100vh; user-select: none; }
+
+.header { height: 48px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--background); flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-center { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.header-logo { width: 24px; height: 24px; background: var(--primary); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-foreground); font-size: 11px; font-weight: 600; }
+.badge-draft { padding: 2px 8px; border-radius: var(--radius-sm); background: var(--neutral-100); color: var(--neutral-700); font-size: 12px; font-weight: 500; border: 1px solid var(--neutral-200); }
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+.content { display: flex; flex: 1; overflow: hidden; }
+
+/* Map Panel */
+.map-panel { flex: 1; background: #2d2d2d; position: relative; border-right: 1px solid var(--border); overflow: hidden; }
+.map-canvas { width: 100%; height: 100%; }
+.map-label { position: absolute; top: 12px; left: 12px; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; }
+
+.divider { width: 6px; background: var(--background); border-left: 1px solid var(--border); border-right: 1px solid var(--border); cursor: col-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.divider-dots { display: flex; flex-direction: column; gap: 2px; }
+.divider-dots span { width: 2px; height: 2px; background: var(--neutral-300); border-radius: 50%; }
+
+/* SLD Panel */
+.sld-panel { flex: 1; background: var(--neutral-50); position: relative; display: flex; flex-direction: column; }
+.sld-canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+.sld-canvas { width: 100%; height: 100%; }
+.sld-label { position: absolute; top: 12px; left: 12px; font-size: 11px; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; }
+
+/* SLD Toolbar */
+.sld-toolbar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); z-index: 10; }
+.sld-tool { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-sm); color: var(--neutral-600); transition: all 0.15s; }
+.sld-tool:hover { background: var(--neutral-100); }
+.sld-tool.active { background: var(--primary); color: var(--primary-foreground); }
+.sld-tool svg { width: 16px; height: 16px; }
+.tool-sep { width: 1px; background: var(--border); margin: 4px 2px; }
+
+/* Conductor Picker */
+.conductor-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 260px; overflow: hidden; display: none; }
+.conductor-picker.visible { display: block; }
+.conductor-picker-header { padding: 10px 12px 8px; font-size: 12px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.5px; }
+.conductor-item { padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 13px; transition: background 0.1s; }
+.conductor-item:hover { background: var(--neutral-50); }
+.conductor-item.recent { border-left: 2px solid var(--orange-500); }
+.conductor-item .name { font-weight: 500; color: var(--foreground); }
+.conductor-item .meta { font-size: 12px; color: var(--neutral-500); }
+.conductor-item .recent-badge { font-size: 10px; color: var(--orange-500); font-weight: 500; margin-left: 6px; }
+.conductor-picker-footer { padding: 8px 12px; border-top: 1px solid var(--border); }
+.conductor-picker-cancel { background: none; border: none; font-size: 13px; color: var(--neutral-500); cursor: pointer; font-family: var(--font-sans); }
+.conductor-picker-cancel:hover { color: var(--foreground); }
+
+/* Toast */
+.toast { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 16px; border-radius: var(--radius-md); font-size: 13px; z-index: 30; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.toast.visible { display: flex; align-items: center; gap: 8px; }
+
+/* Live Validation Mini */
+.validation-mini { position: absolute; top: 12px; right: 12px; width: 260px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 1px 3px rgba(0,0,0,0.08); z-index: 10; overflow: hidden; display: none; }
+.validation-mini.visible { display: block; }
+.validation-mini-header { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.validation-mini-title { font-size: 13px; font-weight: 600; }
+.validation-mini-close { background: none; border: none; cursor: pointer; color: var(--neutral-400); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+.validation-mini-close:hover { background: var(--neutral-100); }
+.validation-item { padding: 8px 12px; border-left: 3px solid var(--destructive); font-size: 12px; }
+.validation-item + .validation-item { border-top: 1px solid var(--neutral-100); }
+.validation-item .code { font-weight: 600; color: var(--foreground); font-family: var(--font-mono); }
+.validation-item .desc { color: var(--neutral-600); margin-top: 2px; }
+.validation-item.warning { border-left-color: var(--warning); }
+
+/* Hint */
+.hint { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: white; padding: 6px 14px; border-radius: var(--radius-md); font-size: 12px; z-index: 5; pointer-events: none; white-space: nowrap; transition: opacity 0.3s; }
+
+/* Status bar */
+.status-bar { height: 28px; border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; font-size: 12px; color: var(--neutral-500); gap: 16px; flex-shrink: 0; background: var(--background); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.status-dot.green { background: var(--success); }
+
+/* Midpoint handle */
+.mid-handle { cursor: grab; transition: fill 0.15s; }
+.mid-handle:hover { fill: #7C3AED !important; }
+.mid-handle:active { cursor: grabbing; }
+
+/* Add Component Panel */
+.add-panel { position: absolute; top: 0; left: 0; bottom: 0; width: 280px; background: var(--background); border-right: 1px solid var(--border); z-index: 25; display: none; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.06); }
+.add-panel.visible { display: flex; }
+.add-panel-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.add-panel-header .title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.add-panel-header .back { background: none; border: none; cursor: pointer; color: var(--neutral-500); display: flex; align-items: center; padding: 4px; border-radius: var(--radius-sm); }
+.add-panel-header .back:hover { background: var(--neutral-100); }
+.add-panel-header .close { background: none; border: none; cursor: pointer; color: var(--neutral-400); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+.add-panel-header .close:hover { background: var(--neutral-100); }
+.add-panel-body { flex: 1; overflow-y: auto; }
+.add-panel-footer { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.add-search { padding: 12px 16px; }
+.add-search input { width: 100%; height: 32px; padding: 0 10px 0 30px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: var(--background); font-family: var(--font-sans); outline: none; }
+.add-search .icon { position: absolute; left: 24px; top: 20px; color: var(--neutral-400); pointer-events: none; }
+.add-list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid var(--neutral-50); }
+.add-list-item:hover { background: var(--neutral-50); }
+.add-list-item .item-icon { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); flex-shrink: 0; margin-right: 10px; }
+.add-list-item .item-text { flex: 1; }
+.add-list-item .item-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+.add-list-item .item-meta { font-size: 12px; color: var(--neutral-500); margin-top: 1px; }
+.add-list-item .arrow { color: var(--neutral-300); flex-shrink: 0; }
+.add-section-label { padding: 8px 16px 4px; font-size: 11px; font-weight: 500; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid var(--border); margin-top: 4px; }
+.add-form-section { padding: 12px 16px 8px; }
+.add-form-section .section-title { font-size: 12px; font-weight: 600; color: var(--neutral-500); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.add-form-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0; gap: 12px; }
+.add-form-row .label { font-size: 12px; color: var(--muted-foreground); min-width: 90px; flex-shrink: 0; }
+.add-form-row .value { font-size: 13px; color: var(--foreground); text-align: right; }
+.add-form-row input { height: 28px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; width: 100%; font-family: var(--font-sans); outline: none; }
+.add-btn-primary { width: 100%; height: 36px; background: var(--primary); color: var(--primary-foreground); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font-sans); }
+.add-btn-primary:hover { opacity: 0.9; }
+.add-btn-secondary { width: 100%; height: 36px; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; cursor: pointer; font-family: var(--font-sans); margin-top: 8px; }
+.add-btn-secondary:hover { background: var(--neutral-50); }
+.add-success { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+.add-success .check { width: 48px; height: 48px; border-radius: 50%; background: var(--success-wash); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.add-success .check svg { color: var(--success); }
+.add-success .msg { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.add-success .sub { font-size: 13px; color: var(--neutral-500); margin-bottom: 24px; }
+
+/* Placement mode overlay */
+.placement-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: white; padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; pointer-events: none; }
+
+/* Context menu */
+.ctx-menu { position: absolute; z-index: 30; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); min-width: 200px; padding: 4px 0; display: none; }
+.ctx-menu.visible { display: block; }
+.ctx-menu-title { padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: var(--foreground); border-bottom: 1px solid var(--neutral-100); margin-bottom: 2px; }
+.ctx-menu-item { padding: 6px 12px; font-size: 13px; color: var(--neutral-700); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.ctx-menu-item:hover { background: var(--neutral-50); }
+.ctx-menu-item svg { flex-shrink: 0; color: var(--neutral-500); }
+.ctx-menu-item:hover svg { color: var(--neutral-700); }
+.ctx-menu-item.danger { color: var(--destructive); }
+.ctx-menu-item.danger svg { color: var(--destructive); }
+.ctx-menu-item.disabled { color: var(--neutral-300); pointer-events: none; }
+.ctx-menu-item.disabled svg { color: var(--neutral-300); }
+.ctx-menu-sep { height: 1px; background: var(--neutral-100); margin: 4px 0; }
+.ctx-menu-item .shortcut { margin-left: auto; font-size: 11px; color: var(--neutral-400); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">G</div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </div>
+    <div class="header-center">
+      <span style="font-weight:500">Project 131212_Zone_51</span>
+      <span style="color:var(--neutral-400)">·</span>
+      <span style="color:var(--neutral-500)">Branch: test_12</span>
+      <span style="color:var(--neutral-400)">·</span>
+      <span style="color:var(--neutral-500)">31 Mar 2026</span>
+    </div>
+    <div class="header-right">
+      <span id="errorCount" style="display:flex;align-items:center;gap:4px;color:var(--neutral-400);font-size:12px;font-weight:500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="errorText">0</span>
+      </span>
+      <span class="badge-draft">Draft</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Map -->
+    <div class="map-panel">
+      <span class="map-label">Physical Map</span>
+      <svg class="map-canvas" id="mapCanvas"></svg>
+    </div>
+
+    <div class="divider"><div class="divider-dots"><span></span><span></span><span></span></div></div>
+
+    <!-- SLD -->
+    <div class="sld-panel">
+      <span class="sld-label">SLD Diagram</span>
+      <div class="sld-canvas-wrap">
+        <svg class="sld-canvas" id="sldCanvas"></svg>
+
+        <div class="sld-toolbar">
+          <button class="sld-tool active" id="toolSelect" title="Select (V)" onclick="setTool('select')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+          </button>
+          <button class="sld-tool" id="toolPan" title="Pan (H)" onclick="setTool('pan')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 0 0-4 0v5m0 0V4a2 2 0 0 0-4 0v7m0 0V7a2 2 0 0 0-4 0v7m12-2v4a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-3"/></svg>
+          </button>
+          <div class="tool-sep"></div>
+          <button class="sld-tool" id="toolAdd" title="Add component (A)" onclick="openAddPanel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <button class="sld-tool" id="toolConnect" title="Connect (C)" onclick="setTool('connect')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 12h10"/></svg>
+          </button>
+          <button class="sld-tool" id="toolDisconnect" title="Disconnect" onclick="setTool('disconnect')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+          <div class="tool-sep"></div>
+          <button class="sld-tool" title="Fit to screen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </button>
+        </div>
+
+        <!-- Add Component Panel -->
+        <div class="add-panel" id="addPanel">
+          <div class="add-panel-header" id="addPanelHeader">
+            <div class="title"><span id="addPanelTitle">Add component</span></div>
+            <button class="close" onclick="closeAddPanel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div class="add-panel-body" id="addPanelBody"></div>
+          <div class="add-panel-footer" id="addPanelFooter" style="display:none"></div>
+        </div>
+
+        <!-- Placement mode hint -->
+        <div class="placement-hint" id="placementHint" style="display:none">Click on the diagram to place component</div>
+
+        <!-- Context menu -->
+        <div class="ctx-menu" id="ctxMenu"></div>
+
+        <div class="conductor-picker" id="conductorPicker">
+          <div class="conductor-picker-header">Select conductor type</div>
+          <div class="conductor-item recent" onclick="pickConductor('2/0 Cu (UG)')">
+            <div><span class="name">2/0 Cu (UG)</span><span class="recent-badge">recent</span></div>
+            <span class="meta">600V</span>
+          </div>
+          <div class="conductor-item" onclick="pickConductor('4/0 ACSR (OH)')">
+            <span class="name">4/0 ACSR (OH)</span><span class="meta">12kV</span>
+          </div>
+          <div class="conductor-item" onclick="pickConductor('336 ACSR (OH)')">
+            <span class="name">336 ACSR (OH)</span><span class="meta">12kV</span>
+          </div>
+          <div class="conductor-item" onclick="pickConductor('XLPE 500 (UG)')">
+            <span class="name">XLPE 500 (UG)</span><span class="meta">12kV</span>
+          </div>
+          <div class="conductor-picker-footer">
+            <button class="conductor-picker-cancel" onclick="cancelPicker()">Cancel</button>
+          </div>
+        </div>
+
+        <div class="toast" id="toast"><span id="toastIcon">✓</span> <span id="toastText"></span></div>
+        <div class="hint" id="hint" style="opacity:1">Press A to add component, or hover and drag from ports to connect</div>
+
+        <div class="validation-mini" id="validationMini">
+          <div class="validation-mini-header">
+            <span class="validation-mini-title">Live validation</span>
+            <button class="validation-mini-close" onclick="document.getElementById('validationMini').classList.remove('visible')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div id="validationItems"></div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span style="display:flex;align-items:center;gap:6px"><span class="status-dot green"></span> <span id="statusText">Ready</span></span>
+        <span style="color:var(--border)">|</span>
+        <span id="hoverInfo" style="color:var(--foreground);font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <span id="connectionCount" style="margin-left:auto">Connections: 0</span>
+        <span>Components: 6</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const svgNS = 'http://www.w3.org/2000/svg';
+const sld = document.getElementById('sldCanvas');
+const map = document.getElementById('mapCanvas');
+
+let currentTool = 'select';
+let dragging = false, dragSource = null, dragLine = null, dragElbow = null;
+let connections = [], validationErrors = [], connectionCount = 0;
+let pendingConnection = null;
+let draggingMid = null, draggingMidConn = null, draggingMidAxis = null;
+let hoveredComp = null;
+let hoveredConn = null;
+let draggingComp = null, dragCompOffset = null;
+let dragPending = null; // {comp, dx, dy, startX, startY} — waits for 5px threshold
+const DRAG_THRESHOLD = 5;
+let selectedComps = [];
+
+// ─── UNDO ───────────────────────────────────────────────
+const undoStack = [];
+const MAX_UNDO = 50;
+
+function saveUndo() {
+  undoStack.push({
+    components: JSON.parse(JSON.stringify(components)),
+    connections: JSON.parse(JSON.stringify(connections)),
+    connectionCount
+  });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const state = undoStack.pop();
+  components.length = 0;
+  state.components.forEach(c => components.push(c));
+  connections.length = 0;
+  state.connections.forEach(c => connections.push(c));
+  connectionCount = state.connectionCount;
+  renderSLD(); renderMap(); updateComponentCount();
+  document.getElementById('connectionCount').textContent = `Connections: ${connections.length}`;
+  showToast('Undo');
+}
+
+// ─── COMPONENTS ─────────────────────────────────────────
+const components = [
+  { id:'BUS', type:'bus', label:'Bus 12kV', x:140, y:60, w:340, h:10,
+    gps: null,
+    terminals:[
+      {id:'BUS-P1',name:'Pos1',side:'bottom',offset:0.1,phases:'ABC-N',connected:false},
+      {id:'BUS-P2',name:'Pos2',side:'bottom',offset:0.3,phases:'ABC-N',connected:false},
+      {id:'BUS-P3',name:'Pos3',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'BUS-P4',name:'Pos4',side:'bottom',offset:0.7,phases:'ABC-N',connected:false},
+      {id:'BUS-P5',name:'Pos5',side:'bottom',offset:0.9,phases:'ABC-N',connected:false},
+    ]},
+  { id:'TR1', type:'transformer', label:'TR-312', x:155, y:140, w:44, h:44,
+    gps:{lat:38.905,lng:-77.035, mx:120, my:180},
+    terminals:[
+      {id:'TR1-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'TR1-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ]},
+  { id:'TR2', type:'transformer', label:'TR-415', x:310, y:140, w:44, h:44,
+    gps:{lat:38.906,lng:-77.032, mx:240, my:160},
+    terminals:[
+      {id:'TR2-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'TR2-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ]},
+  { id:'SW1', type:'switch', label:'SW-42', x:230, y:255, w:30, h:30,
+    gps:{lat:38.904,lng:-77.033, mx:180, my:270},
+    terminals:[
+      {id:'SW1-A',name:'A',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'SW1-B',name:'B',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ]},
+  { id:'MT1', type:'meter', label:'MT-101', x:155, y:350, w:26, h:26,
+    gps:{lat:38.902,lng:-77.036, mx:100, my:350},
+    terminals:[
+      {id:'MT1-T',name:'Terminal',side:'top',offset:0.5,phases:'AB-N',connected:false},
+    ]},
+  { id:'MT2', type:'meter', label:'MT-102', x:310, y:350, w:26, h:26,
+    gps:{lat:38.902,lng:-77.031, mx:260, my:350},
+    terminals:[
+      {id:'MT2-T',name:'Terminal',side:'top',offset:0.5,phases:'A-N',connected:false},
+    ]},
+];
+
+// Physical structures on map
+const structures = [
+  { id:'POLE-1', type:'pole', label:'P-1201', mx:120, my:180 },
+  { id:'POLE-2', type:'pole', label:'P-1202', mx:180, my:270 },
+  { id:'POLE-3', type:'pole', label:'P-1203', mx:100, my:350 },
+  { id:'VAULT-1', type:'vault', label:'VLT-01', mx:240, my:160 },
+  { id:'VAULT-2', type:'vault', label:'VLT-02', mx:260, my:350 },
+];
+const physConnections = [];
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const [k,v] of Object.entries(attrs||{})) e.setAttribute(k,v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function getPortXY(comp, t) {
+  if (t.side==='top') return {x:comp.x+comp.w*t.offset, y:comp.y};
+  if (t.side==='bottom') return {x:comp.x+comp.w*t.offset, y:comp.y+comp.h};
+  if (t.side==='left') return {x:comp.x, y:comp.y+comp.h*t.offset};
+  return {x:comp.x+comp.w, y:comp.y+comp.h*t.offset};
+}
+
+// Orthogonal 4-segment path: start → right to midX → down to midY → right to end → down to end
+function orthoPath(p1, p2, midX, midY) {
+  const my = midY !== undefined ? midY : (p1.y + p2.y) / 2;
+  const mx = midX !== undefined ? midX : p1.x;
+  return `M${p1.x},${p1.y} L${mx},${p1.y} L${mx},${my} L${p2.x},${my} L${p2.x},${p2.y}`;
+}
+
+// Distance from point to line segment
+function distToSegment(px,py,x1,y1,x2,y2) {
+  const dx=x2-x1, dy=y2-y1;
+  if (dx===0 && dy===0) return Math.hypot(px-x1,py-y1);
+  let t = ((px-x1)*dx+(py-y1)*dy)/(dx*dx+dy*dy);
+  t = Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(x1+t*dx), py-(y1+t*dy));
+}
+
+// Get 4 segments of ortho path for hit testing
+function getOrthoSegments(p1, p2, midX, midY) {
+  const my = midY !== undefined ? midY : (p1.y + p2.y) / 2;
+  const mx = midX !== undefined ? midX : p1.x;
+  return [
+    {x1:p1.x,y1:p1.y, x2:mx,y2:p1.y, dir:'h'},      // top horizontal (may be zero-length)
+    {x1:mx,y1:p1.y, x2:mx,y2:my, dir:'v'},             // left vertical
+    {x1:mx,y1:my, x2:p2.x,y2:my, dir:'h'},             // middle horizontal
+    {x1:p2.x,y1:my, x2:p2.x,y2:p2.y, dir:'v'},         // right vertical
+  ];
+}
+
+// ─── RENDER SLD ─────────────────────────────────────────
+function renderSLD() {
+  sld.innerHTML = '';
+  // Grid
+  const defs = el('defs',{},sld);
+  const pat = el('pattern',{id:'grid',width:20,height:20,patternUnits:'userSpaceOnUse'},defs);
+  el('path',{d:'M 20 0 L 0 0 0 20',fill:'none',stroke:'#ececec','stroke-width':0.5},pat);
+  el('rect',{width:'100%',height:'100%',fill:'url(#grid)'},sld);
+
+  // Connections
+  const cg = el('g',{},sld);
+  connections.forEach(conn => {
+    const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+    const ft = fc.terminals.find(t=>t.id===conn.from);
+    const tt = tc.terminals.find(t=>t.id===conn.to);
+    const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+    const path = orthoPath(p1, p2, conn.midX, conn.midY);
+    const isH = hoveredConn === conn.id;
+    const segs = getOrthoSegments(p1, p2, conn.midX, conn.midY);
+
+    // Hit area
+    el('path',{d:path,fill:'none',stroke:'transparent','stroke-width':12,
+      'data-conn':conn.id, class:'conn-hit', cursor:'pointer'},cg);
+
+    // Visible line
+    const lineColor = conn.error ? '#DC2626' : isH ? '#00BFFF' : '#228B22';
+    el('path',{d:path,fill:'none',
+      stroke: lineColor,
+      'stroke-width': isH ? 3 : 2,
+      'stroke-dasharray': conn.error ? '4,3' : 'none',
+      'pointer-events':'none'
+    },cg);
+
+    if (conn.conductor) {
+      const my = conn.midY || (p1.y+p2.y)/2;
+      const mx2 = conn.midX !== undefined ? (conn.midX + p2.x)/2 : (p1.x+p2.x)/2;
+      el('text',{x:mx2,y:my-8,'text-anchor':'middle',fill: isH?'#00BFFF':'#228B22',
+        'font-size':10,'font-family':'var(--font-mono)','pointer-events':'none'},cg).textContent = conn.conductor;
+    }
+
+    if (isH) {
+      // Handle on horizontal segment (seg index 2) — drags midY (up/down)
+      const hSeg = segs[2];
+      const hx = (hSeg.x1 + hSeg.x2)/2;
+      const hy = hSeg.y1;
+      el('rect',{x:hx-10,y:hy-3,width:20,height:6,rx:3,
+        fill:'#7C3AED',opacity:0.9,
+        class:'mid-handle','data-conn':conn.id,'data-axis':'y',cursor:'ns-resize'},cg);
+
+      // Handle on vertical segment (seg index 1) — drags midX (left/right)
+      const vSeg = segs[1];
+      const vx = vSeg.x1;
+      const vy = (vSeg.y1 + vSeg.y2)/2;
+      if (Math.abs(vSeg.y2 - vSeg.y1) > 20) {
+        el('rect',{x:vx-3,y:vy-10,width:6,height:20,rx:3,
+          fill:'#7C3AED',opacity:0.9,
+          class:'mid-handle','data-conn':conn.id,'data-axis':'x',cursor:'ew-resize'},cg);
+      }
+    }
+  });
+
+  // Components
+  const compG = el('g',{},sld);
+  const hc = hoveredComp;
+  components.forEach(comp => {
+    const g = el('g',{'data-id':comp.id,cursor:'pointer'},compG);
+    const isH = hc===comp.id;
+    const isSel = selectedComps.includes(comp.id);
+    const stk = isSel ? '#00BFFF' : isH ? '#00BFFF' : '#404040';
+    const sw = isSel ? 2.5 : isH ? 2 : 1.5;
+    const txtColor = isSel ? '#00BFFF' : isH ? '#00BFFF' : '#525252';
+
+    if (comp.type==='bus') {
+      el('rect',{x:comp.x,y:comp.y,width:comp.w,height:comp.h,fill: (isSel||isH)?'#00BFFF':'#171717',rx:2},g);
+      el('text',{x:comp.x+comp.w/2,y:comp.y-8,'text-anchor':'middle',fill:txtColor,
+        'font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    } else if (comp.type==='transformer') {
+      const cx=comp.x+comp.w/2, cy=comp.y+comp.h/2;
+      el('circle',{cx,cy:cy-7,r:14,fill:'white',stroke:stk,'stroke-width':sw},g);
+      el('circle',{cx,cy:cy+7,r:14,fill:'white',stroke:stk,'stroke-width':sw},g);
+      el('text',{x:cx+26,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    } else if (comp.type==='switch') {
+      const cx=comp.x+comp.w/2, cy=comp.y+comp.h/2;
+      el('rect',{x:comp.x,y:comp.y,width:comp.w,height:comp.h,fill:'white',stroke:stk,'stroke-width':sw,rx:2},g);
+      el('line',{x1:cx-6,y1:cy,x2:cx+6,y2:cy,stroke:'#16A34A','stroke-width':2},g);
+      el('text',{x:cx+22,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    } else if (comp.type==='meter') {
+      const cx=comp.x+comp.w/2, cy=comp.y+comp.h/2;
+      el('circle',{cx,cy,r:13,fill:'white',stroke:stk,'stroke-width':sw},g);
+      el('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#404040','font-size':9,'font-weight':600},g).textContent='M';
+      el('text',{x:cx+20,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    }
+    // Ports
+    comp.terminals.forEach(t => {
+      const p = getPortXY(comp,t);
+      el('circle',{cx:p.x,cy:p.y,r:5,fill:'white',stroke:'#A3A3A3','stroke-width':1.5,
+        class:'port','data-terminal':t.id,'data-comp':comp.id,
+        opacity: currentTool==='connect'?1:0, cursor:'crosshair'},g);
+    });
+  });
+}
+
+// ─── RENDER MAP ─────────────────────────────────────────
+function renderMap() {
+  map.innerHTML = '';
+  // Dark bg
+  el('rect',{width:'100%',height:'100%',fill:'#2d2d2d'},map);
+  // Fake street grid
+  for (let i=0;i<8;i++) {
+    el('line',{x1:0,y1:i*60+40,x2:600,y2:i*60+40,stroke:'#3a3a3a','stroke-width':0.5},map);
+    el('line',{x1:i*60+40,y1:0,x2:i*60+40,y2:600,stroke:'#3a3a3a','stroke-width':0.5},map);
+  }
+
+  // Physical connections (structure to structure)
+  const pcg = el('g',{},map);
+  physConnections.forEach(pc => {
+    const s1 = structures.find(s=>s.id===pc.from);
+    const s2 = structures.find(s=>s.id===pc.to);
+    if (!s1||!s2) return;
+    el('line',{x1:s1.mx,y1:s1.my,x2:s2.mx,y2:s2.my,
+      stroke: pc.type==='OH'?'#16A34A':'#16A34A',
+      'stroke-width':2,
+      'stroke-dasharray': pc.type==='UG'?'6,4':'none',
+      opacity:0.8
+    },pcg);
+  });
+
+  // Electrical connections reflected on map
+  connections.forEach(conn => {
+    if (!conn.conductor) return;
+    const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+    if (!fc.gps||!tc.gps) return;
+    const isUG = conn.conductor.includes('UG');
+    const isH = hoveredConn === conn.id;
+    el('line',{x1:fc.gps.mx,y1:fc.gps.my,x2:tc.gps.mx,y2:tc.gps.my,
+      stroke: isH?'#00BFFF':'#228B22','stroke-width': isH?3:2,
+      'stroke-dasharray': isUG?'6,4':'none', opacity: isH?1:0.7
+    },pcg);
+  });
+
+  // Structures
+  const sg = el('g',{},map);
+  structures.forEach(s => {
+    if (s.type==='pole') {
+      el('circle',{cx:s.mx,cy:s.my,r:5,fill:'#8B6914',stroke:'#d4a84b','stroke-width':1.5},sg);
+    } else {
+      el('rect',{x:s.mx-6,y:s.my-6,width:12,height:12,fill:'#555',stroke:'#888','stroke-width':1.5,rx:2},sg);
+    }
+    el('text',{x:s.mx+10,y:s.my+4,fill:'#999','font-size':10,'font-family':'var(--font-sans)'},sg).textContent=s.label;
+  });
+
+  // Equipment markers from SLD (if GPS)
+  components.forEach(comp => {
+    if (!comp.gps) return;
+    const isHighlighted = connections.some(c => c.from.startsWith(comp.id) || c.to.startsWith(comp.id));
+    const isHovered = hoveredComp === comp.id;
+    const isSel = selectedComps.includes(comp.id);
+
+    if (isSel) {
+      el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r:12,
+        fill:'none',stroke:'#00BFFF','stroke-width':1.5,opacity:0.8},sg);
+    } else if (isHovered) {
+      el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r:12,
+        fill:'none',stroke:'#00BFFF','stroke-width':1.5,opacity:0.7},sg);
+    }
+
+    el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r: (isHovered||isSel)?5:4,
+      fill: (isSel||isHovered)?'#00BFFF': isHighlighted?'#228B22':'#F97316',
+      stroke:'white','stroke-width':1.5},sg);
+
+    if (isHovered || isSel) {
+      el('text',{x:comp.gps.mx,y:comp.gps.my-16,'text-anchor':'middle',
+        fill:'#00BFFF','font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},sg).textContent=comp.label;
+    }
+  });
+}
+
+// ─── INTERACTION: SLD ───────────────────────────────────
+sld.addEventListener('mousemove', e => {
+  const rect = sld.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  if (draggingMid) {
+    if (draggingMidAxis === 'y') draggingMidConn.midY = my;
+    if (draggingMidAxis === 'x') draggingMidConn.midX = mx;
+    renderSLD(); renderMap();
+    return;
+  }
+
+  // Component drag (with threshold)
+  if (draggingComp) {
+    draggingComp.x = mx - dragCompOffset.dx;
+    draggingComp.y = my - dragCompOffset.dy;
+    renderSLD(); renderMap();
+    return;
+  }
+
+  // Drag threshold: only start dragging after 3px movement
+  if (dragPending) {
+    const dist = Math.hypot(mx - dragPending.startX, my - dragPending.startY);
+    if (dist >= DRAG_THRESHOLD) {
+      saveUndo();
+      draggingComp = dragPending.comp;
+      dragCompOffset = { dx: dragPending.dx, dy: dragPending.dy };
+      sld.style.cursor = 'grabbing';
+      dragPending = null;
+    }
+    return;
+  }
+
+  if (dragging && dragLine) {
+    // Orthogonal ghost line
+    const fc = components.find(c=>c.terminals.some(t=>t.id===dragSource));
+    const ft = fc.terminals.find(t=>t.id===dragSource);
+    const p1 = getPortXY(fc,ft);
+    const midY = (p1.y + my) / 2;
+    dragLine.setAttribute('d', `M${p1.x},${p1.y} L${p1.x},${midY} L${mx},${midY} L${mx},${my}`);
+  }
+
+  // Show ports on hover (select mode) + hover highlight
+  if (!dragging && !draggingComp && !dragPending && currentTool !== 'connect') {
+    let found = null;
+    components.forEach(comp => {
+      if (mx>=comp.x-10 && mx<=comp.x+comp.w+10 && my>=comp.y-10 && my<=comp.y+comp.h+10) found=comp;
+    });
+
+    // Update hover glow
+    const newHover = found ? found.id : null;
+    if (newHover !== hoveredComp) {
+      hoveredComp = newHover;
+      renderSLD();
+      renderMap(); // sync map highlight
+      updateHoverInfo(found);
+    }
+
+    document.querySelectorAll('.port').forEach(p => {
+      p.setAttribute('opacity', found && found.id===p.getAttribute('data-comp') ? 1 : 0);
+    });
+  }
+
+  // Hover highlight in connect mode too
+  if (!dragging && currentTool === 'connect') {
+    let found = null;
+    components.forEach(comp => {
+      if (mx>=comp.x-10 && mx<=comp.x+comp.w+10 && my>=comp.y-10 && my<=comp.y+comp.h+10) found=comp;
+    });
+    const newHover = found ? found.id : null;
+    if (newHover !== hoveredComp) {
+      hoveredComp = newHover;
+      renderSLD(); renderMap();
+      updateHoverInfo(found);
+    }
+  }
+
+  // Connection line hover (all modes, when not dragging)
+  if (!dragging && !draggingMid && !draggingComp && !dragPending) {
+    let foundConn = null;
+    connections.forEach(conn => {
+      const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+      const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+      const ft = fc.terminals.find(t=>t.id===conn.from);
+      const tt = tc.terminals.find(t=>t.id===conn.to);
+      const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+      const segs = getOrthoSegments(p1, p2, conn.midX, conn.midY);
+      const near = segs.some(s => distToSegment(mx,my,s.x1,s.y1,s.x2,s.y2) < 8);
+      if (near) foundConn = conn;
+    });
+    const newHC = foundConn ? foundConn.id : null;
+    if (newHC !== hoveredConn) {
+      hoveredConn = newHC;
+      renderSLD(); renderMap();
+      if (foundConn) {
+        const ft = components.flatMap(c=>c.terminals).find(t=>t.id===foundConn.from);
+        const tt = components.flatMap(c=>c.terminals).find(t=>t.id===foundConn.to);
+        const fc = components.find(c=>c.terminals.some(t=>t.id===foundConn.from));
+        const tc = components.find(c=>c.terminals.some(t=>t.id===foundConn.to));
+        const info = `${fc.label}:${ft.name} → ${tc.label}:${tt.name}` +
+          (foundConn.conductor ? `  ·  ${foundConn.conductor}` : '  ·  direct') +
+          `  ·  Phases: ${ft.phases}`;
+        document.getElementById('hoverInfo').textContent = info;
+      } else if (!hoveredComp) {
+        document.getElementById('hoverInfo').textContent = '';
+      }
+    }
+  }
+
+  // Snap target highlighting during drag
+  if (dragging) {
+    let bestDist=30, bestPort=null;
+    components.forEach(c => c.terminals.forEach(t => {
+      if (t.id===dragSource) return;
+      const p = getPortXY(c,t);
+      const d = Math.hypot(mx-p.x,my-p.y);
+      if (d<bestDist) { bestDist=d; bestPort=t; }
+    }));
+    document.querySelectorAll('.port').forEach(p => {
+      const tid = p.getAttribute('data-terminal');
+      if (tid===dragSource) return;
+      if (bestPort && bestPort.id===tid) {
+        const compat = getPhaseCompat(dragSource,tid);
+        p.setAttribute('stroke', compat==='full'?'#16A34A':compat==='partial'?'#EA580C':'#DC2626');
+        p.setAttribute('r',7); p.setAttribute('stroke-width',2.5); p.setAttribute('opacity',1);
+      } else {
+        p.setAttribute('stroke','#A3A3A3'); p.setAttribute('r',5); p.setAttribute('stroke-width',1.5);
+      }
+    });
+  }
+});
+
+sld.addEventListener('mousedown', e => {
+  // Midpoint drag
+  const midH = e.target.closest('.mid-handle');
+  if (midH) {
+    saveUndo();
+    const connId = midH.getAttribute('data-conn');
+    draggingMid = true;
+    draggingMidConn = connections.find(c=>c.id===connId);
+    draggingMidAxis = midH.getAttribute('data-axis') || 'y';
+    hoveredConn = connId;
+    e.preventDefault();
+    return;
+  }
+
+  const port = e.target.closest('.port');
+  if (port && !(e.shiftKey || e.ctrlKey || e.metaKey)) {
+    if (currentTool!=='select' && currentTool!=='connect') return;
+
+    dragSource = port.getAttribute('data-terminal');
+    dragging = true;
+    const fc = components.find(c=>c.terminals.some(t=>t.id===dragSource));
+    const ft = fc.terminals.find(t=>t.id===dragSource);
+    const p = getPortXY(fc,ft);
+
+    dragLine = el('path',{d:`M${p.x},${p.y} L${p.x},${p.y}`,
+      fill:'none',stroke:'#171717','stroke-width':1.5,'stroke-dasharray':'6,4',opacity:0.6},sld);
+
+    port.setAttribute('fill','#16A34A'); port.setAttribute('stroke','#16A34A');
+    document.querySelectorAll('.port').forEach(p=>p.setAttribute('opacity',1));
+    document.getElementById('hint').style.opacity='0';
+    return;
+  }
+
+  // Component body: select / multi-select / drag (select mode only)
+  if (currentTool === 'select') {
+    const rect = sld.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let found = null;
+    components.forEach(comp => {
+      if (mx>=comp.x-5 && mx<=comp.x+comp.w+5 && my>=comp.y-5 && my<=comp.y+comp.h+5) found = comp;
+    });
+
+    if (found && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+      // Shift/Ctrl+click → toggle in multi-selection (no drag)
+      const idx = selectedComps.indexOf(found.id);
+      if (idx >= 0) selectedComps.splice(idx, 1);
+      else selectedComps.push(found.id);
+      renderSLD(); renderMap();
+      updateSelectionHint();
+      e.preventDefault();
+    } else if (found) {
+      // Regular click → select + prepare for potential drag (threshold)
+      if (!selectedComps.includes(found.id)) selectedComps = [found.id];
+      dragPending = { comp: found, dx: mx - found.x, dy: my - found.y, startX: mx, startY: my };
+      renderSLD(); renderMap();
+      updateSelectionHint();
+      e.preventDefault();
+    } else {
+      // Click on empty → clear selection
+      if (selectedComps.length > 0) {
+        selectedComps = [];
+        renderSLD(); renderMap();
+        updateSelectionHint();
+      }
+    }
+  }
+});
+
+window.addEventListener('mouseup', e => {
+  if (draggingMid) { draggingMid=false; draggingMidConn=null; draggingMidAxis=null; return; }
+  if (draggingComp) { draggingComp=null; dragCompOffset=null; sld.style.cursor='default'; return; }
+  if (dragPending) { dragPending=null; return; } // click without drag — selection already applied
+  if (!dragging) return;
+
+  const port = e.target.closest('.port');
+  if (port) {
+    const tid = port.getAttribute('data-terminal');
+    if (tid!==dragSource) completeConnection(dragSource,tid);
+  }
+
+  if (dragLine) dragLine.remove();
+  dragLine=null; dragging=false;
+  document.querySelectorAll('.port').forEach(p => {
+    p.setAttribute('fill','white'); p.setAttribute('stroke','#A3A3A3');
+    p.setAttribute('r',5); p.setAttribute('stroke-width',1.5);
+    if (currentTool!=='connect') p.setAttribute('opacity',0);
+  });
+  dragSource=null;
+});
+
+function getPhaseCompat(fromId, toId) {
+  const ft = components.flatMap(c=>c.terminals).find(t=>t.id===fromId);
+  const tt = components.flatMap(c=>c.terminals).find(t=>t.id===toId);
+  if (!ft||!tt) return 'none';
+  if (ft.phases===tt.phases) return 'full';
+  return 'partial';
+}
+
+function completeConnection(fromId, toId) {
+  const fc = components.find(c=>c.terminals.some(t=>t.id===fromId));
+  const tc = components.find(c=>c.terminals.some(t=>t.id===toId));
+  const needsConductor = fc.type!=='bus' && tc.type!=='bus' && Math.hypot(fc.x-tc.x, fc.y-tc.y)>80;
+
+  if (needsConductor) {
+    pendingConnection = {from:fromId, to:toId};
+    const ft = fc.terminals.find(t=>t.id===fromId);
+    const tt = tc.terminals.find(t=>t.id===toId);
+    const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+    const picker = document.getElementById('conductorPicker');
+    const wrap = sld.parentElement.getBoundingClientRect();
+    const sldRect = sld.getBoundingClientRect();
+    picker.style.left = ((p1.x+p2.x)/2 - 130) + 'px';
+    picker.style.top = ((p1.y+p2.y)/2 - 40) + 'px';
+    picker.classList.add('visible');
+  } else {
+    createConnection(fromId, toId, null);
+  }
+}
+
+function pickConductor(name) {
+  if (!pendingConnection) return;
+  createConnection(pendingConnection.from, pendingConnection.to, name);
+  pendingConnection=null;
+  document.getElementById('conductorPicker').classList.remove('visible');
+}
+function cancelPicker() {
+  pendingConnection=null;
+  document.getElementById('conductorPicker').classList.remove('visible');
+}
+
+function createConnection(fromId, toId, conductor) {
+  saveUndo();
+  const compat = getPhaseCompat(fromId, toId);
+  connections.push({
+    id:'conn-'+(++connectionCount), from:fromId, to:toId, conductor,
+    error: false, midY: undefined, midX: undefined
+  });
+
+  components.forEach(c=>c.terminals.forEach(t=>{
+    if (t.id===fromId||t.id===toId) t.connected=true;
+  }));
+
+  if (compat==='partial') {
+    const ft = components.flatMap(c=>c.terminals).find(t=>t.id===fromId);
+    const tt = components.flatMap(c=>c.terminals).find(t=>t.id===toId);
+    validationErrors.push({code:'V-E02',type:'warning',title:'Phase Continuity',
+      desc:`${ft.phases} → ${tt.phases} — partial phase match`});
+    updateValidation();
+  }
+
+  // Auto-add physical connection on map if conductor
+  if (conductor) {
+    const fc = components.find(c=>c.terminals.some(t=>t.id===fromId));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===toId));
+    if (fc.gps && tc.gps) {
+      const isUG = conductor.includes('UG');
+      // Find nearest structures
+      physConnections.push({from: nearestStruct(fc.gps.mx,fc.gps.my), to: nearestStruct(tc.gps.mx,tc.gps.my), type: isUG?'UG':'OH'});
+    }
+  }
+
+  renderSLD(); renderMap();
+  showToast(conductor ? `Connected via ${conductor}` : 'Connected');
+  document.getElementById('connectionCount').textContent = `Connections: ${connections.length}`;
+}
+
+function nearestStruct(mx,my) {
+  let best=null, bestD=Infinity;
+  structures.forEach(s=>{
+    const d = Math.hypot(s.mx-mx,s.my-my);
+    if (d<bestD) { bestD=d; best=s.id; }
+  });
+  return best;
+}
+
+function updateValidation() {
+  const panel = document.getElementById('validationMini');
+  const items = document.getElementById('validationItems');
+  panel.classList.add('visible');
+  items.innerHTML='';
+  validationErrors.forEach(err => {
+    const div = document.createElement('div');
+    div.className = 'validation-item ' + (err.type||'');
+    div.innerHTML = `<div><span class="code">${err.code}</span> ${err.title}</div><div class="desc">${err.desc}</div>`;
+    items.appendChild(div);
+  });
+  document.getElementById('errorText').textContent = validationErrors.length;
+  document.getElementById('errorCount').style.color = validationErrors.length>0?'var(--warning)':'var(--neutral-400)';
+}
+
+function updateHoverInfo(comp) {
+  const el = document.getElementById('hoverInfo');
+  if (!comp) { el.textContent = ''; return; }
+  const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+  const termCount = comp.terminals.length;
+  const connCount = comp.terminals.filter(t=>t.connected).length;
+  const phases = comp.terminals[0]?.phases || '—';
+  el.textContent = `${comp.label}  ·  ${typeLabels[comp.type]}  ·  Phases: ${phases}  ·  Terminals: ${connCount}/${termCount} connected`;
+}
+
+function updateSelectionHint() {
+  const hint = document.getElementById('hint');
+  if (selectedComps.length === 2) {
+    const c1 = components.find(c=>c.id===selectedComps[0]);
+    const c2 = components.find(c=>c.id===selectedComps[1]);
+    hint.textContent = `${c1.label} + ${c2.label} selected — press Enter to connect`;
+    hint.style.opacity = '1';
+  } else if (selectedComps.length > 2) {
+    hint.textContent = `${selectedComps.length} selected — select exactly 2 to connect`;
+    hint.style.opacity = '1';
+  } else {
+    hint.style.opacity = '0';
+  }
+  // Update status bar
+  if (selectedComps.length > 0) {
+    const names = selectedComps.map(id => components.find(c=>c.id===id)?.label).join(', ');
+    document.getElementById('hoverInfo').textContent = `Selected: ${names}`;
+  }
+}
+
+function connectSelected() {
+  if (selectedComps.length !== 2) return;
+  const c1 = components.find(c=>c.id===selectedComps[0]);
+  const c2 = components.find(c=>c.id===selectedComps[1]);
+  if (!c1 || !c2) return;
+
+  // Find best matching free terminals
+  const free1 = c1.terminals.filter(t=>!t.connected);
+  const free2 = c2.terminals.filter(t=>!t.connected);
+
+  if (free1.length === 0 || free2.length === 0) {
+    showToast('No free terminals on one of the selected components');
+    return;
+  }
+
+  // If exactly one pair → connect immediately
+  if (free1.length === 1 && free2.length === 1) {
+    completeConnection(free1[0].id, free2[0].id);
+    selectedComps = [];
+    renderSLD(); renderMap();
+    document.getElementById('hint').style.opacity = '0';
+    return;
+  }
+
+  // Multiple options → use first available pair (MVP simplification)
+  // Find best by phase compatibility
+  let bestFrom = null, bestTo = null, bestScore = -1;
+  free1.forEach(t1 => {
+    free2.forEach(t2 => {
+      const compat = getPhaseCompat(t1.id, t2.id);
+      const score = compat === 'full' ? 2 : compat === 'partial' ? 1 : 0;
+      if (score > bestScore) { bestScore = score; bestFrom = t1; bestTo = t2; }
+    });
+  });
+
+  if (bestFrom && bestTo) {
+    completeConnection(bestFrom.id, bestTo.id);
+    selectedComps = [];
+    renderSLD(); renderMap();
+    document.getElementById('hint').style.opacity = '0';
+  }
+}
+
+function setTool(tool) {
+  currentTool=tool;
+  document.querySelectorAll('.sld-tool').forEach(t=>t.classList.remove('active'));
+  const btn = document.getElementById('tool'+tool.charAt(0).toUpperCase()+tool.slice(1));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.port').forEach(p => p.setAttribute('opacity', tool==='connect'?1:0));
+  sld.style.cursor = tool==='connect'?'crosshair':tool==='pan'?'grab':'default';
+  const hint = document.getElementById('hint');
+  if (tool==='connect') { hint.textContent='Connect mode — click source → click target'; hint.style.opacity='1'; setTimeout(()=>hint.style.opacity='0',3000); }
+  document.getElementById('statusText').textContent = {select:'Ready',connect:'Connect mode',pan:'Pan mode',disconnect:'Disconnect mode'}[tool]||'Ready';
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  t.classList.add('visible');
+  setTimeout(()=>t.classList.remove('visible'),2000);
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
+  if (e.key==='Enter' && selectedComps.length === 2) { connectSelected(); return; }
+  if (e.key==='v'||e.key==='V') setTool('select');
+  if (e.key==='c'||e.key==='C') setTool('connect');
+  if (e.key==='h'||e.key==='H') setTool('pan');
+  if (e.key==='a'||e.key==='A') { if (!placementMode) openAddPanel(); }
+  if (e.key==='Escape') { setTool('select'); cancelPicker(); closeAddPanel(); exitPlacementMode(); selectedComps=[]; renderSLD(); renderMap(); }
+});
+
+// ─── ADD COMPONENT FLOW ─────────────────────────────────
+const library = {
+  categories: [
+    { id:'connector', name:'Connector', icon:'⊕' },
+    { id:'transformer', name:'Transformer', icon:'⊙' },
+    { id:'switch', name:'Switch', icon:'⊙' },
+    { id:'shunt', name:'Shunt', icon:'⊙' },
+    { id:'voltage_reg', name:'Voltage Regulator', icon:'⊙' },
+    { id:'protection', name:'Protection', icon:'⊙' },
+    { id:'meter', name:'Meter', icon:'⊙' },
+  ],
+  variants: {
+    transformer: [
+      { id:'padmount500', name:'Pad-mount 500 kVA', meta:'500 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'padmount250', name:'Pad-mount 250 kVA', meta:'250 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'padmount167', name:'Pad-mount 167 kVA', meta:'167 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'polemount50', name:'Pole-mount 50 kVA', meta:'50 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'polemount37', name:'Pole-mount 37.5 kVA', meta:'37.5 kVA · 12kV', phases:'AB-N', type:'transformer', w:44, h:44 },
+      { id:'power10mva', name:'Power Transformer 10 MVA', meta:'10 MVA · 69kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+    ],
+    switch: [
+      { id:'poleswitch', name:'Pole Switch', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+      { id:'gasswitch', name:'Gas Switch (SF6)', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+      { id:'loadbreak', name:'Load Break Switch', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+    meter: [
+      { id:'ami', name:'AMI Meter', meta:'240V', phases:'AB-N', type:'meter', w:26, h:26 },
+      { id:'standard', name:'Standard Meter', meta:'240V', phases:'A-N', type:'meter', w:26, h:26 },
+    ],
+    protection: [
+      { id:'recloser', name:'Recloser', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+      { id:'fuse', name:'Fuse', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+    connector: [
+      { id:'bus_section', name:'Bus Section', meta:'12kV', phases:'ABC-N', type:'bus', w:200, h:10 },
+    ],
+    shunt: [
+      { id:'capbank', name:'Capacitor Bank', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+    voltage_reg: [
+      { id:'vreg', name:'Voltage Regulator', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+  },
+  recent: [
+    { catId:'transformer', varId:'padmount250', name:'Pad-mount', meta:'250 kVA · 12kV' },
+    { catId:'transformer', varId:'padmount167', name:'Pad-mount', meta:'167 kVA · 12kV' },
+    { catId:'transformer', varId:'power10mva', name:'Pad-mount', meta:'20 MVA · 69kV' },
+  ],
+  libInfo: { height:'84 in', length:'144 in', loadCapacity:'300 psf', material:'Concrete', maxRuns200:'3', maxRuns600:'4', modelNumber:'100011014' }
+};
+
+let addStep = 0, addCategory = null, addVariant = null, placementMode = false, pendingPlacement = null;
+let compCounter = 100;
+
+function openAddPanel() {
+  addStep = 1; addCategory = null; addVariant = null;
+  renderAddStep1();
+  document.getElementById('addPanel').classList.add('visible');
+}
+
+function closeAddPanel() {
+  document.getElementById('addPanel').classList.remove('visible');
+  addStep = 0;
+  earlyPlacement = false;
+}
+
+function renderAddStep1() {
+  addStep = 1;
+  document.getElementById('addPanelTitle').textContent = 'Add component';
+  document.getElementById('addPanelHeader').querySelector('.back')?.remove();
+  document.getElementById('addPanelFooter').style.display = 'none';
+
+  let html = '<div class="add-search" style="position:relative"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon" style="position:absolute;left:24px;top:20px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="Search equipment" style="padding-left:30px"></div>';
+
+  library.categories.forEach(cat => {
+    html += `<div class="add-list-item" onclick="selectCategory('${cat.id}')">
+      <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="item-text"><div class="item-name">${cat.name}</div></div>
+      <div class="arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>`;
+  });
+
+  if (library.recent.length) {
+    html += '<div class="add-section-label">Recent</div>';
+    library.recent.forEach(r => {
+      html += `<div class="add-list-item" onclick="selectCategory('${r.catId}');selectVariant('${r.varId}')">
+        <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="item-text"><div class="item-name">${r.name}</div><div class="item-meta">${r.meta}</div></div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('addPanelBody').innerHTML = html;
+}
+
+function selectCategory(catId) {
+  addCategory = catId;
+  addStep = 2;
+  const cat = library.categories.find(c=>c.id===catId);
+  document.getElementById('addPanelTitle').textContent = cat.name;
+
+  // Add back button
+  if (!document.getElementById('addPanelHeader').querySelector('.back')) {
+    const btn = document.createElement('button');
+    btn.className = 'back';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>';
+    btn.onclick = renderAddStep1;
+    document.getElementById('addPanelHeader').querySelector('.title').prepend(btn);
+  }
+
+  const variants = library.variants[catId] || [];
+  let html = '<div class="add-search" style="position:relative"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:24px;top:20px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="Search equipment" style="padding-left:30px"></div>';
+
+  variants.forEach(v => {
+    html += `<div class="add-list-item" onclick="selectVariant('${v.id}')">
+      <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="item-text"><div class="item-name">${v.name}</div><div class="item-meta">${v.meta}</div></div>
+      <div class="arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>`;
+  });
+
+  document.getElementById('addPanelBody').innerHTML = html;
+}
+
+function selectVariant(varId) {
+  const variants = library.variants[addCategory] || [];
+  addVariant = variants.find(v=>v.id===varId);
+  if (!addVariant) return;
+  addStep = 3;
+
+  document.getElementById('addPanelTitle').textContent = addVariant.name;
+  compCounter++;
+  const compId = addVariant.type.substring(0,2).toUpperCase() + '-' + compCounter;
+
+  let html = '<div class="add-form-section"><div class="section-title">Defined</div>';
+  html += `<div class="add-form-row"><span class="label">Component ID</span><input value="${compId}" id="addCompId"></div>`;
+  html += `<div class="add-form-row"><span class="label">Name</span><input value="${addVariant.name}" id="addCompName"></div>`;
+  html += `<div class="add-form-row"><span class="label">Tags</span><input value="" placeholder="tag1, tag2" id="addCompTags"></div>`;
+  html += '</div>';
+
+  html += '<div class="add-form-section"><div class="section-title">Library info</div>';
+  const info = library.libInfo;
+  html += `<div class="add-form-row"><span class="label">Height</span><span class="value">${info.height}</span></div>`;
+  html += `<div class="add-form-row"><span class="label">Length</span><span class="value">${info.length}</span></div>`;
+  html += `<div class="add-form-row"><span class="label">Load capacity</span><span class="value">${info.loadCapacity}</span></div>`;
+  html += `<div class="add-form-row"><span class="label">Material</span><span class="value">${info.material}</span></div>`;
+  html += `<div class="add-form-row"><span class="label">Model Number</span><span class="value">${info.modelNumber}</span></div>`;
+  html += '</div>';
+
+  html += '<div class="add-form-section"><div class="section-title">Calculated</div>';
+  html += `<div class="add-form-row"><span class="label">Location</span><span class="value" id="addLocationValue" style="color:var(--neutral-400)">Click map or diagram</span></div>`;
+  html += `<div class="add-form-row"><span class="label">Zone</span><span class="value" id="addZoneValue" style="color:var(--neutral-400)">—</span></div>`;
+  html += '</div>';
+
+  document.getElementById('addPanelBody').innerHTML = html;
+
+  const footer = document.getElementById('addPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = `<button class="add-btn-primary" onclick="enterPlacementMode()">Place component</button><div style="font-size:11px;color:var(--neutral-400);text-align:center;margin-top:6px">Click on map or diagram to place it</div>`;
+
+  // Enable early placement — clicks on map or SLD work immediately
+  earlyPlacement = true;
+}
+
+let earlyPlacement = false;
+
+function buildPendingFromForm() {
+  return {
+    type: addVariant.type,
+    label: document.getElementById('addCompId')?.value || addVariant.name,
+    name: document.getElementById('addCompName')?.value || addVariant.name,
+    w: addVariant.w, h: addVariant.h,
+    phases: addVariant.phases
+  };
+}
+
+function enterPlacementMode() {
+  placementMode = true;
+  pendingPlacement = buildPendingFromForm();
+  document.getElementById('addPanel').classList.remove('visible');
+  document.getElementById('placementHint').style.display = 'block';
+  sld.style.cursor = 'crosshair';
+  earlyPlacement = false;
+}
+
+function exitPlacementMode() {
+  placementMode = false;
+  pendingPlacement = null;
+  document.getElementById('placementHint').style.display = 'none';
+  sld.style.cursor = 'default';
+}
+
+function placeComponent(x, y, gpsData) {
+  if (!pendingPlacement && !earlyPlacement) return;
+  saveUndo();
+  const p = pendingPlacement || buildPendingFromForm();
+  const id = p.label.replace(/[^A-Z0-9-]/gi,'');
+
+  // Build terminals based on type
+  let terminals = [];
+  if (p.type === 'transformer') {
+    terminals = [
+      {id:id+'-PRI',name:'Primary',side:'top',offset:0.5,phases:p.phases,connected:false},
+      {id:id+'-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:p.phases,connected:false},
+    ];
+  } else if (p.type === 'switch') {
+    terminals = [
+      {id:id+'-A',name:'A',side:'top',offset:0.5,phases:p.phases,connected:false},
+      {id:id+'-B',name:'B',side:'bottom',offset:0.5,phases:p.phases,connected:false},
+    ];
+  } else if (p.type === 'meter') {
+    terminals = [
+      {id:id+'-T',name:'Terminal',side:'top',offset:0.5,phases:p.phases,connected:false},
+    ];
+  } else if (p.type === 'bus') {
+    for (let i=1;i<=5;i++) terminals.push({id:id+'-P'+i,name:'Pos'+i,side:'bottom',offset:i/6,phases:p.phases,connected:false});
+  }
+
+  components.push({
+    id, type: p.type, label: p.label,
+    x: x - p.w/2, y: y - p.h/2, w: p.w, h: p.h,
+    gps: gpsData || null, terminals
+  });
+
+  exitPlacementMode();
+  earlyPlacement = false;
+  renderSLD(); renderMap();
+  updateComponentCount();
+  showAddSuccess(p.name + (gpsData ? ` · ${gpsData.lat.toFixed(4)}°N, ${Math.abs(gpsData.lng).toFixed(4)}°W` : ''));
+}
+
+// Map click → place with GPS coordinates
+map.addEventListener('click', e => {
+  if (!earlyPlacement && !placementMode) return;
+
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // Convert pixel to fake lat/lng
+  const lat = 38.91 - (my / rect.height) * 0.02;
+  const lng = -77.04 + (mx / rect.width) * 0.02;
+
+  // Place on SLD at a reasonable free position
+  const sldX = 380 + (components.length % 3) * 70;
+  const sldY = 160 + Math.floor(components.length / 3) * 80;
+
+  if (earlyPlacement && !pendingPlacement) {
+    pendingPlacement = buildPendingFromForm();
+  }
+
+  placeComponent(sldX, sldY, { lat: +lat.toFixed(6), lng: +lng.toFixed(6), mx, my });
+});
+
+function showAddSuccess(name) {
+  addStep = 4;
+  const panel = document.getElementById('addPanel');
+  panel.classList.add('visible');
+  document.getElementById('addPanelHeader').style.display = 'none';
+
+  document.getElementById('addPanelBody').innerHTML = `
+    <div class="add-success">
+      <div class="check"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="msg">Component added</div>
+      <div class="sub">${name}</div>
+      <button class="add-btn-primary" onclick="addAnother()">+ Add another component</button>
+      <button class="add-btn-secondary" onclick="doneAdding()">Done</button>
+    </div>`;
+  document.getElementById('addPanelFooter').style.display = 'none';
+}
+
+function addAnother() {
+  document.getElementById('addPanelHeader').style.display = '';
+  renderAddStep1();
+}
+
+function doneAdding() {
+  document.getElementById('addPanelHeader').style.display = '';
+  closeAddPanel();
+  showToast('Component placed — ready to connect');
+}
+
+function updateComponentCount() {
+  document.querySelector('.status-bar span:last-child').textContent = `Components: ${components.length}`;
+}
+
+// Listen for placement clicks on SLD
+sld.addEventListener('click', e => {
+  if (!placementMode && !earlyPlacement) return;
+  if (earlyPlacement && !pendingPlacement) {
+    pendingPlacement = buildPendingFromForm();
+  }
+  const rect = sld.getBoundingClientRect();
+  placeComponent(e.clientX - rect.left, e.clientY - rect.top, null);
+});
+
+renderSLD(); renderMap();
+
+// Clear hover when leaving SLD canvas
+sld.addEventListener('mouseleave', () => {
+  if (hoveredComp || hoveredConn) { hoveredComp=null; hoveredConn=null; renderSLD(); renderMap(); updateHoverInfo(null); }
+});
+
+saveUndo(); // save initial state
+
+// ─── CONTEXT MENU ───────────────────────────────────────
+const ctxMenu = document.getElementById('ctxMenu');
+
+function hideCtxMenu() { ctxMenu.classList.remove('visible'); }
+
+document.addEventListener('click', () => hideCtxMenu());
+document.addEventListener('contextmenu', e => {
+  // Only handle right-click on SLD canvas area
+  if (!sld.contains(e.target) && !e.target.closest('.sld-canvas-wrap')) return;
+});
+
+sld.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  hideCtxMenu();
+
+  const rect = sld.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  // Check if right-clicked on a component
+  let foundComp = null;
+  components.forEach(comp => {
+    if (mx>=comp.x-5 && mx<=comp.x+comp.w+5 && my>=comp.y-5 && my<=comp.y+comp.h+5) foundComp = comp;
+  });
+
+  // Check if right-clicked on a connection line
+  let foundConn = null;
+  if (!foundComp) {
+    connections.forEach(conn => {
+      const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+      const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+      const ft = fc.terminals.find(t=>t.id===conn.from);
+      const tt = tc.terminals.find(t=>t.id===conn.to);
+      const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+      const segs = getOrthoSegments(p1, p2, conn.midX, conn.midY);
+      if (segs.some(s => distToSegment(mx,my,s.x1,s.y1,s.x2,s.y2) < 10)) foundConn = conn;
+    });
+  }
+
+  // Lucide icon helpers (16px, stroke-width 1.5)
+  const ic = {
+    info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+    mapPin: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    scopeAdd: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>',
+    scopeRemove: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>',
+    folderEdit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+    pencil: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+    replace: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 3l4 4-4 4"/><path d="M20 7H4"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h16"/></svg>',
+    link: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    scissors: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+    copy: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+    plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg>',
+    listTree: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12h-8M21 6h-8M21 18h-8M3 6v4c0 1.1.9 2 2 2h3M3 10v6c0 1.1.9 2 2 2h3"/></svg>',
+    clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    clipboard: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',
+  };
+
+  let html = '';
+
+  if (foundComp) {
+    const conns = connections.filter(c => c.from.startsWith(foundComp.id) || c.to.startsWith(foundComp.id));
+    html = `<div class="ctx-menu-title">${foundComp.label}</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.info} Show info</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.mapPin} Locate</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.scopeAdd} Add to scope</div>`;
+    html += `<div class="ctx-menu-item disabled">${ic.scopeRemove} Remove from scope</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.folderEdit} Edit in project...</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.pencil} Edit attributes</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.replace} Replace type</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();setTool('connect')">${ic.link} Connect...<span class="shortcut">C</span></div>`;
+
+    if (conns.length > 0) {
+      conns.forEach(c => {
+        const isFrom = c.from.startsWith(foundComp.id);
+        const otherTid = isFrom ? c.to : c.from;
+        const otherComp = components.find(comp => comp.terminals.some(t=>t.id===otherTid));
+        const otherT = otherComp?.terminals.find(t=>t.id===otherTid);
+        const myT = isFrom ? foundComp.terminals.find(t=>t.id===c.from) : foundComp.terminals.find(t=>t.id===c.to);
+        html += `<div class="ctx-menu-item" onclick="disconnectById('${c.id}')">${ic.scissors} Disconnect → ${otherComp?.label}:${otherT?.name}<span class="shortcut">${myT?.name}</span></div>`;
+      });
+    } else {
+      html += `<div class="ctx-menu-item disabled">${ic.scissors} Disconnect</div>`;
+    }
+
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.copy} Duplicate</div>`;
+    html += `<div class="ctx-menu-item danger" onclick="deleteComponent('${foundComp.id}')">${ic.trash} Delete</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.plus} Add child component</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.listTree} Select children</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clock} History</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.eye} Show/Hide</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.lock} Lock/Unlock</div>`;
+
+  } else if (foundConn) {
+    const fc = components.find(c=>c.terminals.some(t=>t.id===foundConn.from));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===foundConn.to));
+    const title = foundConn.conductor || 'Direct connection';
+    html = `<div class="ctx-menu-title">${title}</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.info} Show info</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.mapPin} Locate both ends</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item danger" onclick="disconnectById('${foundConn.id}')">${ic.scissors} Disconnect</div>`;
+
+  } else {
+    html = `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel()">${ic.plus} Add component<span class="shortcut">A</span></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clipboard} Paste</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();setTool('connect')">${ic.link} Connect mode<span class="shortcut">C</span></div>`;
+  }
+
+  ctxMenu.innerHTML = html;
+  // Position within SLD canvas wrap
+  const wrap = sld.parentElement.getBoundingClientRect();
+  let left = e.clientX - wrap.left;
+  let top = e.clientY - wrap.top;
+  // Keep menu within bounds
+  ctxMenu.classList.add('visible');
+  const mw = ctxMenu.offsetWidth, mh = ctxMenu.offsetHeight;
+  if (left + mw > wrap.width) left = wrap.width - mw - 4;
+  if (top + mh > wrap.height) top = wrap.height - mh - 4;
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top = top + 'px';
+});
+
+function disconnectById(connId) {
+  hideCtxMenu();
+  saveUndo();
+  const idx = connections.findIndex(c=>c.id===connId);
+  if (idx >= 0) {
+    const conn = connections[idx];
+    // Mark terminals as disconnected
+    components.forEach(c=>c.terminals.forEach(t=>{
+      if (t.id===conn.from || t.id===conn.to) t.connected = false;
+    }));
+    connections.splice(idx, 1);
+    renderSLD(); renderMap();
+    document.getElementById('connectionCount').textContent = `Connections: ${connections.length}`;
+    showToast('Disconnected');
+  }
+}
+
+function deleteComponent(compId) {
+  hideCtxMenu();
+  // Check if has connections
+  const conns = connections.filter(c => c.from.startsWith(compId) || c.to.startsWith(compId));
+  if (conns.length > 0) {
+    showToast('Disconnect all connections first');
+    return;
+  }
+  saveUndo();
+  const idx = components.findIndex(c=>c.id===compId);
+  if (idx >= 0) {
+    const comp = components[idx];
+    components.splice(idx, 1);
+    selectedComps = selectedComps.filter(id=>id!==compId);
+    renderSLD(); renderMap(); updateComponentCount();
+    showToast(`Deleted ${comp.label}`);
+  }
+}
+</script>
+</body>
+</html>
