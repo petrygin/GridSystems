@@ -155,6 +155,75 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 .ctx-menu-item.disabled svg { color: var(--neutral-300); }
 .ctx-menu-sep { height: 1px; background: var(--neutral-100); margin: 4px 0; }
 .ctx-menu-item .shortcut { margin-left: auto; font-size: 11px; color: var(--neutral-400); }
+
+/* Info Panel (right side) */
+.info-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 300px; background: var(--background); border-left: 1px solid var(--border); z-index: 20; display: none; flex-direction: column; box-shadow: -2px 0 8px rgba(0,0,0,0.06); }
+.info-panel.visible { display: flex; }
+.info-panel-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.info-panel-header .title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.info-panel-header .actions { display: flex; gap: 4px; flex-shrink: 0; }
+.info-panel-header .actions button { width: 28px; height: 28px; background: none; border: none; cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); }
+.info-panel-header .actions button:hover { background: var(--neutral-100); }
+.info-panel-body { flex: 1; overflow-y: auto; }
+.info-panel-footer { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.info-section { border-bottom: 1px solid var(--border); }
+.info-section-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--foreground); }
+.info-section-header svg { color: var(--neutral-400); flex-shrink: 0; }
+.info-section-body { padding: 0 16px 12px; }
+.info-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0; gap: 12px; }
+.info-row .label { font-size: 12px; color: var(--muted-foreground); min-width: 80px; flex-shrink: 0; }
+.info-row .value { font-size: 13px; color: var(--foreground); text-align: right; word-break: break-all; }
+.info-row .value.muted { color: var(--neutral-400); }
+
+/* Bind section specific */
+.bind-status { display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+.bind-status .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.bind-status .dot.bound { background: var(--success); }
+.bind-status .dot.unbound { background: var(--warning); }
+.bind-status .text { font-size: 13px; }
+.bind-actions { display: flex; gap: 6px; margin-top: 8px; }
+.bind-actions button { height: 28px; padding: 0 10px; border-radius: var(--radius-sm); font-size: 12px; font-family: var(--font-sans); cursor: pointer; }
+.bind-btn-primary { background: var(--primary); color: var(--primary-foreground); border: none; }
+.bind-btn-secondary { background: var(--background); color: var(--foreground); border: 1px solid var(--border); }
+.bind-btn-danger { background: var(--background); color: var(--destructive); border: 1px solid var(--border); }
+
+/* Structure picker dropdown */
+.struct-picker { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.struct-picker-item { padding: 8px 10px; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.1s; }
+.struct-picker-item:hover { background: var(--neutral-50); }
+.struct-picker-item .name { font-weight: 500; color: var(--foreground); }
+.struct-picker-item .dist { color: var(--neutral-400); }
+.struct-picker-item + .struct-picker-item { border-top: 1px solid var(--neutral-50); }
+
+/* Mounted equipment list */
+.mounted-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.mounted-item .eq-name { font-size: 13px; color: var(--foreground); font-weight: 500; }
+.mounted-item .eq-prep { font-size: 11px; color: var(--neutral-500); }
+
+/* Pick-on-map mode */
+.pick-mode-banner { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; align-items: center; gap: 8px; }
+.pick-mode-banner.visible { display: flex; }
+.pick-mode-banner button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-family: var(--font-sans); }
+
+/* Connect-to Panel (reuses info-panel slot) */
+.connect-list-item { padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid var(--neutral-50); }
+.connect-list-item:hover { background: var(--neutral-50); }
+.connect-list-item .cl-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+.connect-list-item .cl-meta { font-size: 11px; color: var(--neutral-500); margin-top: 1px; }
+.connect-list-item .cl-compat { font-size: 11px; padding: 1px 6px; border-radius: 2px; }
+.connect-list-item .cl-compat.full { background: var(--success-wash); color: var(--success); }
+.connect-list-item .cl-compat.partial { background: var(--warning-wash); color: var(--warning); }
+
+/* Add Structure picker on Map */
+.add-struct-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 220px; overflow: hidden; }
+.add-struct-item { padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.1s; }
+.add-struct-item:hover { background: var(--neutral-50); }
+.add-struct-item svg { flex-shrink: 0; color: var(--neutral-500); }
+
+/* Map placement mode */
+.map-place-hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.map-place-hint.visible { display: flex; }
+.map-place-hint button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-family: var(--font-sans); }
 </style>
 </head>
 <body>
@@ -182,9 +251,33 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 
   <div class="content">
     <!-- Map -->
-    <div class="map-panel">
+    <div class="map-panel" id="mapPanel">
       <span class="map-label">Physical Map</span>
       <svg class="map-canvas" id="mapCanvas"></svg>
+      <!-- Map context menu -->
+      <div class="ctx-menu" id="mapCtxMenu"></div>
+      <!-- Add Structure picker -->
+      <div class="add-struct-picker" id="addStructPicker" style="display:none">
+        <div style="padding:10px 12px 6px;font-size:12px;font-weight:600;color:var(--neutral-500);text-transform:uppercase;letter-spacing:0.5px">Add to map</div>
+        <div class="add-struct-item" onclick="startAddStructure('pole')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="3"/><path d="M12 9v12"/><path d="M8 21h8"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Pole</div><div style="font-size:11px;color:var(--neutral-500)">Wood, Steel, Concrete</div></div>
+        </div>
+        <div class="add-struct-item" onclick="startAddStructure('vault')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Vault</div><div style="font-size:11px;color:var(--neutral-500)">Underground vault, Handhole</div></div>
+        </div>
+        <div class="add-struct-item" onclick="startAddStructure('pad')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="12" width="20" height="8" rx="1"/><path d="M6 12V8M18 12V8"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Pad / Cabinet</div><div style="font-size:11px;color:var(--neutral-500)">Equipment pad, Cabinet</div></div>
+        </div>
+      </div>
+      <!-- Map placement hint -->
+      <div class="map-place-hint" id="mapPlaceHint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span id="mapPlaceText">Click on the map to place structure</span>
+        <button onclick="cancelMapPlace()">Cancel</button>
+      </div>
     </div>
 
     <div class="divider"><div class="divider-dots"><span></span><span></span><span></span></div></div>
@@ -203,14 +296,8 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 0 0-4 0v5m0 0V4a2 2 0 0 0-4 0v7m0 0V7a2 2 0 0 0-4 0v7m12-2v4a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-3"/></svg>
           </button>
           <div class="tool-sep"></div>
-          <button class="sld-tool" id="toolAdd" title="Add component (A)" onclick="openAddPanel()">
+          <button class="sld-tool" id="toolAdd" title="Add (A)" onclick="openAddPanel()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
-          <button class="sld-tool" id="toolConnect" title="Connect (C)" onclick="setTool('connect')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 12h10"/></svg>
-          </button>
-          <button class="sld-tool" id="toolDisconnect" title="Disconnect" onclick="setTool('disconnect')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
           <div class="tool-sep"></div>
           <button class="sld-tool" title="Fit to screen">
@@ -233,6 +320,26 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 
         <!-- Context menu -->
         <div class="ctx-menu" id="ctxMenu"></div>
+
+        <!-- Info Panel -->
+        <div class="info-panel" id="infoPanel">
+          <div class="info-panel-header">
+            <span class="title" id="infoPanelTitle">Component</span>
+            <div class="actions">
+              <button title="Expand" onclick=""><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+              <button title="Close" onclick="closeInfoPanel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+          </div>
+          <div class="info-panel-body" id="infoPanelBody"></div>
+          <div class="info-panel-footer" id="infoPanelFooter" style="display:none"></div>
+        </div>
+
+        <!-- Pick on map banner -->
+        <div class="pick-mode-banner" id="pickBanner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          Click a structure on the map to bind
+          <button onclick="cancelPickMode()">Cancel</button>
+        </div>
 
         <div class="conductor-picker" id="conductorPicker">
           <div class="conductor-picker-header">Select conductor type</div>
@@ -295,6 +402,9 @@ let draggingComp = null, dragCompOffset = null;
 let dragPending = null; // {comp, dx, dy, startX, startY} — waits for 5px threshold
 const DRAG_THRESHOLD = 5;
 let selectedComps = [];
+let infoPanelComp = null, infoPanelStruct = null;
+let pickMode = false, pickTarget = null;
+let highlightedStruct = null;
 
 // ─── UNDO ───────────────────────────────────────────────
 const undoStack = [];
@@ -325,7 +435,7 @@ function undo() {
 // ─── COMPONENTS ─────────────────────────────────────────
 const components = [
   { id:'BUS', type:'bus', label:'Bus 12kV', x:140, y:60, w:340, h:10,
-    gps: null,
+    gps: null, binding: null,
     terminals:[
       {id:'BUS-P1',name:'Pos1',side:'bottom',offset:0.1,phases:'ABC-N',connected:false},
       {id:'BUS-P2',name:'Pos2',side:'bottom',offset:0.3,phases:'ABC-N',connected:false},
@@ -334,30 +444,30 @@ const components = [
       {id:'BUS-P5',name:'Pos5',side:'bottom',offset:0.9,phases:'ABC-N',connected:false},
     ]},
   { id:'TR1', type:'transformer', label:'TR-312', x:155, y:140, w:44, h:44,
-    gps:{lat:38.905,lng:-77.035, mx:120, my:180},
+    gps:{lat:38.905,lng:-77.035, mx:120, my:180}, binding:null,
     terminals:[
       {id:'TR1-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
       {id:'TR1-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
     ]},
   { id:'TR2', type:'transformer', label:'TR-415', x:310, y:140, w:44, h:44,
-    gps:{lat:38.906,lng:-77.032, mx:240, my:160},
+    gps:{lat:38.906,lng:-77.032, mx:240, my:160}, binding:null,
     terminals:[
       {id:'TR2-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
       {id:'TR2-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
     ]},
   { id:'SW1', type:'switch', label:'SW-42', x:230, y:255, w:30, h:30,
-    gps:{lat:38.904,lng:-77.033, mx:180, my:270},
+    gps:{lat:38.904,lng:-77.033, mx:180, my:270}, binding:null,
     terminals:[
       {id:'SW1-A',name:'A',side:'top',offset:0.5,phases:'ABC-N',connected:false},
       {id:'SW1-B',name:'B',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
     ]},
   { id:'MT1', type:'meter', label:'MT-101', x:155, y:350, w:26, h:26,
-    gps:{lat:38.902,lng:-77.036, mx:100, my:350},
+    gps:{lat:38.902,lng:-77.036, mx:100, my:350}, binding:null,
     terminals:[
       {id:'MT1-T',name:'Terminal',side:'top',offset:0.5,phases:'AB-N',connected:false},
     ]},
   { id:'MT2', type:'meter', label:'MT-102', x:310, y:350, w:26, h:26,
-    gps:{lat:38.902,lng:-77.031, mx:260, my:350},
+    gps:{lat:38.902,lng:-77.031, mx:260, my:350}, binding:null,
     terminals:[
       {id:'MT2-T',name:'Terminal',side:'top',offset:0.5,phases:'A-N',connected:false},
     ]},
@@ -508,13 +618,20 @@ function renderSLD() {
       el('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#404040','font-size':9,'font-weight':600},g).textContent='M';
       el('text',{x:cx+20,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
     }
-    // Ports
+    // Ports (visible on hover, always during drag)
     comp.terminals.forEach(t => {
       const p = getPortXY(comp,t);
-      el('circle',{cx:p.x,cy:p.y,r:5,fill:'white',stroke:'#A3A3A3','stroke-width':1.5,
+      el('circle',{cx:p.x,cy:p.y,r:6,fill:'white',stroke:'#A3A3A3','stroke-width':1.5,
         class:'port','data-terminal':t.id,'data-comp':comp.id,
-        opacity: currentTool==='connect'?1:0, cursor:'crosshair'},g);
+        opacity: dragging ? 0.8 : 0, cursor:'crosshair'},g);
     });
+
+    // Orphan badge (not bound, not bus)
+    if (!comp.binding && comp.type !== 'bus') {
+      const bx = comp.x + comp.w - 2, by = comp.y - 2;
+      el('circle',{cx:bx,cy:by,r:6,fill:'#FFF7ED',stroke:'#EA580C','stroke-width':1},g);
+      el('text',{x:bx,y:by+3.5,'text-anchor':'middle',fill:'#EA580C','font-size':8,'font-weight':700},g).textContent='!';
+    }
   });
 }
 
@@ -560,12 +677,26 @@ function renderMap() {
   // Structures
   const sg = el('g',{},map);
   structures.forEach(s => {
-    if (s.type==='pole') {
-      el('circle',{cx:s.mx,cy:s.my,r:5,fill:'#8B6914',stroke:'#d4a84b','stroke-width':1.5},sg);
-    } else {
-      el('rect',{x:s.mx-6,y:s.my-6,width:12,height:12,fill:'#555',stroke:'#888','stroke-width':1.5,rx:2},sg);
+    const isPick = pickMode;
+    const isHL = highlightedStruct === s.id;
+    
+    // Pick mode: green ring on compatible structures
+    if (isPick) {
+      el('circle',{cx:s.mx,cy:s.my,r:18,fill:'none',stroke:'#16A34A','stroke-width':1.5,opacity:0.5,'stroke-dasharray':'3,3'},sg);
     }
-    el('text',{x:s.mx+10,y:s.my+4,fill:'#999','font-size':10,'font-family':'var(--font-sans)'},sg).textContent=s.label;
+    // Hover highlight from dropdown
+    if (isHL) {
+      el('circle',{cx:s.mx,cy:s.my,r:16,fill:'none',stroke:'#00BFFF','stroke-width':2,opacity:0.8},sg);
+    }
+    
+    if (s.type==='pole') {
+      el('circle',{cx:s.mx,cy:s.my,r:5,fill: isHL?'#00BFFF':'#8B6914',stroke: isHL?'#00BFFF':'#d4a84b','stroke-width':1.5},sg);
+    } else if (s.type==='pad') {
+      el('rect',{x:s.mx-7,y:s.my-5,width:14,height:10,fill: isHL?'#00BFFF':'#666',stroke: isHL?'#00BFFF':'#999','stroke-width':1.5,rx:1},sg);
+    } else {
+      el('rect',{x:s.mx-6,y:s.my-6,width:12,height:12,fill: isHL?'#00BFFF':'#555',stroke: isHL?'#00BFFF':'#888','stroke-width':1.5,rx:2},sg);
+    }
+    el('text',{x:s.mx+10,y:s.my+4,fill: isHL?'#00BFFF':'#999','font-size':10,'font-family':'var(--font-sans)'},sg).textContent=s.label;
   });
 
   // Equipment markers from SLD (if GPS)
@@ -636,11 +767,11 @@ sld.addEventListener('mousemove', e => {
     dragLine.setAttribute('d', `M${p1.x},${p1.y} L${p1.x},${midY} L${mx},${midY} L${mx},${my}`);
   }
 
-  // Show ports on hover (select mode) + hover highlight
-  if (!dragging && !draggingComp && !dragPending && currentTool !== 'connect') {
+  // Show ports on hover + hover highlight (all modes)
+  if (!dragging && !draggingComp && !dragPending) {
     let found = null;
     components.forEach(comp => {
-      if (mx>=comp.x-10 && mx<=comp.x+comp.w+10 && my>=comp.y-10 && my<=comp.y+comp.h+10) found=comp;
+      if (mx>=comp.x-14 && mx<=comp.x+comp.w+14 && my>=comp.y-14 && my<=comp.y+comp.h+14) found=comp;
     });
 
     // Update hover glow
@@ -648,27 +779,13 @@ sld.addEventListener('mousemove', e => {
     if (newHover !== hoveredComp) {
       hoveredComp = newHover;
       renderSLD();
-      renderMap(); // sync map highlight
+      renderMap();
       updateHoverInfo(found);
     }
 
     document.querySelectorAll('.port').forEach(p => {
       p.setAttribute('opacity', found && found.id===p.getAttribute('data-comp') ? 1 : 0);
     });
-  }
-
-  // Hover highlight in connect mode too
-  if (!dragging && currentTool === 'connect') {
-    let found = null;
-    components.forEach(comp => {
-      if (mx>=comp.x-10 && mx<=comp.x+comp.w+10 && my>=comp.y-10 && my<=comp.y+comp.h+10) found=comp;
-    });
-    const newHover = found ? found.id : null;
-    if (newHover !== hoveredComp) {
-      hoveredComp = newHover;
-      renderSLD(); renderMap();
-      updateHoverInfo(found);
-    }
   }
 
   // Connection line hover (all modes, when not dragging)
@@ -703,9 +820,15 @@ sld.addEventListener('mousemove', e => {
     }
   }
 
-  // Snap target highlighting during drag
+  // Snap target highlighting during drag — show ALL ports, highlight nearest
   if (dragging) {
-    let bestDist=30, bestPort=null;
+    // Show all ports on all components during drag
+    document.querySelectorAll('.port').forEach(p => {
+      p.setAttribute('opacity', 0.6);
+      p.setAttribute('r', 6);
+    });
+
+    let bestDist=45, bestPort=null;
     components.forEach(c => c.terminals.forEach(t => {
       if (t.id===dragSource) return;
       const p = getPortXY(c,t);
@@ -714,13 +837,13 @@ sld.addEventListener('mousemove', e => {
     }));
     document.querySelectorAll('.port').forEach(p => {
       const tid = p.getAttribute('data-terminal');
-      if (tid===dragSource) return;
+      if (tid===dragSource) { p.setAttribute('fill','#16A34A'); p.setAttribute('stroke','#16A34A'); p.setAttribute('opacity',1); return; }
       if (bestPort && bestPort.id===tid) {
         const compat = getPhaseCompat(dragSource,tid);
         p.setAttribute('stroke', compat==='full'?'#16A34A':compat==='partial'?'#EA580C':'#DC2626');
-        p.setAttribute('r',7); p.setAttribute('stroke-width',2.5); p.setAttribute('opacity',1);
+        p.setAttribute('r',8); p.setAttribute('stroke-width',2.5); p.setAttribute('opacity',1);
       } else {
-        p.setAttribute('stroke','#A3A3A3'); p.setAttribute('r',5); p.setAttribute('stroke-width',1.5);
+        p.setAttribute('stroke','#A3A3A3'); p.setAttribute('r',6); p.setAttribute('stroke-width',1.5);
       }
     });
   }
@@ -742,7 +865,7 @@ sld.addEventListener('mousedown', e => {
 
   const port = e.target.closest('.port');
   if (port && !(e.shiftKey || e.ctrlKey || e.metaKey)) {
-    if (currentTool!=='select' && currentTool!=='connect') return;
+    if (currentTool!=='select') return;
 
     dragSource = port.getAttribute('data-terminal');
     dragging = true;
@@ -777,19 +900,21 @@ sld.addEventListener('mousedown', e => {
       updateSelectionHint();
       e.preventDefault();
     } else if (found) {
-      // Regular click → select + prepare for potential drag (threshold)
+      // Regular click → select + open info panel + prepare for potential drag
       if (!selectedComps.includes(found.id)) selectedComps = [found.id];
       dragPending = { comp: found, dx: mx - found.x, dy: my - found.y, startX: mx, startY: my };
+      openInfoPanel(found.id);
       renderSLD(); renderMap();
       updateSelectionHint();
       e.preventDefault();
     } else {
-      // Click on empty → clear selection
+      // Click on empty → clear selection + close info panel
       if (selectedComps.length > 0) {
         selectedComps = [];
         renderSLD(); renderMap();
         updateSelectionHint();
       }
+      closeInfoPanel();
     }
   }
 });
@@ -810,8 +935,8 @@ window.addEventListener('mouseup', e => {
   dragLine=null; dragging=false;
   document.querySelectorAll('.port').forEach(p => {
     p.setAttribute('fill','white'); p.setAttribute('stroke','#A3A3A3');
-    p.setAttribute('r',5); p.setAttribute('stroke-width',1.5);
-    if (currentTool!=='connect') p.setAttribute('opacity',0);
+    p.setAttribute('r',6); p.setAttribute('stroke-width',1.5);
+    p.setAttribute('opacity',0);
   });
   dragSource=null;
 });
@@ -994,11 +1119,8 @@ function setTool(tool) {
   document.querySelectorAll('.sld-tool').forEach(t=>t.classList.remove('active'));
   const btn = document.getElementById('tool'+tool.charAt(0).toUpperCase()+tool.slice(1));
   if (btn) btn.classList.add('active');
-  document.querySelectorAll('.port').forEach(p => p.setAttribute('opacity', tool==='connect'?1:0));
-  sld.style.cursor = tool==='connect'?'crosshair':tool==='pan'?'grab':'default';
-  const hint = document.getElementById('hint');
-  if (tool==='connect') { hint.textContent='Connect mode — click source → click target'; hint.style.opacity='1'; setTimeout(()=>hint.style.opacity='0',3000); }
-  document.getElementById('statusText').textContent = {select:'Ready',connect:'Connect mode',pan:'Pan mode',disconnect:'Disconnect mode'}[tool]||'Ready';
+  sld.style.cursor = tool==='pan'?'grab':'default';
+  document.getElementById('statusText').textContent = {select:'Ready',pan:'Pan mode'}[tool]||'Ready';
 }
 
 function showToast(text) {
@@ -1012,10 +1134,9 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
   if (e.key==='Enter' && selectedComps.length === 2) { connectSelected(); return; }
   if (e.key==='v'||e.key==='V') setTool('select');
-  if (e.key==='c'||e.key==='C') setTool('connect');
   if (e.key==='h'||e.key==='H') setTool('pan');
   if (e.key==='a'||e.key==='A') { if (!placementMode) openAddPanel(); }
-  if (e.key==='Escape') { setTool('select'); cancelPicker(); closeAddPanel(); exitPlacementMode(); selectedComps=[]; renderSLD(); renderMap(); }
+  if (e.key==='Escape') { setTool('select'); cancelPicker(); closeAddPanel(); exitPlacementMode(); cancelPickMode(); cancelMapPlace(); selectedComps=[]; renderSLD(); renderMap(); }
 });
 
 // ─── ADD COMPONENT FLOW ─────────────────────────────────
@@ -1239,7 +1360,7 @@ function placeComponent(x, y, gpsData) {
   components.push({
     id, type: p.type, label: p.label,
     x: x - p.w/2, y: y - p.h/2, w: p.w, h: p.h,
-    gps: gpsData || null, terminals
+    gps: gpsData || null, binding: null, terminals
   });
 
   exitPlacementMode();
@@ -1251,6 +1372,7 @@ function placeComponent(x, y, gpsData) {
 
 // Map click → place with GPS coordinates
 map.addEventListener('click', e => {
+  if (pickMode || mapPlaceMode) return; // Bind/Structure flow takes priority
   if (!earlyPlacement && !placementMode) return;
 
   const rect = map.getBoundingClientRect();
@@ -1321,6 +1443,174 @@ sld.addEventListener('mouseleave', () => {
   if (hoveredComp || hoveredConn) { hoveredComp=null; hoveredConn=null; renderSLD(); renderMap(); updateHoverInfo(null); }
 });
 
+// ─── MAP HOVER ──────────────────────────────────────────
+let hoveredMapStruct = null;
+
+map.addEventListener('mousemove', e => {
+  if (pickMode || earlyPlacement || placementMode) return;
+  if (mapPlaceMode) { map.style.cursor = 'crosshair'; return; }
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  
+  let found = null;
+  structures.forEach(s => {
+    if (Math.hypot(mx - s.mx, my - s.my) < 18) found = s;
+  });
+  
+  const newId = found ? found.id : null;
+  if (newId !== hoveredMapStruct) {
+    hoveredMapStruct = newId;
+    highlightedStruct = newId;
+    renderMap();
+    // Show structure info in status bar
+    if (found) {
+      document.getElementById('hoverInfo').textContent = `${found.label}  ·  ${found.type==='pole'?'Pole (Wood)':'Vault'}`;
+    } else if (!hoveredComp) {
+      document.getElementById('hoverInfo').textContent = '';
+    }
+  }
+  
+  map.style.cursor = found ? 'pointer' : (pickMode ? 'crosshair' : 'default');
+});
+
+map.addEventListener('mouseleave', () => {
+  if (hoveredMapStruct) { hoveredMapStruct=null; highlightedStruct=null; renderMap(); }
+});
+
+// ─── MAP CONTEXT MENU + ADD STRUCTURE ───────────────────
+let mapPlaceMode = false, mapPlaceType = null;
+let structCounter = 100;
+const mapCtxMenu = document.getElementById('mapCtxMenu');
+
+function hideMapCtxMenu() { mapCtxMenu.classList.remove('visible'); }
+
+const mapPanel = document.getElementById('mapPanel');
+
+mapPanel.addEventListener('contextmenu', e => {
+  if (!map.contains(e.target)) return;
+  e.preventDefault();
+  hideCtxMenu(); hideMapCtxMenu();
+
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  // Check if right-clicked on a structure
+  let clickedStruct = null;
+  structures.forEach(s => {
+    if (Math.hypot(mx - s.mx, my - s.my) < 15) clickedStruct = s;
+  });
+
+  const ic_info = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
+  const ic_plus = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg>';
+  const ic_trash = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
+  const ic_link = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+  let html = '';
+
+  if (clickedStruct) {
+    const mounted = components.filter(c => c.binding && c.binding.structId === clickedStruct.id);
+    html = `<div class="ctx-menu-title">${clickedStruct.label}</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideMapCtxMenu();openStructureInfoPanel('${clickedStruct.id}')">${ic_info} Show info</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideMapCtxMenu();mountFromCtx('${clickedStruct.id}')">${ic_link} Mount equipment...</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item danger" onclick="hideMapCtxMenu();deleteStructure('${clickedStruct.id}')">${ic_trash} Delete</div>`;
+  } else {
+    html = `<div class="ctx-menu-item" onclick="hideMapCtxMenu();showAddStructPicker(event)">${ic_plus} Add structure...</div>`;
+  }
+
+  mapCtxMenu.innerHTML = html;
+  const panelRect = mapPanel.getBoundingClientRect();
+  let left = e.clientX - panelRect.left;
+  let top = e.clientY - panelRect.top;
+  mapCtxMenu.classList.add('visible');
+  const mw = mapCtxMenu.offsetWidth, mh = mapCtxMenu.offsetHeight;
+  if (left + mw > panelRect.width) left = panelRect.width - mw - 4;
+  if (top + mh > panelRect.height) top = panelRect.height - mh - 4;
+  mapCtxMenu.style.left = left + 'px';
+  mapCtxMenu.style.top = top + 'px';
+});
+
+document.addEventListener('click', () => {
+  hideMapCtxMenu();
+  document.getElementById('addStructPicker').style.display = 'none';
+});
+
+function showAddStructPicker(e) {
+  const picker = document.getElementById('addStructPicker');
+  const panelRect = mapPanel.getBoundingClientRect();
+  picker.style.left = (e.clientX - panelRect.left) + 'px';
+  picker.style.top = (e.clientY - panelRect.top) + 'px';
+  picker.style.display = 'block';
+  e.stopPropagation();
+}
+
+function startAddStructure(type) {
+  document.getElementById('addStructPicker').style.display = 'none';
+  mapPlaceMode = true;
+  mapPlaceType = type;
+  const labels = {pole:'Pole',vault:'Vault',pad:'Pad/Cabinet'};
+  document.getElementById('mapPlaceText').textContent = `Click on the map to place ${labels[type]}`;
+  document.getElementById('mapPlaceHint').classList.add('visible');
+  map.style.cursor = 'crosshair';
+}
+
+function cancelMapPlace() {
+  mapPlaceMode = false;
+  mapPlaceType = null;
+  document.getElementById('mapPlaceHint').classList.remove('visible');
+  map.style.cursor = 'default';
+}
+
+function placeStructure(mx, my) {
+  if (!mapPlaceMode) return;
+  saveUndo();
+  structCounter++;
+  const labels = {pole:'P',vault:'VLT',pad:'PAD'};
+  const id = mapPlaceType.toUpperCase() + '-' + structCounter;
+  const label = labels[mapPlaceType] + '-' + structCounter;
+
+  structures.push({ id, type: mapPlaceType, label, mx, my });
+
+  cancelMapPlace();
+  renderMap();
+  showToast(`${label} placed`);
+  openStructureInfoPanel(id);
+}
+
+function mountFromCtx(structId) {
+  openStructureInfoPanel(structId);
+  setTimeout(() => showMountPicker(structId), 100);
+}
+
+function deleteStructure(structId) {
+  const mounted = components.filter(c => c.binding && c.binding.structId === structId);
+  if (mounted.length > 0) {
+    showToast('Unbind all equipment first');
+    return;
+  }
+  saveUndo();
+  const idx = structures.findIndex(s => s.id === structId);
+  if (idx >= 0) {
+    const s = structures[idx];
+    structures.splice(idx, 1);
+    renderMap();
+    showToast(`Deleted ${s.label}`);
+    closeInfoPanel();
+  }
+}
+
+// Update map click to handle structure placement
+const origMapClick = map.onclick;
+map.addEventListener('click', e => {
+  if (mapPlaceMode) {
+    const rect = map.getBoundingClientRect();
+    placeStructure(e.clientX - rect.left, e.clientY - rect.top);
+    e.stopPropagation();
+    return;
+  }
+});
+
 saveUndo(); // save initial state
 
 // ─── CONTEXT MENU ───────────────────────────────────────
@@ -1387,7 +1677,7 @@ sld.addEventListener('contextmenu', e => {
   if (foundComp) {
     const conns = connections.filter(c => c.from.startsWith(foundComp.id) || c.to.startsWith(foundComp.id));
     html = `<div class="ctx-menu-title">${foundComp.label}</div>`;
-    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.info} Show info</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openInfoPanel('${foundComp.id}')">${ic.info} Show info</div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.mapPin} Locate</div>`;
     html += `<div class="ctx-menu-sep"></div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.scopeAdd} Add to scope</div>`;
@@ -1397,8 +1687,11 @@ sld.addEventListener('contextmenu', e => {
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.pencil} Edit attributes</div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.replace} Replace type</div>`;
     html += `<div class="ctx-menu-sep"></div>`;
-    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();setTool('connect')">${ic.link} Connect...<span class="shortcut">C</span></div>`;
 
+    // Connect to... (list-based connect for long diagrams)
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openConnectPanel('${foundComp.id}')">${ic.link} Connect to...<span class="shortcut">list</span></div>`;
+
+    // Disconnect submenu
     if (conns.length > 0) {
       conns.forEach(c => {
         const isFrom = c.from.startsWith(foundComp.id);
@@ -1436,8 +1729,6 @@ sld.addEventListener('contextmenu', e => {
   } else {
     html = `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel()">${ic.plus} Add component<span class="shortcut">A</span></div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clipboard} Paste</div>`;
-    html += `<div class="ctx-menu-sep"></div>`;
-    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();setTool('connect')">${ic.link} Connect mode<span class="shortcut">C</span></div>`;
   }
 
   ctxMenu.innerHTML = html;
@@ -1489,6 +1780,378 @@ function deleteComponent(compId) {
     showToast(`Deleted ${comp.label}`);
   }
 }
+
+// ─── INFO PANEL ─────────────────────────────────────────
+
+function openInfoPanel(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  infoPanelComp = comp;
+  infoPanelStruct = null;
+  
+  const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+  document.getElementById('infoPanelTitle').textContent = comp.label;
+  
+  const conns = connections.filter(c => c.from.startsWith(comp.id) || c.to.startsWith(comp.id));
+  const phases = comp.terminals[0]?.phases || '—';
+  const bound = comp.binding;
+  const boundStruct = bound ? structures.find(s=>s.id===bound.structId) : null;
+  
+  let html = '';
+  
+  // Defined section
+  html += '<div class="info-section"><div class="info-section-header">Defined <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += `<div class="info-row"><span class="label">Component ID</span><span class="value" style="font-family:var(--font-mono)">${comp.id}</span></div>`;
+  html += `<div class="info-row"><span class="label">Name</span><span class="value">${comp.label}</span></div>`;
+  html += `<div class="info-row"><span class="label">Type</span><span class="value">${typeLabels[comp.type] || comp.type}</span></div>`;
+  html += `<div class="info-row"><span class="label">Phases</span><span class="value">${phases}</span></div>`;
+  html += '</div></div>';
+  
+  // Library info section
+  html += '<div class="info-section"><div class="info-section-header">Library info <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += `<div class="info-row"><span class="label">Terminals</span><span class="value">${comp.terminals.length}</span></div>`;
+  html += `<div class="info-row"><span class="label">Connected</span><span class="value">${comp.terminals.filter(t=>t.connected).length} / ${comp.terminals.length}</span></div>`;
+  if (conns.length > 0) {
+    conns.forEach(c => {
+      const isFrom = c.from.startsWith(comp.id);
+      const otherTid = isFrom ? c.to : c.from;
+      const otherComp = components.find(co => co.terminals.some(t=>t.id===otherTid));
+      html += `<div class="info-row"><span class="label">${isFrom?'→':'←'} ${otherComp?.label||'?'}</span><span class="value">${c.conductor||'direct'}</span></div>`;
+    });
+  }
+  html += '</div></div>';
+  
+  // Calculated section
+  html += '<div class="info-section"><div class="info-section-header">Calculated <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  if (comp.gps) {
+    html += `<div class="info-row"><span class="label">Location</span><span class="value">${comp.gps.lat.toFixed(4)}, ${comp.gps.lng.toFixed(4)}</span></div>`;
+  } else {
+    html += `<div class="info-row"><span class="label">Location</span><span class="value muted">No GPS</span></div>`;
+  }
+  html += '</div></div>';
+  
+  // Physical binding section
+  html += '<div class="info-section" style="background:var(--neutral-50)"><div class="info-section-header">Physical binding <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  
+  if (bound && boundStruct) {
+    html += `<div class="bind-status"><span class="dot bound"></span><span class="text">Bound</span></div>`;
+    html += `<div class="info-row"><span class="label">Structure</span><span class="value">${boundStruct.label} · ${boundStruct.type === 'pole' ? 'Pole' : 'Vault'}</span></div>`;
+    html += `<div class="info-row"><span class="label">Preposition</span><span class="value">${bound.prep}</span></div>`;
+    html += `<div class="bind-actions">`;
+    html += `<button class="bind-btn-secondary" onclick="startPickMode('${comp.id}')">Change...</button>`;
+    html += `<button class="bind-btn-danger" onclick="unbindComponent('${comp.id}')">Unbind</button>`;
+    html += `</div>`;
+  } else {
+    html += `<div class="bind-status"><span class="dot unbound"></span><span class="text" style="color:var(--warning)">Not bound</span></div>`;
+    html += `<div style="font-size:12px;color:var(--neutral-500);margin-bottom:8px">Select a physical structure to bind this equipment.</div>`;
+    html += `<button class="bind-btn-primary" onclick="startPickMode('${comp.id}')" style="width:100%">Bind to structure...</button>`;
+    // Structure picker dropdown
+    const compatible = getCompatibleStructures(comp);
+    if (compatible.length > 0) {
+      html += `<div class="struct-picker" style="margin-top:8px">`;
+      compatible.forEach(s => {
+        html += `<div class="struct-picker-item" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindToStructure('${comp.id}','${s.struct.id}')">`;
+        html += `<span class="name">${s.struct.label} · ${s.struct.type==='pole'?'Pole':'Vault'}</span>`;
+        html += `<span class="dist">${s.dist}m</span>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+  }
+  html += '</div></div>';
+  
+  // Files section (stub)
+  html += '<div class="info-section"><div class="info-section-header">Files <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += '<div style="font-size:12px;color:var(--neutral-400);padding:8px 0">Drop files here</div>';
+  html += '</div></div>';
+  
+  document.getElementById('infoPanelBody').innerHTML = html;
+  
+  // Footer
+  const footer = document.getElementById('infoPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = '<button style="width:100%;height:32px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;cursor:pointer;font-family:var(--font-sans);display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit</button>';
+  
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+function openStructureInfoPanel(structId) {
+  const struct = structures.find(s=>s.id===structId);
+  if (!struct) return;
+  infoPanelStruct = struct;
+  infoPanelComp = null;
+  
+  document.getElementById('infoPanelTitle').textContent = struct.label;
+  
+  // Find mounted equipment
+  const mounted = components.filter(c => c.binding && c.binding.structId === structId);
+  // Find conductors passing through (bound to this structure via connections)
+  
+  let html = '';
+  
+  // Details section
+  html += '<div class="info-section"><div class="info-section-header">Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += `<div class="info-row"><span class="label">Type</span><span class="value">${{pole:'Pole (Wood)',vault:'Vault',pad:'Pad / Cabinet'}[struct.type]||struct.type}</span></div>`;
+  html += `<div class="info-row"><span class="label">ID</span><span class="value" style="font-family:var(--font-mono)">${struct.id}</span></div>`;
+  html += `<div class="info-row"><span class="label">GPS</span><span class="value">${struct.mx}, ${struct.my}</span></div>`;
+  if (struct.type === 'pole') {
+    html += `<div class="info-row"><span class="label">Height</span><span class="value">40 ft</span></div>`;
+    html += `<div class="info-row"><span class="label">Material</span><span class="value">Wood</span></div>`;
+    html += `<div class="info-row"><span class="label">Class</span><span class="value">4</span></div>`;
+  }
+  html += '</div></div>';
+  
+  // Mounted equipment section
+  html += '<div class="info-section" style="background:var(--neutral-50)"><div class="info-section-header">Mounted equipment (' + mounted.length + ') <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  
+  if (mounted.length > 0) {
+    mounted.forEach(c => {
+      html += `<div class="mounted-item"><span class="eq-name">${c.label} · ${c.type}</span><span class="eq-prep">${c.binding.prep}</span></div>`;
+    });
+  } else {
+    html += '<div style="font-size:12px;color:var(--neutral-400);padding:4px 0">No equipment mounted</div>';
+  }
+  
+  // Mount equipment button — show orphan components
+  const orphans = components.filter(c => !c.binding && c.type !== 'bus');
+  if (orphans.length > 0) {
+    html += `<div style="margin-top:8px"><button class="bind-btn-secondary" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="showMountPicker('${structId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg> Mount equipment...</button></div>`;
+  }
+  html += '</div></div>';
+  
+  document.getElementById('infoPanelBody').innerHTML = html;
+  document.getElementById('infoPanelFooter').style.display = 'none';
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+function showMountPicker(structId) {
+  const orphans = components.filter(c => !c.binding && c.type !== 'bus');
+  if (orphans.length === 0) return;
+  
+  let html = '<div style="padding:8px 16px;font-size:12px;font-weight:600;color:var(--neutral-500)">Select equipment to mount:</div>';
+  orphans.forEach(c => {
+    const prep = getPreposition(c.type, structures.find(s=>s.id===structId)?.type);
+    html += `<div class="struct-picker-item" onclick="bindToStructure('${c.id}','${structId}')">`;
+    html += `<span class="name">${c.label} · ${c.type}</span>`;
+    html += `<span class="dist">${prep}</span>`;
+    html += `</div>`;
+  });
+  
+  // Insert after the mount button
+  const body = document.getElementById('infoPanelBody');
+  const mountDiv = document.createElement('div');
+  mountDiv.className = 'struct-picker';
+  mountDiv.innerHTML = html;
+  body.querySelector('.info-section:last-child .info-section-body').appendChild(mountDiv);
+}
+
+function closeInfoPanel() {
+  document.getElementById('infoPanel').classList.remove('visible');
+  infoPanelComp = null;
+  infoPanelStruct = null;
+}
+
+// ─── CONNECT-TO PANEL ────────────────────────────────────
+function openConnectPanel(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  
+  document.getElementById('infoPanelTitle').textContent = `Connect ${comp.label} to...`;
+  
+  // Find all other components with free terminals
+  const others = components.filter(c => c.id !== comp.id && c.terminals.some(t => !t.connected));
+  const freeSource = comp.terminals.filter(t => !t.connected);
+  
+  if (freeSource.length === 0) {
+    document.getElementById('infoPanelBody').innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--neutral-500);font-size:13px">All terminals on ' + comp.label + ' are connected.</div>';
+    document.getElementById('infoPanelFooter').style.display = 'none';
+    document.getElementById('infoPanel').classList.add('visible');
+    return;
+  }
+  
+  let html = '<div style="padding:8px 16px"><div style="position:relative"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:9px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="connectSearch" placeholder="Search components..." oninput="filterConnectList()" style="width:100%;height:32px;padding:0 10px 0 28px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;background:var(--background);font-family:var(--font-sans);outline:none"></div></div>';
+  
+  html += '<div style="padding:4px 16px 8px;font-size:11px;color:var(--neutral-400)">Free terminals: ' + freeSource.map(t=>t.name).join(', ') + '</div>';
+  
+  html += '<div id="connectListItems">';
+  others.forEach(other => {
+    const freeTarget = other.terminals.filter(t => !t.connected);
+    if (freeTarget.length === 0) return;
+    
+    // Best compatibility
+    let bestCompat = 'none';
+    freeSource.forEach(s => {
+      freeTarget.forEach(t => {
+        const c = getPhaseCompat(s.id, t.id);
+        if (c === 'full') bestCompat = 'full';
+        else if (c === 'partial' && bestCompat !== 'full') bestCompat = 'partial';
+      });
+    });
+    
+    const dist = comp.gps && other.gps ? Math.round(Math.hypot(comp.gps.mx - other.gps.mx, comp.gps.my - other.gps.my)) + 'px' : '—';
+    const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+    
+    html += `<div class="connect-list-item" data-name="${other.label.toLowerCase()}" onmouseenter="hoveredComp='${other.id}';renderSLD();renderMap()" onmouseleave="hoveredComp=null;renderSLD();renderMap()" onclick="connectFromPanel('${comp.id}','${other.id}')">`;
+    html += `<div><div class="cl-name">${other.label}</div><div class="cl-meta">${typeLabels[other.type]||other.type} · ${freeTarget.length} free · ${dist}</div></div>`;
+    html += `<span class="cl-compat ${bestCompat}">${bestCompat === 'full' ? 'match' : bestCompat === 'partial' ? 'partial' : '—'}</span>`;
+    html += `</div>`;
+  });
+  html += '</div>';
+  
+  document.getElementById('infoPanelBody').innerHTML = html;
+  document.getElementById('infoPanelFooter').style.display = 'none';
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+function filterConnectList() {
+  const q = document.getElementById('connectSearch').value.toLowerCase();
+  document.querySelectorAll('#connectListItems .connect-list-item').forEach(item => {
+    item.style.display = item.getAttribute('data-name').includes(q) ? '' : 'none';
+  });
+}
+
+function connectFromPanel(fromCompId, toCompId) {
+  const fromComp = components.find(c=>c.id===fromCompId);
+  const toComp = components.find(c=>c.id===toCompId);
+  if (!fromComp || !toComp) return;
+  
+  const freeFrom = fromComp.terminals.filter(t=>!t.connected);
+  const freeTo = toComp.terminals.filter(t=>!t.connected);
+  
+  // Find best pair
+  let bestFrom = null, bestTo = null, bestScore = -1;
+  freeFrom.forEach(t1 => {
+    freeTo.forEach(t2 => {
+      const compat = getPhaseCompat(t1.id, t2.id);
+      const score = compat === 'full' ? 2 : compat === 'partial' ? 1 : 0;
+      if (score > bestScore) { bestScore = score; bestFrom = t1; bestTo = t2; }
+    });
+  });
+  
+  if (bestFrom && bestTo) {
+    completeConnection(bestFrom.id, bestTo.id);
+    closeInfoPanel();
+  }
+}
+
+// ─── BIND MECHANICS ─────────────────────────────────────
+
+function getCompatibleStructures(comp) {
+  // Return structures sorted by distance, filtered by type compatibility
+  const results = [];
+  structures.forEach(s => {
+    const dist = comp.gps ? Math.round(Math.hypot(comp.gps.mx - s.mx, comp.gps.my - s.my)) : '?';
+    results.push({ struct: s, dist });
+  });
+  results.sort((a,b) => (typeof a.dist === 'number' ? a.dist : 999) - (typeof b.dist === 'number' ? b.dist : 999));
+  return results.slice(0, 5);
+}
+
+function getPreposition(compType, structType) {
+  if (structType === 'vault') return 'ON';
+  if (compType === 'transformer' || compType === 'switch') return 'ON';
+  if (compType === 'meter') return 'AT';
+  return 'ON';
+}
+
+function highlightStruct(structId) {
+  highlightedStruct = structId;
+  renderMap();
+}
+
+function bindToStructure(compId, structId) {
+  saveUndo();
+  const comp = components.find(c=>c.id===compId);
+  const struct = structures.find(s=>s.id===structId);
+  if (!comp || !struct) return;
+  
+  const prep = getPreposition(comp.type, struct.type);
+  comp.binding = { structId: struct.id, prep };
+  
+  // Update GPS to structure location
+  comp.gps = { lat: 38.9 + struct.my * 0.0001, lng: -77.03 + struct.mx * 0.0001, mx: struct.mx, my: struct.my };
+  
+  cancelPickMode();
+  renderSLD(); renderMap();
+  showToast(`${comp.label} bound ${prep} ${struct.label}`);
+  
+  // Refresh info panel
+  if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
+  if (infoPanelStruct && infoPanelStruct.id === structId) openStructureInfoPanel(structId);
+}
+
+function unbindComponent(compId) {
+  saveUndo();
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  
+  const oldStruct = comp.binding ? structures.find(s=>s.id===comp.binding.structId) : null;
+  comp.binding = null;
+  
+  renderSLD(); renderMap();
+  showToast(`${comp.label} unbound` + (oldStruct ? ` from ${oldStruct.label}` : ''));
+  
+  if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
+}
+
+function startPickMode(compId) {
+  pickMode = true;
+  pickTarget = compId;
+  document.getElementById('pickBanner').classList.add('visible');
+  map.style.cursor = 'crosshair';
+  
+  // Highlight compatible structures on map
+  renderMap();
+}
+
+function cancelPickMode() {
+  pickMode = false;
+  pickTarget = null;
+  document.getElementById('pickBanner').classList.remove('visible');
+  map.style.cursor = 'default';
+  highlightedStruct = null;
+  renderMap();
+}
+
+// Map click — structure selection or bind
+map.addEventListener('click', e => {
+  if (earlyPlacement || placementMode || mapPlaceMode) return; // Add/Structure flow takes priority
+  
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  
+  // Find clicked structure
+  let clickedStruct = null;
+  structures.forEach(s => {
+    if (Math.hypot(mx - s.mx, my - s.my) < 15) clickedStruct = s;
+  });
+  
+  if (pickMode && clickedStruct) {
+    // Bind in pick mode
+    bindToStructure(pickTarget, clickedStruct.id);
+    return;
+  }
+  
+  if (clickedStruct && !pickMode) {
+    // Open structure info panel
+    openStructureInfoPanel(clickedStruct.id);
+    return;
+  }
+});
+
+// ─── MODIFY CONTEXT MENU: Show info opens Info Panel ────
+// (Already wired — we just need to update onclick handlers)
+
+// ─── ORPHAN BADGE ON SLD ────────────────────────────────
+// Added in renderSLD — see orphan badge rendering below
 </script>
 </body>
 </html>
