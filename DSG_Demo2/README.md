@@ -1,17 +1,16 @@
 # DSG Demo 2 — Component Interaction Flows
 
-| Flow | Doc | Prototype | Status |
-|------|-----|-----------|--------|
-| Add | — | v3 HTML | Done |
-| Connect | Summary + Discussion v0.2 | v3 HTML | Done |
-| Bind | Summary + Discussion v0.1 | v3 HTML | Done |
-| Aggregate | — | — | Next |
+| Flow | Status |
+|------|--------|
+| Add | Done |
+| Connect | Done |
+| Bind | Done |
+| **Aggregate** | Next |
 
 ## Files
 
+- `BindFlow_Summary.md` — Bind flow results (includes all updates)
 - `ConnectFlow_Summary.md` — Connect flow results
-- `BindFlow_Summary.md` — Bind flow results (includes all iteration updates)
-- `BindFlow_Discussion_RU.md` — Bind discussion doc (RU)
 - `connect-flow-prototype-v3.html` — Interactive prototype (Add + Connect + Bind)
 
 ## How to use prototype
@@ -29,8 +28,9 @@ Download `connect-flow-prototype-v3.html` and open in browser.
 | Connect (list) | Right-click → Connect to... → select from list |
 | Connect (select two) | Click + Shift+click → Enter |
 | Disconnect | Right-click → Disconnect → specific connection |
-| Bind | Click component → Info Panel → + Add binding → pick on map |
-| Bind (reverse) | Click structure on Map → Mount equipment → select component |
+| Bind | Click component → Info Panel → + Add binding → pick on map or list |
+| Bind multi | Hold Shift while clicking structures (list or map) |
+| Mount (reverse) | Click structure on Map → Mount equipment → select component |
 | Unbind | Info Panel → X button on specific binding row |
 | Drag component | Click + drag (5px threshold) |
 | Drag connection | Hover line → purple handles → drag |
