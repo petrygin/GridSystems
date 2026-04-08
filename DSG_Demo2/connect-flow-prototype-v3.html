@@ -57,15 +57,21 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 .tool-sep { width: 1px; background: var(--border); margin: 4px 2px; }
 
 /* Conductor Picker */
-.conductor-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 260px; overflow: hidden; display: none; }
+.conductor-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 280px; overflow: hidden; display: none; }
 .conductor-picker.visible { display: block; }
 .conductor-picker-header { padding: 10px 12px 8px; font-size: 12px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.5px; }
-.conductor-item { padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 13px; transition: background 0.1s; }
+.conductor-picker-search { padding: 6px 12px 8px; }
+.conductor-picker-search input { width: 100%; height: 30px; padding: 0 10px 0 28px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; background: var(--background); font-family: var(--font-sans); outline: none; }
+.conductor-section-label { padding: 6px 12px 4px; font-size: 11px; font-weight: 500; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.4px; border-top: 1px solid var(--border); }
+.conductor-list { max-height: 240px; overflow-y: auto; }
+.conductor-item { padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 13px; transition: background 0.1s; }
 .conductor-item:hover { background: var(--neutral-50); }
 .conductor-item.recent { border-left: 2px solid var(--orange-500); }
 .conductor-item .name { font-weight: 500; color: var(--foreground); }
-.conductor-item .meta { font-size: 12px; color: var(--neutral-500); }
+.conductor-item .meta { font-size: 11px; color: var(--neutral-500); }
 .conductor-item .recent-badge { font-size: 10px; color: var(--orange-500); font-weight: 500; margin-left: 6px; }
+.conductor-show-all { padding: 7px 12px; font-size: 12px; color: var(--neutral-500); cursor: pointer; display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--border); }
+.conductor-show-all:hover { color: var(--foreground); background: var(--neutral-50); }
 .conductor-picker-footer { padding: 8px 12px; border-top: 1px solid var(--border); }
 .conductor-picker-cancel { background: none; border: none; font-size: 13px; color: var(--neutral-500); cursor: pointer; font-family: var(--font-sans); }
 .conductor-picker-cancel:hover { color: var(--foreground); }
@@ -216,6 +222,19 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 
 /* Add Structure picker on Map */
 .add-struct-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 220px; overflow: hidden; }
+
+/* Bind/Mount mode — panel highlights (outline renders on top of SVG) */
+.map-panel.bind-mode { outline: 3px solid #00BFFF; outline-offset: -3px; }
+.sld-panel.bind-mode { outline: 3px solid #00BFFF; outline-offset: -3px; }
+
+/* Compact picker list items */
+.bind-list-item { padding: 5px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.1s; font-size: 12px; }
+.bind-list-item:hover { background: var(--neutral-50); }
+.bind-list-item.selected { background: var(--success-wash); }
+.bind-list-item.disabled { color: var(--neutral-300); pointer-events: none; }
+.bind-list-item .bl-name { font-weight: 500; color: var(--foreground); font-size: 13px; }
+.bind-list-item .bl-meta { color: var(--neutral-500); font-size: 11px; }
+.bind-list-item .bl-tag { font-size: 10px; color: var(--neutral-400); }
 .add-struct-item { padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.1s; }
 .add-struct-item:hover { background: var(--neutral-50); }
 .add-struct-item svg { flex-shrink: 0; color: var(--neutral-500); }
@@ -224,6 +243,9 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 .map-place-hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 .map-place-hint.visible { display: flex; }
 .map-place-hint button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-family: var(--font-sans); }
+
+/* Drag ghost from Add panel */
+.add-drag-ghost { position: fixed; pointer-events: none; z-index: 100; background: var(--background); border: 1.5px dashed var(--neutral-400); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12px; font-family: var(--font-sans); color: var(--neutral-600); opacity: 0.85; box-shadow: 0 2px 8px rgba(0,0,0,0.12); display: none; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -315,9 +337,6 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
           <div class="add-panel-footer" id="addPanelFooter" style="display:none"></div>
         </div>
 
-        <!-- Placement mode hint -->
-        <div class="placement-hint" id="placementHint" style="display:none">Click on the diagram to place component</div>
-
         <!-- Context menu -->
         <div class="ctx-menu" id="ctxMenu"></div>
 
@@ -342,23 +361,7 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
         </div>
 
         <div class="conductor-picker" id="conductorPicker">
-          <div class="conductor-picker-header">Select conductor type</div>
-          <div class="conductor-item recent" onclick="pickConductor('2/0 Cu (UG)')">
-            <div><span class="name">2/0 Cu (UG)</span><span class="recent-badge">recent</span></div>
-            <span class="meta">600V</span>
-          </div>
-          <div class="conductor-item" onclick="pickConductor('4/0 ACSR (OH)')">
-            <span class="name">4/0 ACSR (OH)</span><span class="meta">12kV</span>
-          </div>
-          <div class="conductor-item" onclick="pickConductor('336 ACSR (OH)')">
-            <span class="name">336 ACSR (OH)</span><span class="meta">12kV</span>
-          </div>
-          <div class="conductor-item" onclick="pickConductor('XLPE 500 (UG)')">
-            <span class="name">XLPE 500 (UG)</span><span class="meta">12kV</span>
-          </div>
-          <div class="conductor-picker-footer">
-            <button class="conductor-picker-cancel" onclick="cancelPicker()">Cancel</button>
-          </div>
+          <div id="conductorPickerContent"></div>
         </div>
 
         <div class="toast" id="toast"><span id="toastIcon">✓</span> <span id="toastText"></span></div>
@@ -385,6 +388,8 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
     </div>
   </div>
 </div>
+<!-- Drag ghost for Add panel drag-and-drop -->
+<div class="add-drag-ghost" id="addDragGhost"></div>
 
 <script>
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -405,6 +410,8 @@ let selectedComps = [];
 let infoPanelComp = null, infoPanelStruct = null;
 let pickMode = false, pickTarget = null;
 let highlightedStruct = null;
+let addGhostPos = null; // {x, y} on SLD — ghost preview during Add
+let addDragging = false; // dragging from Add panel list
 
 // ─── UNDO ───────────────────────────────────────────────
 const undoStack = [];
@@ -435,7 +442,7 @@ function undo() {
 // ─── COMPONENTS ─────────────────────────────────────────
 const components = [
   { id:'BUS', type:'bus', label:'Bus 12kV', x:140, y:60, w:340, h:10,
-    gps: null, binding: null,
+    gps: null, bindings: [],
     terminals:[
       {id:'BUS-P1',name:'Pos1',side:'bottom',offset:0.1,phases:'ABC-N',connected:false},
       {id:'BUS-P2',name:'Pos2',side:'bottom',offset:0.3,phases:'ABC-N',connected:false},
@@ -444,32 +451,38 @@ const components = [
       {id:'BUS-P5',name:'Pos5',side:'bottom',offset:0.9,phases:'ABC-N',connected:false},
     ]},
   { id:'TR1', type:'transformer', label:'TR-312', x:155, y:140, w:44, h:44,
-    gps:{lat:38.905,lng:-77.035, mx:120, my:180}, binding:null,
+    gps:{lat:38.905,lng:-77.035, mx:120, my:180}, bindings:[],
     terminals:[
       {id:'TR1-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
       {id:'TR1-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
     ]},
   { id:'TR2', type:'transformer', label:'TR-415', x:310, y:140, w:44, h:44,
-    gps:{lat:38.906,lng:-77.032, mx:240, my:160}, binding:null,
+    gps:{lat:38.906,lng:-77.032, mx:240, my:160}, bindings:[],
     terminals:[
       {id:'TR2-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
       {id:'TR2-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
     ]},
   { id:'SW1', type:'switch', label:'SW-42', x:230, y:255, w:30, h:30,
-    gps:{lat:38.904,lng:-77.033, mx:180, my:270}, binding:null,
+    gps:{lat:38.904,lng:-77.033, mx:180, my:270}, bindings:[],
     terminals:[
       {id:'SW1-A',name:'A',side:'top',offset:0.5,phases:'ABC-N',connected:false},
       {id:'SW1-B',name:'B',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
     ]},
   { id:'MT1', type:'meter', label:'MT-101', x:155, y:350, w:26, h:26,
-    gps:{lat:38.902,lng:-77.036, mx:100, my:350}, binding:null,
+    gps:{lat:38.902,lng:-77.036, mx:100, my:350}, bindings:[],
     terminals:[
       {id:'MT1-T',name:'Terminal',side:'top',offset:0.5,phases:'AB-N',connected:false},
     ]},
   { id:'MT2', type:'meter', label:'MT-102', x:310, y:350, w:26, h:26,
-    gps:{lat:38.902,lng:-77.031, mx:260, my:350}, binding:null,
+    gps:{lat:38.902,lng:-77.031, mx:260, my:350}, bindings:[],
     terminals:[
       {id:'MT2-T',name:'Terminal',side:'top',offset:0.5,phases:'A-N',connected:false},
+    ]},
+  { id:'GEN1', type:'switch', label:'DG-201', x:420, y:255, w:30, h:30,
+    gps:{lat:38.903,lng:-77.030, mx:300, my:290}, bindings:[],
+    terminals:[
+      {id:'GEN1-A',name:'Output',side:'top',offset:0.5,phases:'DC',connected:true},
+      {id:'GEN1-B',name:'Grid',side:'bottom',offset:0.5,phases:'DC',connected:false},
     ]},
 ];
 
@@ -550,19 +563,20 @@ function renderSLD() {
     el('path',{d:path,fill:'none',stroke:'transparent','stroke-width':12,
       'data-conn':conn.id, class:'conn-hit', cursor:'pointer'},cg);
 
-    // Visible line
-    const lineColor = conn.error ? '#DC2626' : isH ? '#00BFFF' : '#228B22';
+    // Line color by validation status (shadcn tokens)
+    const connStatus = conn.status || 'success';
+    const lineColor = isH ? '#00BFFF' : connStatus === 'error' ? 'var(--destructive)' : connStatus === 'warning' ? 'var(--warning)' : 'var(--success)';
     el('path',{d:path,fill:'none',
       stroke: lineColor,
       'stroke-width': isH ? 3 : 2,
-      'stroke-dasharray': conn.error ? '4,3' : 'none',
+      'stroke-dasharray': 'none',
       'pointer-events':'none'
     },cg);
 
     if (conn.conductor) {
       const my = conn.midY || (p1.y+p2.y)/2;
       const mx2 = conn.midX !== undefined ? (conn.midX + p2.x)/2 : (p1.x+p2.x)/2;
-      el('text',{x:mx2,y:my-8,'text-anchor':'middle',fill: isH?'#00BFFF':'#228B22',
+      el('text',{x:mx2,y:my-8,'text-anchor':'middle',fill: isH?'#00BFFF': connStatus==='warning'?'var(--warning)':connStatus==='error'?'var(--destructive)':'var(--success)',
         'font-size':10,'font-family':'var(--font-mono)','pointer-events':'none'},cg).textContent = conn.conductor;
     }
 
@@ -627,12 +641,27 @@ function renderSLD() {
     });
 
     // Orphan badge (not bound, not bus)
-    if (!comp.binding && comp.type !== 'bus') {
+    if (comp.bindings.length === 0 && comp.type !== 'bus') {
       const bx = comp.x + comp.w - 2, by = comp.y - 2;
       el('circle',{cx:bx,cy:by,r:6,fill:'#FFF7ED',stroke:'#EA580C','stroke-width':1},g);
       el('text',{x:bx,y:by+3.5,'text-anchor':'middle',fill:'#EA580C','font-size':8,'font-weight':700},g).textContent='!';
     }
   });
+
+  // Ghost preview for Add flow — dashed outline at placement position
+  if (addGhostPos && document.getElementById('addPanel').classList.contains('visible')) {
+    const gw = addVariant ? addVariant.w : 40;
+    const gh = addVariant ? addVariant.h : 40;
+    const gx = addGhostPos.x - gw/2;
+    const gy = addGhostPos.y - gh/2;
+    el('rect',{x:gx,y:gy,width:gw,height:gh,fill:'none',
+      stroke:'var(--neutral-400)','stroke-width':1.5,'stroke-dasharray':'4,3',rx:3,opacity:0.6},sld);
+    // Crosshair at center
+    el('line',{x1:addGhostPos.x-6,y1:addGhostPos.y,x2:addGhostPos.x+6,y2:addGhostPos.y,
+      stroke:'var(--neutral-400)','stroke-width':1,opacity:0.5},sld);
+    el('line',{x1:addGhostPos.x,y1:addGhostPos.y-6,x2:addGhostPos.x,y2:addGhostPos.y+6,
+      stroke:'var(--neutral-400)','stroke-width':1,opacity:0.5},sld);
+  }
 }
 
 // ─── RENDER MAP ─────────────────────────────────────────
@@ -668,8 +697,9 @@ function renderMap() {
     if (!fc.gps||!tc.gps) return;
     const isUG = conn.conductor.includes('UG');
     const isH = hoveredConn === conn.id;
+    const mapLineColor = isH ? '#00BFFF' : conn.status==='warning' ? 'var(--warning)' : conn.status==='error' ? 'var(--destructive)' : 'var(--success)';
     el('line',{x1:fc.gps.mx,y1:fc.gps.my,x2:tc.gps.mx,y2:tc.gps.my,
-      stroke: isH?'#00BFFF':'#228B22','stroke-width': isH?3:2,
+      stroke: mapLineColor,'stroke-width': isH?3:2,
       'stroke-dasharray': isUG?'6,4':'none', opacity: isH?1:0.7
     },pcg);
   });
@@ -715,7 +745,7 @@ function renderMap() {
     }
 
     el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r: (isHovered||isSel)?5:4,
-      fill: (isSel||isHovered)?'#00BFFF': isHighlighted?'#228B22':'#F97316',
+      fill: (isSel||isHovered)?'#00BFFF': isHighlighted?'var(--success)':'var(--warning)',
       stroke:'white','stroke-width':1.5},sg);
 
     if (isHovered || isSel) {
@@ -946,7 +976,114 @@ function getPhaseCompat(fromId, toId) {
   const tt = components.flatMap(c=>c.terminals).find(t=>t.id===toId);
   if (!ft||!tt) return 'none';
   if (ft.phases===tt.phases) return 'full';
+  // Check for any common phase letters (A,B,C)
+  const p1 = ft.phases.replace(/[-N]/g,'');
+  const p2 = tt.phases.replace(/[-N]/g,'');
+  const common = [...p1].filter(ch => p2.includes(ch));
+  if (common.length === 0) return 'none'; // no common phases = error
   return 'partial';
+}
+
+// ─── CONDUCTOR LIBRARY ──────────────────────────────────
+const conductorLibrary = [
+  { name: '2/0 Cu (UG)', voltage: '600V', type: 'UG', ampacity: '175A' },
+  { name: '4/0 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '340A' },
+  { name: '336 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '530A' },
+  { name: '477 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '670A' },
+  { name: '795 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '900A' },
+  { name: '1/0 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '230A' },
+  { name: '#2 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '180A' },
+  { name: '#4 Cu (OH)', voltage: '12kV', type: 'OH', ampacity: '135A' },
+  { name: 'XLPE 500 (UG)', voltage: '12kV', type: 'UG', ampacity: '460A' },
+  { name: 'XLPE 750 (UG)', voltage: '12kV', type: 'UG', ampacity: '590A' },
+  { name: 'XLPE 1000 (UG)', voltage: '12kV', type: 'UG', ampacity: '700A' },
+  { name: 'EPR 1/0 (UG)', voltage: '12kV', type: 'UG', ampacity: '220A' },
+  { name: 'EPR 4/0 (UG)', voltage: '12kV', type: 'UG', ampacity: '320A' },
+  { name: 'TR-XLPE 500 (UG)', voltage: '35kV', type: 'UG', ampacity: '430A' },
+  { name: 'TR-XLPE 750 (UG)', voltage: '35kV', type: 'UG', ampacity: '550A' },
+  { name: '636 ACSR (OH)', voltage: '69kV', type: 'OH', ampacity: '780A' },
+  { name: '954 ACSR (OH)', voltage: '69kV', type: 'OH', ampacity: '1010A' },
+  { name: '556 AAC (OH)', voltage: '12kV', type: 'OH', ampacity: '730A' },
+  { name: '#6 Cu (OH)', voltage: '240V', type: 'OH', ampacity: '75A' },
+  { name: '2/0 Al (UG)', voltage: '600V', type: 'UG', ampacity: '140A' },
+  { name: '350 Al (UG)', voltage: '600V', type: 'UG', ampacity: '310A' },
+  { name: '500 Al (UG)', voltage: '600V', type: 'UG', ampacity: '400A' },
+];
+let recentConductors = ['2/0 Cu (UG)', '4/0 ACSR (OH)', '336 ACSR (OH)'];
+let conductorShowAll = false;
+
+function renderConductorPicker() {
+  const container = document.getElementById('conductorPickerContent');
+  let html = '';
+  
+  // Header
+  html += '<div class="conductor-picker-header">Select conductor type</div>';
+  
+  // Search
+  html += '<div class="conductor-picker-search" style="position:relative">';
+  html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:20px;top:15px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>';
+  html += '<input id="conductorSearchInput" placeholder="Search conductors..." oninput="filterConductors()">';
+  html += '</div>';
+  
+  // Recent section
+  if (recentConductors.length > 0) {
+    html += '<div class="conductor-section-label">Recent</div>';
+    recentConductors.forEach(name => {
+      const c = conductorLibrary.find(x => x.name === name);
+      if (!c) return;
+      html += `<div class="conductor-item" onclick="pickConductor('${c.name}')">`;
+      html += `<span class="name">${c.name}</span>`;
+      html += `<span class="meta">${c.voltage} · ${c.ampacity}</span></div>`;
+    });
+  }
+  
+  // All conductors
+  html += '<div class="conductor-section-label">All conductors</div>';
+  html += '<div class="conductor-list" id="conductorAllList">';
+  conductorLibrary.forEach(c => {
+    html += `<div class="conductor-item" data-name="${c.name.toLowerCase()}" onclick="pickConductor('${c.name}')">`;
+    html += `<span class="name">${c.name}</span>`;
+    html += `<span class="meta">${c.voltage} · ${c.type} · ${c.ampacity}</span></div>`;
+  });
+  html += '</div>';
+  
+  // Footer
+  html += '<div class="conductor-picker-footer"><button class="conductor-picker-cancel" onclick="cancelPicker()">Cancel</button></div>';
+  
+  container.innerHTML = html;
+  // Focus search after render
+  setTimeout(() => document.getElementById('conductorSearchInput')?.focus(), 50);
+}
+
+function filterConductors() {
+  const q = (document.getElementById('conductorSearchInput')?.value || '').toLowerCase();
+  if (!q) { renderConductorPicker(); return; }
+  
+  const container = document.getElementById('conductorPickerContent');
+  let html = '<div class="conductor-picker-header">Select conductor type</div>';
+  html += '<div class="conductor-picker-search" style="position:relative">';
+  html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:20px;top:15px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>';
+  html += `<input id="conductorSearchInput" value="${q}" placeholder="Search conductors..." oninput="filterConductors()">`;
+  html += '</div>';
+  
+  const results = conductorLibrary.filter(c => c.name.toLowerCase().includes(q) || c.voltage.toLowerCase().includes(q) || c.type.toLowerCase().includes(q));
+  html += '<div class="conductor-list">';
+  if (results.length > 0) {
+    results.forEach(c => {
+      html += `<div class="conductor-item" onclick="pickConductor('${c.name}')">`;
+      html += `<span class="name">${c.name}</span>`;
+      html += `<span class="meta">${c.voltage} · ${c.type} · ${c.ampacity}</span></div>`;
+    });
+  } else {
+    html += '<div style="padding:12px;font-size:12px;color:var(--neutral-400);text-align:center">No conductors found</div>';
+  }
+  html += '</div>';
+  html += '<div class="conductor-picker-footer"><button class="conductor-picker-cancel" onclick="cancelPicker()">Cancel</button></div>';
+  
+  container.innerHTML = html;
+  // Re-focus and restore cursor
+  const input = document.getElementById('conductorSearchInput');
+  if (input) { input.focus(); input.setSelectionRange(q.length, q.length); }
 }
 
 function completeConnection(fromId, toId) {
@@ -960,10 +1097,10 @@ function completeConnection(fromId, toId) {
     const tt = tc.terminals.find(t=>t.id===toId);
     const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
     const picker = document.getElementById('conductorPicker');
-    const wrap = sld.parentElement.getBoundingClientRect();
-    const sldRect = sld.getBoundingClientRect();
-    picker.style.left = ((p1.x+p2.x)/2 - 130) + 'px';
+    picker.style.left = ((p1.x+p2.x)/2 - 140) + 'px';
     picker.style.top = ((p1.y+p2.y)/2 - 40) + 'px';
+    conductorShowAll = false;
+    renderConductorPicker();
     picker.classList.add('visible');
   } else {
     createConnection(fromId, toId, null);
@@ -972,6 +1109,8 @@ function completeConnection(fromId, toId) {
 
 function pickConductor(name) {
   if (!pendingConnection) return;
+  // Track recent
+  recentConductors = [name, ...recentConductors.filter(n => n !== name)].slice(0, 3);
   createConnection(pendingConnection.from, pendingConnection.to, name);
   pendingConnection=null;
   document.getElementById('conductorPicker').classList.remove('visible');
@@ -984,9 +1123,10 @@ function cancelPicker() {
 function createConnection(fromId, toId, conductor) {
   saveUndo();
   const compat = getPhaseCompat(fromId, toId);
+  const status = compat === 'full' ? 'success' : compat === 'partial' ? 'warning' : 'error';
   connections.push({
     id:'conn-'+(++connectionCount), from:fromId, to:toId, conductor,
-    error: false, midY: undefined, midX: undefined
+    status, midY: undefined, midX: undefined
   });
 
   components.forEach(c=>c.terminals.forEach(t=>{
@@ -1135,8 +1275,8 @@ document.addEventListener('keydown', e => {
   if (e.key==='Enter' && selectedComps.length === 2) { connectSelected(); return; }
   if (e.key==='v'||e.key==='V') setTool('select');
   if (e.key==='h'||e.key==='H') setTool('pan');
-  if (e.key==='a'||e.key==='A') { if (!placementMode) openAddPanel(); }
-  if (e.key==='Escape') { setTool('select'); cancelPicker(); closeAddPanel(); exitPlacementMode(); cancelPickMode(); cancelMapPlace(); selectedComps=[]; renderSLD(); renderMap(); }
+  if (e.key==='a'||e.key==='A') { openAddPanel(); }
+  if (e.key==='Escape') { setTool('select'); cancelPicker(); closeAddPanel(); cancelPickMode(); cancelMapPlace(); bindPickerCompId=null; mountPickerStructId=null; closeInfoPanel(); selectedComps=[]; renderSLD(); renderMap(); }
 });
 
 // ─── ADD COMPONENT FLOW ─────────────────────────────────
@@ -1190,24 +1330,36 @@ const library = {
   libInfo: { height:'84 in', length:'144 in', loadCapacity:'300 psf', material:'Concrete', maxRuns200:'3', maxRuns600:'4', modelNumber:'100011014' }
 };
 
-let addStep = 0, addCategory = null, addVariant = null, placementMode = false, pendingPlacement = null;
+let addStep = 0, addCategory = null, addVariant = null;
 let compCounter = 100;
+let addOrigin = null; // {source:'sld'|'map', x, y, mapMx, mapMy} — where right-click happened
 
-function openAddPanel() {
+function openAddPanel(origin) {
   addStep = 1; addCategory = null; addVariant = null;
+  addOrigin = origin || null;
+  // Show ghost at click position
+  if (origin && origin.source === 'sld') {
+    addGhostPos = { x: origin.x, y: origin.y };
+  } else {
+    addGhostPos = null;
+  }
   renderAddStep1();
   document.getElementById('addPanel').classList.add('visible');
+  renderSLD(); // re-render to show ghost
 }
 
 function closeAddPanel() {
   document.getElementById('addPanel').classList.remove('visible');
   addStep = 0;
-  earlyPlacement = false;
+  addOrigin = null;
+  addGhostPos = null;
+  renderSLD();
 }
 
 function renderAddStep1() {
   addStep = 1;
   document.getElementById('addPanelTitle').textContent = 'Add component';
+  document.getElementById('addPanelHeader').style.display = '';
   document.getElementById('addPanelHeader').querySelector('.back')?.remove();
   document.getElementById('addPanelFooter').style.display = 'none';
 
@@ -1253,10 +1405,9 @@ function selectCategory(catId) {
   let html = '<div class="add-search" style="position:relative"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:24px;top:20px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="Search equipment" style="padding-left:30px"></div>';
 
   variants.forEach(v => {
-    html += `<div class="add-list-item" onclick="selectVariant('${v.id}')">
+    html += `<div class="add-list-item" onclick="selectVariant('${v.id}')" onmousedown="startAddDrag(event,'${v.id}','${catId}')" style="cursor:grab">
       <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
       <div class="item-text"><div class="item-name">${v.name}</div><div class="item-meta">${v.meta}</div></div>
-      <div class="arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
     </div>`;
   });
 
@@ -1264,179 +1415,162 @@ function selectCategory(catId) {
 }
 
 function selectVariant(varId) {
+  if (addDragActive) return; // Don't fire on drag end
   const variants = library.variants[addCategory] || [];
   addVariant = variants.find(v=>v.id===varId);
   if (!addVariant) return;
-  addStep = 3;
 
-  document.getElementById('addPanelTitle').textContent = addVariant.name;
   compCounter++;
   const compId = addVariant.type.substring(0,2).toUpperCase() + '-' + compCounter;
 
-  let html = '<div class="add-form-section"><div class="section-title">Defined</div>';
-  html += `<div class="add-form-row"><span class="label">Component ID</span><input value="${compId}" id="addCompId"></div>`;
-  html += `<div class="add-form-row"><span class="label">Name</span><input value="${addVariant.name}" id="addCompName"></div>`;
-  html += `<div class="add-form-row"><span class="label">Tags</span><input value="" placeholder="tag1, tag2" id="addCompTags"></div>`;
-  html += '</div>';
+  // Determine placement position
+  let sldX, sldY, gpsData = null;
 
-  html += '<div class="add-form-section"><div class="section-title">Library info</div>';
-  const info = library.libInfo;
-  html += `<div class="add-form-row"><span class="label">Height</span><span class="value">${info.height}</span></div>`;
-  html += `<div class="add-form-row"><span class="label">Length</span><span class="value">${info.length}</span></div>`;
-  html += `<div class="add-form-row"><span class="label">Load capacity</span><span class="value">${info.loadCapacity}</span></div>`;
-  html += `<div class="add-form-row"><span class="label">Material</span><span class="value">${info.material}</span></div>`;
-  html += `<div class="add-form-row"><span class="label">Model Number</span><span class="value">${info.modelNumber}</span></div>`;
-  html += '</div>';
+  if (addOrigin && addOrigin.source === 'sld') {
+    sldX = addOrigin.x;
+    sldY = addOrigin.y;
+  } else if (addOrigin && addOrigin.source === 'map') {
+    sldX = 380 + (components.length % 3) * 70;
+    sldY = 160 + Math.floor(components.length / 3) * 80;
+    gpsData = { lat: addOrigin.lat, lng: addOrigin.lng, mx: addOrigin.mapMx, my: addOrigin.mapMy };
+  } else {
+    // Toolbar/keyboard — place at center of SLD
+    sldX = 300 + (components.length % 3) * 70;
+    sldY = 200 + Math.floor(components.length / 3) * 80;
+  }
 
-  html += '<div class="add-form-section"><div class="section-title">Calculated</div>';
-  html += `<div class="add-form-row"><span class="label">Location</span><span class="value" id="addLocationValue" style="color:var(--neutral-400)">Click map or diagram</span></div>`;
-  html += `<div class="add-form-row"><span class="label">Zone</span><span class="value" id="addZoneValue" style="color:var(--neutral-400)">—</span></div>`;
-  html += '</div>';
-
-  document.getElementById('addPanelBody').innerHTML = html;
-
-  const footer = document.getElementById('addPanelFooter');
-  footer.style.display = 'block';
-  footer.innerHTML = `<button class="add-btn-primary" onclick="enterPlacementMode()">Place component</button><div style="font-size:11px;color:var(--neutral-400);text-align:center;margin-top:6px">Click on map or diagram to place it</div>`;
-
-  // Enable early placement — clicks on map or SLD work immediately
-  earlyPlacement = true;
+  // Place immediately with defaults
+  placeComponentDirect(compId, addVariant, sldX, sldY, gpsData);
 }
 
-let earlyPlacement = false;
-
-function buildPendingFromForm() {
-  return {
-    type: addVariant.type,
-    label: document.getElementById('addCompId')?.value || addVariant.name,
-    name: document.getElementById('addCompName')?.value || addVariant.name,
-    w: addVariant.w, h: addVariant.h,
-    phases: addVariant.phases
-  };
-}
-
-function enterPlacementMode() {
-  placementMode = true;
-  pendingPlacement = buildPendingFromForm();
-  document.getElementById('addPanel').classList.remove('visible');
-  document.getElementById('placementHint').style.display = 'block';
-  sld.style.cursor = 'crosshair';
-  earlyPlacement = false;
-}
-
-function exitPlacementMode() {
-  placementMode = false;
-  pendingPlacement = null;
-  document.getElementById('placementHint').style.display = 'none';
-  sld.style.cursor = 'default';
-}
-
-function placeComponent(x, y, gpsData) {
-  if (!pendingPlacement && !earlyPlacement) return;
+function placeComponentDirect(compId, variant, x, y, gpsData) {
   saveUndo();
-  const p = pendingPlacement || buildPendingFromForm();
-  const id = p.label.replace(/[^A-Z0-9-]/gi,'');
+  const id = compId.replace(/[^A-Z0-9-]/gi,'');
 
-  // Build terminals based on type
   let terminals = [];
-  if (p.type === 'transformer') {
+  if (variant.type === 'transformer') {
     terminals = [
-      {id:id+'-PRI',name:'Primary',side:'top',offset:0.5,phases:p.phases,connected:false},
-      {id:id+'-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:p.phases,connected:false},
+      {id:id+'-PRI',name:'Primary',side:'top',offset:0.5,phases:variant.phases,connected:false},
+      {id:id+'-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:variant.phases,connected:false},
     ];
-  } else if (p.type === 'switch') {
+  } else if (variant.type === 'switch') {
     terminals = [
-      {id:id+'-A',name:'A',side:'top',offset:0.5,phases:p.phases,connected:false},
-      {id:id+'-B',name:'B',side:'bottom',offset:0.5,phases:p.phases,connected:false},
+      {id:id+'-A',name:'A',side:'top',offset:0.5,phases:variant.phases,connected:false},
+      {id:id+'-B',name:'B',side:'bottom',offset:0.5,phases:variant.phases,connected:false},
     ];
-  } else if (p.type === 'meter') {
+  } else if (variant.type === 'meter') {
     terminals = [
-      {id:id+'-T',name:'Terminal',side:'top',offset:0.5,phases:p.phases,connected:false},
+      {id:id+'-T',name:'Terminal',side:'top',offset:0.5,phases:variant.phases,connected:false},
     ];
-  } else if (p.type === 'bus') {
-    for (let i=1;i<=5;i++) terminals.push({id:id+'-P'+i,name:'Pos'+i,side:'bottom',offset:i/6,phases:p.phases,connected:false});
+  } else if (variant.type === 'bus') {
+    for (let i=1;i<=5;i++) terminals.push({id:id+'-P'+i,name:'Pos'+i,side:'bottom',offset:i/6,phases:variant.phases,connected:false});
   }
 
   components.push({
-    id, type: p.type, label: p.label,
-    x: x - p.w/2, y: y - p.h/2, w: p.w, h: p.h,
-    gps: gpsData || null, binding: null, terminals
+    id, type: variant.type, label: compId,
+    x: x - variant.w/2, y: y - variant.h/2, w: variant.w, h: variant.h,
+    gps: gpsData || null, bindings: [], terminals
   });
 
-  exitPlacementMode();
-  earlyPlacement = false;
+  closeAddPanel();
   renderSLD(); renderMap();
   updateComponentCount();
-  showAddSuccess(p.name + (gpsData ? ` · ${gpsData.lat.toFixed(4)}°N, ${Math.abs(gpsData.lng).toFixed(4)}°W` : ''));
-}
 
-// Map click → place with GPS coordinates
-map.addEventListener('click', e => {
-  if (pickMode || mapPlaceMode) return; // Bind/Structure flow takes priority
-  if (!earlyPlacement && !placementMode) return;
+  // Toast with Add more button
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').innerHTML = `${compId} added <span onclick="openAddPanel()" style="text-decoration:underline;cursor:pointer;margin-left:8px">+ Add more</span>`;
+  t.classList.add('visible');
+  setTimeout(()=>t.classList.remove('visible'),4000);
 
-  const rect = map.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-
-  // Convert pixel to fake lat/lng
-  const lat = 38.91 - (my / rect.height) * 0.02;
-  const lng = -77.04 + (mx / rect.width) * 0.02;
-
-  // Place on SLD at a reasonable free position
-  const sldX = 380 + (components.length % 3) * 70;
-  const sldY = 160 + Math.floor(components.length / 3) * 80;
-
-  if (earlyPlacement && !pendingPlacement) {
-    pendingPlacement = buildPendingFromForm();
-  }
-
-  placeComponent(sldX, sldY, { lat: +lat.toFixed(6), lng: +lng.toFixed(6), mx, my });
-});
-
-function showAddSuccess(name) {
-  addStep = 4;
-  const panel = document.getElementById('addPanel');
-  panel.classList.add('visible');
-  document.getElementById('addPanelHeader').style.display = 'none';
-
-  document.getElementById('addPanelBody').innerHTML = `
-    <div class="add-success">
-      <div class="check"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
-      <div class="msg">Component added</div>
-      <div class="sub">${name}</div>
-      <button class="add-btn-primary" onclick="addAnother()">+ Add another component</button>
-      <button class="add-btn-secondary" onclick="doneAdding()">Done</button>
-    </div>`;
-  document.getElementById('addPanelFooter').style.display = 'none';
-}
-
-function addAnother() {
-  document.getElementById('addPanelHeader').style.display = '';
-  renderAddStep1();
-}
-
-function doneAdding() {
-  document.getElementById('addPanelHeader').style.display = '';
-  closeAddPanel();
-  showToast('Component placed — ready to connect');
+  // Open Info Panel for the new component
+  selectedComps = [id];
+  openInfoPanel(id);
 }
 
 function updateComponentCount() {
   document.querySelector('.status-bar span:last-child').textContent = `Components: ${components.length}`;
 }
 
-// Listen for placement clicks on SLD
-sld.addEventListener('click', e => {
-  if (!placementMode && !earlyPlacement) return;
-  if (earlyPlacement && !pendingPlacement) {
-    pendingPlacement = buildPendingFromForm();
+// ─── DRAG FROM ADD PANEL ────────────────────────────────
+let addDragVariant = null, addDragStartX = 0, addDragStartY = 0, addDragActive = false;
+const ADD_DRAG_THRESHOLD = 5;
+
+function startAddDrag(e, varId, catId) {
+  addDragVariant = (library.variants[catId] || []).find(v => v.id === varId);
+  if (!addDragVariant) return;
+  addDragStartX = e.clientX;
+  addDragStartY = e.clientY;
+  addDragActive = false;
+  e.preventDefault();
+}
+
+window.addEventListener('mousemove', e => {
+  if (!addDragVariant) return;
+  const dist = Math.hypot(e.clientX - addDragStartX, e.clientY - addDragStartY);
+  if (dist < ADD_DRAG_THRESHOLD && !addDragActive) return;
+
+  if (!addDragActive) {
+    addDragActive = true;
+    const ghost = document.getElementById('addDragGhost');
+    ghost.textContent = addDragVariant.name;
+    ghost.style.display = 'block';
   }
-  const rect = sld.getBoundingClientRect();
-  placeComponent(e.clientX - rect.left, e.clientY - rect.top, null);
+
+  const ghost = document.getElementById('addDragGhost');
+  ghost.style.left = (e.clientX + 12) + 'px';
+  ghost.style.top = (e.clientY - 14) + 'px';
+
+  // Update ghost preview on SLD
+  const sldRect = sld.getBoundingClientRect();
+  if (e.clientX >= sldRect.left && e.clientX <= sldRect.right && e.clientY >= sldRect.top && e.clientY <= sldRect.bottom) {
+    addGhostPos = { x: e.clientX - sldRect.left, y: e.clientY - sldRect.top };
+    sld.style.cursor = 'copy';
+  } else {
+    addGhostPos = null;
+    sld.style.cursor = '';
+  }
+  renderSLD();
 });
 
+window.addEventListener('mouseup', e => {
+  if (!addDragVariant) return;
+  const ghost = document.getElementById('addDragGhost');
+  ghost.style.display = 'none';
+
+  if (addDragActive) {
+    // Check if dropped on SLD
+    const sldRect = sld.getBoundingClientRect();
+    if (e.clientX >= sldRect.left && e.clientX <= sldRect.right && e.clientY >= sldRect.top && e.clientY <= sldRect.bottom) {
+      const dropX = e.clientX - sldRect.left;
+      const dropY = e.clientY - sldRect.top;
+      addCategory = addDragVariant.type; // not strictly needed but for consistency
+      compCounter++;
+      const compId = addDragVariant.type.substring(0,2).toUpperCase() + '-' + compCounter;
+      placeComponentDirect(compId, addDragVariant, dropX, dropY, null);
+    }
+    addGhostPos = null;
+    sld.style.cursor = 'default';
+    renderSLD();
+  }
+
+  addDragVariant = null;
+  addDragActive = false;
+});
+
+// Pre-create an error connection (DC generator → AC bus = incompatible)
+connections.push({
+  id:'conn-err-1', from:'GEN1-A', to:'BUS-P5', conductor:null,
+  status:'error', midY: undefined, midX: undefined
+});
+components.find(c=>c.id==='BUS').terminals.find(t=>t.id==='BUS-P5').connected = true;
+connectionCount = 1;
+validationErrors.push({code:'V-E01',type:'error',title:'Phase Incompatible',
+  desc:'DC → ABC-N — no common phases between DG-201 and Bus 12kV'});
+
 renderSLD(); renderMap();
+
+// Show validation panel for the pre-existing error
+updateValidation();
 
 // Clear hover when leaving SLD canvas
 sld.addEventListener('mouseleave', () => {
@@ -1447,7 +1581,7 @@ sld.addEventListener('mouseleave', () => {
 let hoveredMapStruct = null;
 
 map.addEventListener('mousemove', e => {
-  if (pickMode || earlyPlacement || placementMode) return;
+  if (pickMode) return;
   if (mapPlaceMode) { map.style.cursor = 'crosshair'; return; }
   const rect = map.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
@@ -1508,7 +1642,7 @@ mapPanel.addEventListener('contextmenu', e => {
   let html = '';
 
   if (clickedStruct) {
-    const mounted = components.filter(c => c.binding && c.binding.structId === clickedStruct.id);
+    const mounted = components.filter(c => c.bindings.some(b => b.structId === clickedStruct.id));
     html = `<div class="ctx-menu-title">${clickedStruct.label}</div>`;
     html += `<div class="ctx-menu-item" onclick="hideMapCtxMenu();openStructureInfoPanel('${clickedStruct.id}')">${ic_info} Show info</div>`;
     html += `<div class="ctx-menu-sep"></div>`;
@@ -1579,12 +1713,11 @@ function placeStructure(mx, my) {
 }
 
 function mountFromCtx(structId) {
-  openStructureInfoPanel(structId);
-  setTimeout(() => showMountPicker(structId), 100);
+  openMountPicker(structId);
 }
 
 function deleteStructure(structId) {
-  const mounted = components.filter(c => c.binding && c.binding.structId === structId);
+  const mounted = components.filter(c => c.bindings.some(b => b.structId === structId));
   if (mounted.length > 0) {
     showToast('Unbind all equipment first');
     return;
@@ -1727,7 +1860,7 @@ sld.addEventListener('contextmenu', e => {
     html += `<div class="ctx-menu-item danger" onclick="disconnectById('${foundConn.id}')">${ic.scissors} Disconnect</div>`;
 
   } else {
-    html = `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel()">${ic.plus} Add component<span class="shortcut">A</span></div>`;
+    html = `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})">${ic.plus} Add component<span class="shortcut">A</span></div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clipboard} Paste</div>`;
   }
 
@@ -1794,8 +1927,7 @@ function openInfoPanel(compId) {
   
   const conns = connections.filter(c => c.from.startsWith(comp.id) || c.to.startsWith(comp.id));
   const phases = comp.terminals[0]?.phases || '—';
-  const bound = comp.binding;
-  const boundStruct = bound ? structures.find(s=>s.id===bound.structId) : null;
+  const bindings = comp.bindings || [];
   
   let html = '';
   
@@ -1833,35 +1965,30 @@ function openInfoPanel(compId) {
   }
   html += '</div></div>';
   
-  // Physical binding section
-  html += '<div class="info-section" style="background:var(--neutral-50)"><div class="info-section-header">Physical binding <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  // Physical binding section — compact multi-bind list
+  const bindCount = bindings.length;
+  html += `<div class="info-section" style="background:var(--neutral-50)"><div class="info-section-header">Physical binding${bindCount > 0 ? ' (' + bindCount + ')' : ''} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>`;
   html += '<div class="info-section-body">';
   
-  if (bound && boundStruct) {
-    html += `<div class="bind-status"><span class="dot bound"></span><span class="text">Bound</span></div>`;
-    html += `<div class="info-row"><span class="label">Structure</span><span class="value">${boundStruct.label} · ${boundStruct.type === 'pole' ? 'Pole' : 'Vault'}</span></div>`;
-    html += `<div class="info-row"><span class="label">Preposition</span><span class="value">${bound.prep}</span></div>`;
-    html += `<div class="bind-actions">`;
-    html += `<button class="bind-btn-secondary" onclick="startPickMode('${comp.id}')">Change...</button>`;
-    html += `<button class="bind-btn-danger" onclick="unbindComponent('${comp.id}')">Unbind</button>`;
-    html += `</div>`;
+  if (bindCount > 0) {
+    bindings.forEach((b, idx) => {
+      const s = structures.find(st => st.id === b.structId);
+      if (!s) return;
+      const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.type] || s.type;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;gap:4px" onmouseenter="highlightStruct('${s.id}')" onmouseleave="highlightStruct(null)">`;
+      html += `<span style="font-size:13px;color:var(--foreground)">${b.prep} <strong>${s.label}</strong> <span style="color:var(--neutral-500);font-weight:400">${typeLabel}</span></span>`;
+      html += `<span style="display:flex;gap:2px;flex-shrink:0">`;
+      html += `<button onclick="rebindOne('${comp.id}',${idx})" style="width:24px;height:24px;border:none;background:none;cursor:pointer;border-radius:var(--radius-sm);color:var(--neutral-500);display:flex;align-items:center;justify-content:center" title="Change"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 3l4 4-4 4"/><path d="M20 7H4"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h16"/></svg></button>`;
+      html += `<button onclick="unbindOne('${comp.id}',${idx})" style="width:24px;height:24px;border:none;background:none;cursor:pointer;border-radius:var(--radius-sm);color:var(--neutral-400);display:flex;align-items:center;justify-content:center" title="Unbind"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+      html += `</span></div>`;
+    });
   } else {
-    html += `<div class="bind-status"><span class="dot unbound"></span><span class="text" style="color:var(--warning)">Not bound</span></div>`;
-    html += `<div style="font-size:12px;color:var(--neutral-500);margin-bottom:8px">Select a physical structure to bind this equipment.</div>`;
-    html += `<button class="bind-btn-primary" onclick="startPickMode('${comp.id}')" style="width:100%">Bind to structure...</button>`;
-    // Structure picker dropdown
-    const compatible = getCompatibleStructures(comp);
-    if (compatible.length > 0) {
-      html += `<div class="struct-picker" style="margin-top:8px">`;
-      compatible.forEach(s => {
-        html += `<div class="struct-picker-item" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindToStructure('${comp.id}','${s.struct.id}')">`;
-        html += `<span class="name">${s.struct.label} · ${s.struct.type==='pole'?'Pole':'Vault'}</span>`;
-        html += `<span class="dist">${s.dist}m</span>`;
-        html += `</div>`;
-      });
-      html += `</div>`;
-    }
+    html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Not bound</div>`;
   }
+  
+  // Add binding button
+  html += `<button class="bind-btn-secondary" onclick="openBindPicker('${comp.id}')" style="width:100%;margin-top:6px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/></svg> Add binding</button>`;
+  
   html += '</div></div>';
   
   // Files section (stub)
@@ -1889,7 +2016,7 @@ function openStructureInfoPanel(structId) {
   document.getElementById('infoPanelTitle').textContent = struct.label;
   
   // Find mounted equipment
-  const mounted = components.filter(c => c.binding && c.binding.structId === structId);
+  const mounted = components.filter(c => c.bindings.some(b => b.structId === structId));
   // Find conductors passing through (bound to this structure via connections)
   
   let html = '';
@@ -1913,17 +2040,15 @@ function openStructureInfoPanel(structId) {
   
   if (mounted.length > 0) {
     mounted.forEach(c => {
-      html += `<div class="mounted-item"><span class="eq-name">${c.label} · ${c.type}</span><span class="eq-prep">${c.binding.prep}</span></div>`;
+      const b = c.bindings.find(b => b.structId === structId);
+      html += `<div class="mounted-item"><span class="eq-name">${c.label} · ${c.type}</span><span class="eq-prep">${b?.prep||'ON'}</span></div>`;
     });
   } else {
     html += '<div style="font-size:12px;color:var(--neutral-400);padding:4px 0">No equipment mounted</div>';
   }
   
-  // Mount equipment button — show orphan components
-  const orphans = components.filter(c => !c.binding && c.type !== 'bus');
-  if (orphans.length > 0) {
-    html += `<div style="margin-top:8px"><button class="bind-btn-secondary" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="showMountPicker('${structId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg> Mount equipment...</button></div>`;
-  }
+  // Mount equipment button — always visible (like Add binding in component Info Panel)
+  html += `<div style="margin-top:8px"><button class="bind-btn-secondary" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openMountPicker('${structId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg> Mount equipment...</button></div>`;
   html += '</div></div>';
   
   document.getElementById('infoPanelBody').innerHTML = html;
@@ -1931,31 +2056,214 @@ function openStructureInfoPanel(structId) {
   document.getElementById('infoPanel').classList.add('visible');
 }
 
-function showMountPicker(structId) {
-  const orphans = components.filter(c => !c.binding && c.type !== 'bus');
-  if (orphans.length === 0) return;
-  
-  let html = '<div style="padding:8px 16px;font-size:12px;font-weight:600;color:var(--neutral-500)">Select equipment to mount:</div>';
-  orphans.forEach(c => {
-    const prep = getPreposition(c.type, structures.find(s=>s.id===structId)?.type);
-    html += `<div class="struct-picker-item" onclick="bindToStructure('${c.id}','${structId}')">`;
-    html += `<span class="name">${c.label} · ${c.type}</span>`;
-    html += `<span class="dist">${prep}</span>`;
-    html += `</div>`;
+let recentBindStructs = []; // track recently bound structure IDs
+
+let bindPickerSelected = []; // multi-select struct IDs
+let bindPickerCompId = null;
+
+function openBindPicker(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  bindPickerCompId = compId;
+  bindPickerSelected = [];
+
+  // Enter bind mode — pick on map active simultaneously
+  pickMode = true;
+  pickTarget = compId;
+  document.getElementById('mapPanel').classList.add('bind-mode');
+  renderMap();
+
+  renderBindPickerList(compId);
+}
+
+function renderBindPickerList(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+
+  document.getElementById('infoPanelTitle').textContent = `Bind ${comp.label}`;
+
+  const allStructs = getCompatibleStructures(comp);
+  const recentItems = recentBindStructs.map(id => allStructs.find(s => s.struct.id === id)).filter(Boolean);
+
+  let html = '';
+
+  // Back button row
+  html += `<div style="padding:6px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;cursor:pointer" onclick="exitBindPicker('${compId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span style="font-size:12px;color:var(--neutral-600)">Back to info</span></div>`;
+
+  // Search
+  html += '<div style="padding:6px 16px"><div style="position:relative"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:9px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="bindSearchInput" placeholder="Search structures..." oninput="filterBindList()" style="width:100%;height:28px;padding:0 10px 0 28px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--background);font-family:var(--font-sans);outline:none"></div></div>';
+
+  // Hint
+  html += '<div style="padding:2px 16px 6px;font-size:11px;color:var(--neutral-400)">Click to bind · Pick on map · Hold Shift to add more</div>';
+
+  // Recent
+  if (recentItems.length > 0) {
+    html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">Recent</div>';
+    recentItems.forEach(s => {
+      const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.struct.type] || s.struct.type;
+      html += `<div class="bind-list-item" data-sid="${s.struct.id}" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindPickerClick('${s.struct.id}',event)">`;
+      html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
+      html += `</div>`;
+    });
+  }
+
+  // All structures
+  html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">All structures</div>';
+  html += '<div id="bindListItems" style="max-height:200px;overflow-y:auto">';
+  allStructs.forEach(s => {
+    const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.struct.type] || s.struct.type;
+    const alreadyBound = comp.bindings.some(b => b.structId === s.struct.id);
+    const sel = bindPickerSelected.includes(s.struct.id);
+    if (alreadyBound) {
+      html += `<div class="bind-list-item disabled" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}">`;
+      html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
+      html += `<span class="bl-tag">bound</span></div>`;
+    } else {
+      html += `<div class="bind-list-item" data-sid="${s.struct.id}" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindPickerClick('${s.struct.id}',event)">`;
+      html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
+      html += `</div>`;
+    }
   });
-  
-  // Insert after the mount button
-  const body = document.getElementById('infoPanelBody');
-  const mountDiv = document.createElement('div');
-  mountDiv.className = 'struct-picker';
-  mountDiv.innerHTML = html;
-  body.querySelector('.info-section:last-child .info-section-body').appendChild(mountDiv);
+  html += '</div>';
+
+  document.getElementById('infoPanelBody').innerHTML = html;
+
+  // Footer — Done button
+  const footer = document.getElementById('infoPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = `<button class="bind-btn-secondary" onclick="exitBindPicker('${compId}')" style="width:100%;font-size:13px">Done</button>`;
+
+  document.getElementById('infoPanel').classList.add('visible');
+  setTimeout(() => document.getElementById('bindSearchInput')?.focus(), 50);
+}
+
+function bindPickerClick(structId, e) {
+  if (e && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+    // Shift+click — bind immediately but stay in picker
+    bindToStructure(bindPickerCompId, structId);
+  } else {
+    // Single click — bind and return to info panel
+    const cid = bindPickerCompId;
+    bindPickerCompId = null;
+    bindToStructure(cid, structId);
+  }
+}
+
+function exitBindPicker(compId) {
+  pickMode = false;
+  pickTarget = null;
+  document.getElementById('mapPanel').classList.remove('bind-mode');
+  highlightedStruct = null;
+  bindPickerSelected = [];
+  renderMap();
+  openInfoPanel(compId);
+}
+
+function filterBindList() {
+  const q = (document.getElementById('bindSearchInput')?.value || '').toLowerCase();
+  document.querySelectorAll('#bindListItems .bind-list-item').forEach(item => {
+    item.style.display = (item.getAttribute('data-name') || '').includes(q) ? '' : 'none';
+  });
+}
+
+let mountPickerStructId = null;
+
+function openMountPicker(structId) {
+  const struct = structures.find(s=>s.id===structId);
+  if (!struct) return;
+  mountPickerStructId = structId;
+
+  // Highlight SLD panel — components live there
+  document.querySelector('.sld-panel').classList.add('bind-mode');
+
+  renderMountPickerList(structId);
+}
+
+function renderMountPickerList(structId) {
+  const struct = structures.find(s=>s.id===structId);
+  if (!struct) return;
+
+  document.getElementById('infoPanelTitle').textContent = `Mount on ${struct.label}`;
+
+  const allComps = components.filter(c => c.type !== 'bus');
+  const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+
+  let html = '';
+
+  // Back button
+  html += `<div style="padding:6px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;cursor:pointer" onclick="exitMountPicker('${structId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span style="font-size:12px;color:var(--neutral-600)">Back to info</span></div>`;
+
+  // Search
+  html += '<div style="padding:6px 16px"><div style="position:relative"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:9px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="mountSearchInput" placeholder="Search components..." oninput="filterMountList()" style="width:100%;height:28px;padding:0 10px 0 28px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--background);font-family:var(--font-sans);outline:none"></div></div>';
+
+  // Hint
+  html += '<div style="padding:2px 16px 6px;font-size:11px;color:var(--neutral-400)">Click to mount · Hold Shift to add more</div>';
+
+  html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">Components</div>';
+  html += '<div id="mountListItems" style="max-height:220px;overflow-y:auto">';
+  allComps.forEach(c => {
+    const prep = getPreposition(c.type, struct.type);
+    const alreadyMounted = c.bindings.some(b => b.structId === structId);
+    if (alreadyMounted) {
+      html += `<div class="bind-list-item disabled" data-name="${c.label.toLowerCase()} ${(typeLabels[c.type]||'').toLowerCase()}">`;
+      html += `<span><span class="bl-name">${c.label}</span> <span class="bl-meta">${typeLabels[c.type]||c.type} · ${c.terminals[0]?.phases||'—'}</span></span>`;
+      html += `<span class="bl-tag">mounted</span></div>`;
+    } else {
+      const isBoundElsewhere = c.bindings.length > 0;
+      html += `<div class="bind-list-item" data-name="${c.label.toLowerCase()} ${(typeLabels[c.type]||'').toLowerCase()}" onmouseenter="hoveredComp='${c.id}';renderSLD()" onmouseleave="hoveredComp=null;renderSLD()" onclick="mountPickerClick('${c.id}',event)">`;
+      html += `<span><span class="bl-name">${c.label}</span> <span class="bl-meta">${typeLabels[c.type]||c.type} · ${c.terminals[0]?.phases||'—'}${isBoundElsewhere?' · bound elsewhere':''}</span></span>`;
+      html += `<span class="bl-tag">${prep}</span>`;
+      html += `</div>`;
+    }
+  });
+  html += '</div>';
+
+  document.getElementById('infoPanelBody').innerHTML = html;
+
+  // Footer — Done button
+  const footer = document.getElementById('infoPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = `<button class="bind-btn-secondary" onclick="exitMountPicker('${structId}')" style="width:100%;font-size:13px">Done</button>`;
+
+  document.getElementById('infoPanel').classList.add('visible');
+  setTimeout(() => document.getElementById('mountSearchInput')?.focus(), 50);
+}
+
+function mountPickerClick(compId, e) {
+  if (e && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+    // Shift+click — mount and stay in picker
+    bindToStructure(compId, mountPickerStructId);
+  } else {
+    // Single click — mount and exit
+    const sid = mountPickerStructId;
+    mountPickerStructId = null;
+    document.querySelector('.sld-panel').classList.remove('bind-mode');
+    bindToStructure(compId, sid);
+  }
+}
+
+function exitMountPicker(structId) {
+  mountPickerStructId = null;
+  document.querySelector('.sld-panel').classList.remove('bind-mode');
+  openStructureInfoPanel(structId);
+}
+
+function filterMountList() {
+  const q = (document.getElementById('mountSearchInput')?.value || '').toLowerCase();
+  document.querySelectorAll('#mountListItems .bind-list-item').forEach(item => {
+    item.style.display = (item.getAttribute('data-name') || '').includes(q) ? '' : 'none';
+  });
 }
 
 function closeInfoPanel() {
   document.getElementById('infoPanel').classList.remove('visible');
   infoPanelComp = null;
   infoPanelStruct = null;
+  // Clean up picker modes
+  if (bindPickerCompId) { bindPickerCompId = null; cancelPickMode(); }
+  if (mountPickerStructId) { mountPickerStructId = null; document.querySelector('.sld-panel').classList.remove('bind-mode'); }
+  document.getElementById('mapPanel').classList.remove('bind-mode');
+  document.querySelector('.sld-panel').classList.remove('bind-mode');
 }
 
 // ─── CONNECT-TO PANEL ────────────────────────────────────
@@ -2073,32 +2381,69 @@ function bindToStructure(compId, structId) {
   if (!comp || !struct) return;
   
   const prep = getPreposition(comp.type, struct.type);
-  comp.binding = { structId: struct.id, prep };
   
-  // Update GPS to structure location
+  // Add to bindings array (multi-bind)
+  if (!comp.bindings) comp.bindings = [];
+  comp.bindings.push({ structId: struct.id, prep });
+  
+  // Track recent structures
+  recentBindStructs = [struct.id, ...recentBindStructs.filter(id => id !== struct.id)].slice(0, 3);
+  
+  // Update GPS to first binding's structure location
   comp.gps = { lat: 38.9 + struct.my * 0.0001, lng: -77.03 + struct.mx * 0.0001, mx: struct.mx, my: struct.my };
   
-  cancelPickMode();
-  renderSLD(); renderMap();
-  showToast(`${comp.label} bound ${prep} ${struct.label}`);
-  
-  // Refresh info panel
-  if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
-  if (infoPanelStruct && infoPanelStruct.id === structId) openStructureInfoPanel(structId);
+  // Refresh — stay in picker if active, otherwise exit pick mode and refresh info panel
+  if (bindPickerCompId === compId) {
+    // Stay in bind picker — just re-render list, don't cancel pick mode
+    renderSLD(); renderMap();
+    showToast(`${comp.label} bound ${prep} ${struct.label}`);
+    renderBindPickerList(compId);
+  } else if (mountPickerStructId === structId) {
+    // Stay in mount picker — just re-render list
+    cancelPickMode();
+    renderSLD(); renderMap();
+    showToast(`${comp.label} mounted ${prep} ${struct.label}`);
+    renderMountPickerList(structId);
+  } else {
+    // Not in any picker — exit pick mode and refresh info panel
+    cancelPickMode();
+    renderSLD(); renderMap();
+    showToast(`${comp.label} bound ${prep} ${struct.label}`);
+    if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
+    if (infoPanelStruct && infoPanelStruct.id === structId) openStructureInfoPanel(structId);
+  }
 }
 
-function unbindComponent(compId) {
+function unbindOne(compId, bindIdx) {
   saveUndo();
   const comp = components.find(c=>c.id===compId);
-  if (!comp) return;
+  if (!comp || !comp.bindings || bindIdx >= comp.bindings.length) return;
   
-  const oldStruct = comp.binding ? structures.find(s=>s.id===comp.binding.structId) : null;
-  comp.binding = null;
+  const removed = comp.bindings.splice(bindIdx, 1)[0];
+  const struct = structures.find(s=>s.id===removed.structId);
+  
+  // If no bindings left, clear GPS
+  if (comp.bindings.length === 0) {
+    comp.gps = null;
+  } else {
+    // Update GPS to first remaining binding
+    const firstStruct = structures.find(s=>s.id===comp.bindings[0].structId);
+    if (firstStruct) comp.gps = { lat: 38.9 + firstStruct.my * 0.0001, lng: -77.03 + firstStruct.mx * 0.0001, mx: firstStruct.mx, my: firstStruct.my };
+  }
   
   renderSLD(); renderMap();
-  showToast(`${comp.label} unbound` + (oldStruct ? ` from ${oldStruct.label}` : ''));
-  
+  showToast(`Unbound from ${struct?.label || '?'}`);
   if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
+}
+
+function rebindOne(compId, bindIdx) {
+  // Remove old binding and start pick mode to select new one
+  saveUndo();
+  const comp = components.find(c=>c.id===compId);
+  if (!comp || !comp.bindings || bindIdx >= comp.bindings.length) return;
+  comp.bindings.splice(bindIdx, 1);
+  renderSLD(); renderMap();
+  startPickMode(compId);
 }
 
 function startPickMode(compId) {
@@ -2115,14 +2460,16 @@ function cancelPickMode() {
   pickMode = false;
   pickTarget = null;
   document.getElementById('pickBanner').classList.remove('visible');
+  document.getElementById('mapPanel').classList.remove('bind-mode');
   map.style.cursor = 'default';
   highlightedStruct = null;
+  bindPickerSelected = [];
   renderMap();
 }
 
 // Map click — structure selection or bind
 map.addEventListener('click', e => {
-  if (earlyPlacement || placementMode || mapPlaceMode) return; // Add/Structure flow takes priority
+  if (mapPlaceMode) return; // Structure flow takes priority
   
   const rect = map.getBoundingClientRect();
   const mx = e.clientX - rect.left;
@@ -2136,7 +2483,15 @@ map.addEventListener('click', e => {
   
   if (pickMode && clickedStruct) {
     // Bind in pick mode
-    bindToStructure(pickTarget, clickedStruct.id);
+    const cid = pickTarget;
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      // Shift+click on map — bind and stay in mode
+      bindToStructure(cid, clickedStruct.id);
+    } else {
+      // Regular click — bind and exit
+      if (bindPickerCompId) bindPickerCompId = null;
+      bindToStructure(cid, clickedStruct.id);
+    }
     return;
   }
   
