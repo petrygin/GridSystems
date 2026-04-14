@@ -1,48 +1,103 @@
 # DSG Demo 2 — Component Interaction Flows
 
-| Flow | Status |
-|------|--------|
-| Add | Done |
-| Connect | Done |
-| Bind | Done |
-| **Aggregate** | Next |
+Interactive HTML prototype for GridModel SLD + Map editor.
+
+| Flow | Status | Version |
+|------|--------|----------|
+| Add | Done | v1 → v5 |
+| Connect | Done | v2 → v5 |
+| Bind | Done | v3 → v5 |
+| Aggregate | Done | v4 → v5 |
+| Sketch-first (palettes, generic components) | Done | v5 |
+| Edit / View mode | Done | v5 |
 
 ## Files
 
-- `BindFlow_Summary.md` — Bind flow results (includes all updates)
-- `ConnectFlow_Summary.md` — Connect flow results
-- `connect-flow-prototype-v3.html` — Interactive prototype (Add + Connect + Bind)
+| File | Description |
+|------|-------------|
+| `prototype-v5-sketch.html` | **Current** — full prototype with all flows |
+| `connect-flow-prototype-v3.html` | Previous version (Add + Connect + Bind only) |
+| `PrototypeSummary_v5.md` | Complete feature summary |
+| `AggregateFlow_Summary.md` | Aggregate flow design decisions |
+| `BindFlow_Summary.md` | Bind flow design decisions |
+| `ConnectFlow_Summary.md` | Connect flow design decisions |
 
-## How to use prototype
+## Live preview
 
-Download `connect-flow-prototype-v3.html` and open in browser.
+Enable GitHub Pages (Settings → Pages → main branch), then open:
 
-### Key interactions
+```
+https://petrygin.github.io/GridSystems/DSG_Demo2/prototype-v5-sketch.html
+```
 
-| Action | How |
+Or use htmlpreview:
+
+```
+https://htmlpreview.github.io/?https://github.com/petrygin/GridSystems/blob/main/DSG_Demo2/prototype-v5-sketch.html
+```
+
+## How to use
+
+Download `prototype-v5-sketch.html` and open in browser, or use live preview link above.
+
+### Modes
+
+The prototype starts in **View mode** (read-only). Click **Edit** button or press **E** to enter Edit mode.
+
+| Mode | Toolbar | Capabilities |
+|------|---------|-------------|
+| View | [Select] [Edit] | Browse, Info Panel, right-click → info only |
+| Edit | [Select] [Pan] [Add] [Fit] [✓ Done] | Full editing: add, connect, bind, aggregate |
+
+### Adding components (Edit mode)
+
+| Method | How |
 |--------|-----|
-| Add component (SLD) | Right-click → Add → Category → Variant (placed at click pos) |
-| Add component (drag) | Open Add panel → drag variant from list onto SLD |
-| Add structure (Map) | Right-click Map → Add structure → Pole/Vault/Pad |
-| Connect (drag) | Hover → port appears → drag to target port |
-| Connect (list) | Right-click → Connect to... → select from list |
-| Connect (select two) | Click + Shift+click → Enter |
-| Disconnect | Right-click → Disconnect → specific connection |
-| Bind | Click component → Info Panel → + Add binding → pick on map or list |
-| Bind multi | Hold Shift while clicking structures (list or map) |
-| Mount (reverse) | Click structure on Map → Mount equipment → select component |
-| Unbind | Info Panel → X button on specific binding row |
-| Drag component | Click + drag (5px threshold) |
-| Drag connection | Hover line → purple handles → drag |
-| Undo | Cmd+Z / Ctrl+Z (50 steps) |
+| Palette drag | Drag type icon from left palette onto diagram |
+| Right-click | Right-click → Add component → select type |
+| Add panel (A) | Press A → Quick add grid or From library |
+| Shift+click | Serial placement (stay in placement mode) |
+
+Components are placed as **generic** (orange ? badge). Specify exact variant later via Info Panel.
+
+### Connecting
+
+| Method | How |
+|--------|-----|
+| Port drag | Hover component → port appears → drag to target port |
+| Connect to... | Right-click → Connect to... → select from list |
+| Multi-select | Click + Shift+click two components → Enter |
+
+### Binding (electrical → physical)
+
+| Method | How |
+|--------|-----|
+| From component | Click component → Info Panel → + Add binding |
+| Pick on map | Info Panel → Add binding → click structure on map |
+| From structure | Click structure on map → Mount equipment |
+| Multi-bind | Hold Shift while clicking (stay in picker mode) |
+
+### Aggregating
+
+| Method | How |
+|--------|-----|
+| Bottom-up | Select components → right-click → Add to Aggregate |
+| Top-down | Right-click empty → Add aggregate → drag components in |
+| Drag-in | Drag component onto aggregate area (snackbar + undo) |
+| Dissolve | Right-click aggregate → Dissolve |
 
 ### Keyboard shortcuts
 
 | Key | Action |
 |-----|--------|
-| V | Select mode |
-| H | Pan mode |
+| E | Enter Edit mode |
+| V | Select tool |
+| H | Pan tool |
 | A | Open Add panel |
 | Enter | Connect two selected |
-| Cmd+Z | Undo |
+| Cmd/Ctrl+Z | Undo (50 steps) |
 | Esc | Cancel any mode |
+
+## Tech
+
+Standalone HTML, ~180KB, ~3350 lines. Vanilla JS, no dependencies. SVG rendering.
