@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridModel — Component Interaction Flows v5 (Sketch-first)</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: #FFFFFF; --foreground: #0A0A0A; --primary: #171717; --primary-foreground: #FAFAFA;
+  --muted: #F5F5F5; --muted-foreground: #737373; --border: #E5E5E5;
+  --neutral-50: #FAFAFA; --neutral-100: #F5F5F5; --neutral-200: #E5E5E5; --neutral-300: #D4D4D4;
+  --neutral-400: #A3A3A3; --neutral-500: #737373; --neutral-600: #525252; --neutral-700: #404040;
+  --neutral-800: #262626; --neutral-900: #171717;
+  --destructive: #DC2626; --destructive-wash: #FEF2F2;
+  --success: #16A34A; --success-wash: #F0FDF4;
+  --warning: #EA580C; --warning-wash: #FFF7ED;
+  --orange-500: #F97316;
+  --radius-sm: 4px; --radius-md: 6px;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: var(--background); color: var(--foreground); font-size: 14px; line-height: 20px; overflow: hidden; height: 100vh; user-select: none; }
+
+.header { height: 48px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--background); flex-shrink: 0; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-center { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.header-logo { width: 24px; height: 24px; background: var(--primary); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--primary-foreground); font-size: 11px; font-weight: 600; }
+.badge-draft { padding: 2px 8px; border-radius: var(--radius-sm); background: var(--neutral-100); color: var(--neutral-700); font-size: 12px; font-weight: 500; border: 1px solid var(--neutral-200); }
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+.content { display: flex; flex: 1; overflow: hidden; }
+
+/* Map Panel */
+.map-panel { flex: 1; background: #2d2d2d; position: relative; border-right: 1px solid var(--border); overflow: hidden; }
+.map-canvas { width: 100%; height: 100%; }
+.map-label { position: absolute; top: 12px; left: 56px; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; }
+
+.divider { width: 6px; background: var(--background); border-left: 1px solid var(--border); border-right: 1px solid var(--border); cursor: col-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.divider-dots { display: flex; flex-direction: column; gap: 2px; }
+.divider-dots span { width: 2px; height: 2px; background: var(--neutral-300); border-radius: 50%; }
+
+/* SLD Panel */
+.sld-panel { flex: 1; background: var(--neutral-50); position: relative; display: flex; flex-direction: column; }
+.sld-canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+.sld-canvas { width: 100%; height: 100%; }
+.sld-label { position: absolute; top: 12px; left: 12px; font-size: 11px; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; }
+
+/* SLD Toolbar */
+.sld-toolbar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); z-index: 10; }
+.sld-tool { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-sm); color: var(--neutral-600); transition: all 0.15s; }
+.sld-tool:hover { background: var(--neutral-100); }
+.sld-tool.active { background: var(--primary); color: var(--primary-foreground); }
+.sld-tool svg { width: 16px; height: 16px; }
+.sld-tool-done { width: auto !important; padding: 0 14px !important; gap: 6px; background: var(--primary) !important; color: var(--primary-foreground) !important; font-size: 13px; font-weight: 500; font-family: var(--font-sans); border-radius: var(--radius-md) !important; }
+.sld-tool-done span { pointer-events: none; }
+.sld-tool-done svg { width: 14px; height: 14px; }
+.sld-tool-done:hover { opacity: 0.9; background: var(--primary) !important; }
+#viewToolbar, #editToolbar { display: flex; gap: 2px; align-items: center; }
+.tool-sep { width: 1px; background: var(--border); margin: 4px 2px; }
+
+/* Conductor Picker */
+.conductor-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 280px; overflow: hidden; display: none; }
+.conductor-picker.visible { display: block; }
+.conductor-picker-header { padding: 10px 12px 8px; font-size: 12px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.5px; }
+.conductor-picker-search { padding: 6px 12px 8px; }
+.conductor-picker-search input { width: 100%; height: 30px; padding: 0 10px 0 28px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; background: var(--background); font-family: var(--font-sans); outline: none; }
+.conductor-section-label { padding: 6px 12px 4px; font-size: 11px; font-weight: 500; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.4px; border-top: 1px solid var(--border); }
+.conductor-list { max-height: 240px; overflow-y: auto; }
+.conductor-item { padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 13px; transition: background 0.1s; }
+.conductor-item:hover { background: var(--neutral-50); }
+.conductor-item.recent { border-left: 2px solid var(--orange-500); }
+.conductor-item .name { font-weight: 500; color: var(--foreground); }
+.conductor-item .meta { font-size: 11px; color: var(--neutral-500); }
+.conductor-item .recent-badge { font-size: 10px; color: var(--orange-500); font-weight: 500; margin-left: 6px; }
+.conductor-show-all { padding: 7px 12px; font-size: 12px; color: var(--neutral-500); cursor: pointer; display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--border); }
+.conductor-show-all:hover { color: var(--foreground); background: var(--neutral-50); }
+.conductor-picker-footer { padding: 8px 12px; border-top: 1px solid var(--border); }
+.conductor-picker-cancel { background: none; border: none; font-size: 13px; color: var(--neutral-500); cursor: pointer; font-family: var(--font-sans); }
+.conductor-picker-cancel:hover { color: var(--foreground); }
+
+/* Toast */
+.toast { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 16px; border-radius: var(--radius-md); font-size: 13px; z-index: 30; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.toast.visible { display: flex; align-items: center; gap: 8px; }
+
+/* Live Validation Mini */
+.validation-mini { position: absolute; top: 12px; right: 12px; width: 260px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 1px 3px rgba(0,0,0,0.08); z-index: 10; overflow: hidden; display: none; }
+.validation-mini.visible { display: block; }
+.validation-mini-header { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.validation-mini-title { font-size: 13px; font-weight: 600; }
+.validation-mini-close { background: none; border: none; cursor: pointer; color: var(--neutral-400); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+.validation-mini-close:hover { background: var(--neutral-100); }
+.validation-item { padding: 8px 12px; border-left: 3px solid var(--destructive); font-size: 12px; }
+.validation-item + .validation-item { border-top: 1px solid var(--neutral-100); }
+.validation-item .code { font-weight: 600; color: var(--foreground); font-family: var(--font-mono); }
+.validation-item .desc { color: var(--neutral-600); margin-top: 2px; }
+.validation-item.warning { border-left-color: var(--warning); }
+
+/* Hint */
+.hint { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: white; padding: 6px 14px; border-radius: var(--radius-md); font-size: 12px; z-index: 5; pointer-events: none; white-space: nowrap; transition: opacity 0.3s; }
+
+/* Status bar */
+.status-bar { height: 28px; border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; font-size: 12px; color: var(--neutral-500); gap: 16px; flex-shrink: 0; background: var(--background); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.status-dot.green { background: var(--success); }
+
+/* Midpoint handle */
+.mid-handle { cursor: grab; transition: fill 0.15s; }
+.mid-handle:hover { fill: #7C3AED !important; }
+.mid-handle:active { cursor: grabbing; }
+
+/* Add Component Panel */
+.add-panel { position: absolute; top: 0; left: 0; bottom: 0; width: 280px; background: var(--background); border-right: 1px solid var(--border); z-index: 25; display: none; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.06); }
+.add-panel.visible { display: flex; }
+.add-panel-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.add-panel-header .title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.add-panel-header .back { background: none; border: none; cursor: pointer; color: var(--neutral-500); display: flex; align-items: center; padding: 4px; border-radius: var(--radius-sm); }
+.add-panel-header .back:hover { background: var(--neutral-100); }
+.add-panel-header .close { background: none; border: none; cursor: pointer; color: var(--neutral-400); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+.add-panel-header .close:hover { background: var(--neutral-100); }
+.add-panel-body { flex: 1; overflow-y: auto; }
+.add-panel-footer { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.add-search { padding: 12px 16px; }
+.add-search input { width: 100%; height: 32px; padding: 0 10px 0 30px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: var(--background); font-family: var(--font-sans); outline: none; }
+.add-search .icon { position: absolute; left: 24px; top: 20px; color: var(--neutral-400); pointer-events: none; }
+.add-list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid var(--neutral-50); }
+.add-list-item:hover { background: var(--neutral-50); }
+.add-list-item .item-icon { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); flex-shrink: 0; margin-right: 10px; }
+.add-list-item .item-text { flex: 1; }
+.add-list-item .item-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+.add-list-item .item-meta { font-size: 12px; color: var(--neutral-500); margin-top: 1px; }
+.add-list-item .arrow { color: var(--neutral-300); flex-shrink: 0; }
+.add-section-label { padding: 8px 16px 4px; font-size: 11px; font-weight: 500; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid var(--border); margin-top: 4px; }
+.add-form-section { padding: 12px 16px 8px; }
+.add-form-section .section-title { font-size: 12px; font-weight: 600; color: var(--neutral-500); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.add-form-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0; gap: 12px; }
+.add-form-row .label { font-size: 12px; color: var(--muted-foreground); min-width: 90px; flex-shrink: 0; }
+.add-form-row .value { font-size: 13px; color: var(--foreground); text-align: right; }
+.add-form-row input { height: 28px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; width: 100%; font-family: var(--font-sans); outline: none; }
+.add-btn-primary { width: 100%; height: 36px; background: var(--primary); color: var(--primary-foreground); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font-sans); }
+.add-btn-primary:hover { opacity: 0.9; }
+.add-btn-secondary { width: 100%; height: 36px; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; cursor: pointer; font-family: var(--font-sans); margin-top: 8px; }
+.add-btn-secondary:hover { background: var(--neutral-50); }
+.add-success { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+.add-success .check { width: 48px; height: 48px; border-radius: 50%; background: var(--success-wash); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.add-success .check svg { color: var(--success); }
+.add-success .msg { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.add-success .sub { font-size: 13px; color: var(--neutral-500); margin-bottom: 24px; }
+
+/* Placement mode overlay */
+.placement-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: white; padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; pointer-events: none; }
+
+/* Context menu */
+.ctx-menu { position: absolute; z-index: 30; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); min-width: 200px; padding: 4px 0; display: none; }
+.ctx-menu.visible { display: block; }
+.ctx-menu-title { padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: var(--foreground); border-bottom: 1px solid var(--neutral-100); margin-bottom: 2px; }
+.ctx-menu-item { padding: 6px 12px; font-size: 13px; color: var(--neutral-700); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.ctx-menu-item:hover { background: var(--neutral-50); }
+.ctx-menu-item svg { flex-shrink: 0; color: var(--neutral-500); }
+.ctx-menu-item:hover svg { color: var(--neutral-700); }
+.ctx-menu-item.danger { color: var(--destructive); }
+.ctx-menu-item.danger svg { color: var(--destructive); }
+.ctx-menu-item.disabled { color: var(--neutral-300); pointer-events: none; }
+.ctx-menu-item.disabled svg { color: var(--neutral-300); }
+.ctx-menu-sep { height: 1px; background: var(--neutral-100); margin: 4px 0; }
+.ctx-menu-item .shortcut { margin-left: auto; font-size: 11px; color: var(--neutral-400); }
+
+/* Info Panel (right side) */
+.info-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 300px; background: var(--background); border-left: 1px solid var(--border); z-index: 20; display: none; flex-direction: column; box-shadow: -2px 0 8px rgba(0,0,0,0.06); }
+.info-panel.visible { display: flex; }
+.info-panel-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.info-panel-header .title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.info-panel-header .actions { display: flex; gap: 4px; flex-shrink: 0; }
+.info-panel-header .actions button { width: 28px; height: 28px; background: none; border: none; cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); }
+.info-panel-header .actions button:hover { background: var(--neutral-100); }
+.info-panel-body { flex: 1; overflow-y: auto; }
+.info-panel-footer { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.info-section { border-bottom: 1px solid var(--border); }
+.info-section-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--foreground); }
+.info-section-header svg { color: var(--neutral-400); flex-shrink: 0; }
+.info-section-body { padding: 0 16px 12px; }
+.info-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0; gap: 12px; }
+.info-row .label { font-size: 12px; color: var(--muted-foreground); min-width: 80px; flex-shrink: 0; }
+.info-row .value { font-size: 13px; color: var(--foreground); text-align: right; word-break: break-all; }
+.info-row .value.muted { color: var(--neutral-400); }
+
+/* Bind section specific */
+.bind-status { display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+.bind-status .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.bind-status .dot.bound { background: var(--success); }
+.bind-status .dot.unbound { background: var(--warning); }
+.bind-status .text { font-size: 13px; }
+.bind-actions { display: flex; gap: 6px; margin-top: 8px; }
+.bind-actions button { height: 28px; padding: 0 10px; border-radius: var(--radius-sm); font-size: 12px; font-family: var(--font-sans); cursor: pointer; }
+.bind-btn-primary { background: var(--primary); color: var(--primary-foreground); border: none; }
+.bind-btn-secondary { background: var(--background); color: var(--foreground); border: 1px solid var(--border); }
+.bind-btn-danger { background: var(--background); color: var(--destructive); border: 1px solid var(--border); }
+
+/* Structure picker dropdown */
+.struct-picker { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.struct-picker-item { padding: 8px 10px; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.1s; }
+.struct-picker-item:hover { background: var(--neutral-50); }
+.struct-picker-item .name { font-weight: 500; color: var(--foreground); }
+.struct-picker-item .dist { color: var(--neutral-400); }
+.struct-picker-item + .struct-picker-item { border-top: 1px solid var(--neutral-50); }
+
+/* Mounted equipment list */
+.mounted-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.mounted-item .eq-name { font-size: 13px; color: var(--foreground); font-weight: 500; }
+.mounted-item .eq-prep { font-size: 11px; color: var(--neutral-500); }
+
+/* Pick-on-map mode */
+.pick-mode-banner { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; align-items: center; gap: 8px; }
+.pick-mode-banner.visible { display: flex; }
+.pick-mode-banner button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-family: var(--font-sans); }
+
+/* Connect-to Panel (reuses info-panel slot) */
+.connect-list-item { padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid var(--neutral-50); }
+.connect-list-item:hover { background: var(--neutral-50); }
+.connect-list-item .cl-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+.connect-list-item .cl-meta { font-size: 11px; color: var(--neutral-500); margin-top: 1px; }
+.connect-list-item .cl-compat { font-size: 11px; padding: 1px 6px; border-radius: 2px; }
+.connect-list-item .cl-compat.full { background: var(--success-wash); color: var(--success); }
+.connect-list-item .cl-compat.partial { background: var(--warning-wash); color: var(--warning); }
+
+/* Add Structure picker on Map */
+.add-struct-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 220px; overflow: hidden; }
+
+/* Bind/Mount mode — panel highlights (outline renders on top of SVG) */
+.map-panel.bind-mode { outline: 3px solid #00BFFF; outline-offset: -3px; }
+.sld-panel.bind-mode { outline: 3px solid #00BFFF; outline-offset: -3px; }
+
+/* Compact picker list items */
+.bind-list-item { padding: 5px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.1s; font-size: 12px; }
+.bind-list-item:hover { background: var(--neutral-50); }
+.bind-list-item.selected { background: var(--success-wash); }
+.bind-list-item.disabled { color: var(--neutral-300); pointer-events: none; }
+.bind-list-item .bl-name { font-weight: 500; color: var(--foreground); font-size: 13px; }
+.bind-list-item .bl-meta { color: var(--neutral-500); font-size: 11px; }
+.bind-list-item .bl-tag { font-size: 10px; color: var(--neutral-400); }
+.add-struct-item { padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.1s; }
+.add-struct-item:hover { background: var(--neutral-50); }
+.add-struct-item svg { flex-shrink: 0; color: var(--neutral-500); }
+
+/* Map placement mode */
+.map-place-hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.map-place-hint.visible { display: flex; }
+.map-place-hint button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-family: var(--font-sans); }
+
+/* Drag ghost from Add panel */
+.add-drag-ghost { position: fixed; pointer-events: none; z-index: 100; background: var(--background); border: 1.5px dashed var(--neutral-400); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12px; font-family: var(--font-sans); color: var(--neutral-600); opacity: 0.85; box-shadow: 0 2px 8px rgba(0,0,0,0.12); display: none; white-space: nowrap; }
+/* Component Palette (left side of SLD) */
+.comp-palette { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-direction: column; }
+.comp-palette.expanded { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.palette-grid { display: grid; gap: 4px; }
+.palette-item { display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; border-radius: var(--radius-sm); border: 1px solid transparent; transition: all 0.15s; position: relative; }
+.palette-item:hover { background: var(--neutral-100); border-color: var(--border); }
+.palette-item:active { cursor: grabbing; }
+.palette-item svg { color: var(--neutral-600); pointer-events: none; }
+.palette-item .p-label { color: var(--neutral-500); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.comp-palette.collapsed { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); width: 40px; }
+.comp-palette.collapsed .palette-grid { grid-template-columns: 1fr; }
+.comp-palette.collapsed .palette-item { width: 32px; height: 32px; }
+.comp-palette.collapsed .palette-item svg { width: 18px; height: 18px; }
+.comp-palette.collapsed .palette-item .p-label { display: none; }
+.comp-palette.expanded .palette-grid { grid-template-columns: repeat(2, 1fr); }
+.comp-palette.expanded .palette-item { width: 80px; height: 60px; gap: 4px; }
+.comp-palette.expanded .palette-item svg { width: 22px; height: 22px; }
+.comp-palette.expanded .palette-item .p-label { font-size: 10px; max-width: 76px; }
+.palette-toggle { height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; background: none; border-radius: var(--radius-sm); color: var(--neutral-400); margin-top: 2px; }
+.palette-toggle:hover { background: var(--neutral-100); color: var(--neutral-600); }
+.palette-item .p-tooltip { display: none; position: absolute; left: 40px; top: 50%; transform: translateY(-50%); background: var(--primary); color: var(--primary-foreground); padding: 4px 10px; border-radius: var(--radius-sm); font-size: 12px; white-space: nowrap; pointer-events: none; z-index: 5; }
+.comp-palette.collapsed .palette-item:hover .p-tooltip { display: block; }
+
+/* Unspecified component badge */
+.unspecified-badge { fill: var(--warning); }
+
+/* Map structure palette */
+.struct-palette { position: absolute; top: 12px; left: 12px; z-index: 15; background: rgba(30,30,30,0.9); border: 1px solid #444; border-radius: var(--radius-md); padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+.struct-palette-item { width: 36px; height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; border-radius: var(--radius-sm); border: 1px solid transparent; transition: all 0.15s; position: relative; }
+.struct-palette-item:hover { background: rgba(255,255,255,0.1); border-color: #555; }
+.struct-palette-item svg { width: 18px; height: 18px; color: #999; pointer-events: none; }
+.struct-palette-item .sp-tooltip { display: none; position: absolute; left: 44px; top: 50%; transform: translateY(-50%); background: #222; color: #ddd; padding: 4px 10px; border-radius: var(--radius-sm); font-size: 12px; white-space: nowrap; pointer-events: none; }
+.struct-palette-item:hover .sp-tooltip { display: block; }
+
+/* Drag ghost */
+.drag-ghost { position: fixed; z-index: 100; opacity: 0.7; pointer-events: none; }
+
+/* Context menu submenu */
+.ctx-submenu { position: relative; }
+.ctx-submenu-items { position: absolute; left: 100%; top: -4px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); min-width: 180px; padding: 4px 0; display: none; z-index: 31; }
+.ctx-submenu:hover .ctx-submenu-items { display: block; }
+.ctx-menu-item .chevron { margin-left: auto; color: var(--neutral-400); }
+
+/* Aggregate type option in info panel */
+.agg-type-option { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 6px; transition: all 0.15s; }
+.agg-type-option:hover { border-color: var(--neutral-400); }
+.agg-type-option.selected { border-color: #00BFFF; background: rgba(0,191,255,0.05); }
+.agg-type-option .type-icon { width: 28px; height: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.agg-type-option .type-name { font-size: 13px; font-weight: 500; }
+.agg-type-option .type-meta { font-size: 11px; color: var(--neutral-500); }
+.agg-member-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.agg-member-item .member-remove { background: none; border: none; cursor: pointer; color: var(--neutral-400); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 2px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+.agg-member-item:hover .member-remove { opacity: 1; }
+.agg-member-item .member-remove:hover { color: var(--destructive); }
+.agg-rule-item { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; font-size: 12px; }
+.agg-rule-item .rule-icon { flex-shrink: 0; margin-top: 1px; }
+.agg-rule-item.ok { color: var(--success); }
+.agg-rule-item.warn { color: var(--warning); }
+.agg-rule-item.err { color: var(--destructive); }
+.agg-rule-item .rule-text { color: var(--neutral-600); }
+
+/* Action snackbar (undo) */
+.snackbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 10px 16px; border-radius: var(--radius-md); font-size: 13px; z-index: 35; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); align-items: center; gap: 12px; }
+.snackbar.visible { display: flex; }
+.snackbar .sb-undo { padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font-sans); background: transparent; color: #00BFFF; }
+.snackbar .sb-undo:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">G</div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </div>
+    <div class="header-center">
+      <span style="font-weight:500">Project 131212_Zone_51</span>
+      <span style="color:var(--neutral-400)">·</span>
+      <span style="color:var(--neutral-500)">Branch: test_12</span>
+      <span style="color:var(--neutral-400)">·</span>
+      <span style="color:var(--neutral-500)">31 Mar 2026</span>
+    </div>
+    <div class="header-right">
+      <span id="errorCount" style="display:flex;align-items:center;gap:4px;color:var(--neutral-400);font-size:12px;font-weight:500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="errorText">0</span>
+      </span>
+      <span class="badge-draft">Draft</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Map -->
+    <div class="map-panel" id="mapPanel">
+      <span class="map-label">Physical Map</span>
+      <!-- Structure Palette -->
+      <div class="struct-palette" id="structPalette"></div>
+      <svg class="map-canvas" id="mapCanvas"></svg>
+      <!-- Map context menu -->
+      <div class="ctx-menu" id="mapCtxMenu"></div>
+      <!-- Add Structure picker -->
+      <div class="add-struct-picker" id="addStructPicker" style="display:none">
+        <div style="padding:10px 12px 6px;font-size:12px;font-weight:600;color:var(--neutral-500);text-transform:uppercase;letter-spacing:0.5px">Add to map</div>
+        <div class="add-struct-item" onclick="startAddStructure('pole')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="3"/><path d="M12 9v12"/><path d="M8 21h8"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Pole</div><div style="font-size:11px;color:var(--neutral-500)">Wood, Steel, Concrete</div></div>
+        </div>
+        <div class="add-struct-item" onclick="startAddStructure('vault')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Vault</div><div style="font-size:11px;color:var(--neutral-500)">Underground vault, Handhole</div></div>
+        </div>
+        <div class="add-struct-item" onclick="startAddStructure('pad')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="12" width="20" height="8" rx="1"/><path d="M6 12V8M18 12V8"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Pad / Cabinet</div><div style="font-size:11px;color:var(--neutral-500)">Equipment pad, Cabinet</div></div>
+        </div>
+      </div>
+      <!-- Map placement hint -->
+      <div class="map-place-hint" id="mapPlaceHint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span id="mapPlaceText">Click on the map to place structure</span>
+        <button onclick="cancelMapPlace()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="divider"><div class="divider-dots"><span></span><span></span><span></span></div></div>
+
+    <!-- SLD -->
+    <div class="sld-panel">
+      <span class="sld-label" style="left:60px">SLD Diagram</span>
+      <div class="sld-canvas-wrap">
+
+        <!-- Component Palette -->
+        <div class="comp-palette collapsed" id="compPalette">
+          <div class="palette-grid" id="paletteGrid"></div>
+          <button class="palette-toggle" id="paletteToggle" onclick="togglePalette()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </button>
+        </div>
+        <svg class="sld-canvas" id="sldCanvas"></svg>
+
+        <!-- Placement hint -->
+        <div class="placement-hint" id="placementHint" style="display:none">Click on the diagram to place component</div>
+
+        <div class="sld-toolbar" id="sldToolbar">
+          <!-- View mode toolbar -->
+          <div id="viewToolbar">
+            <button class="sld-tool active" id="toolSelectView" title="Select (V)" onclick="setTool('select')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+            </button>
+            <button class="sld-tool" id="toolEditToggle" title="Edit mode" onclick="enterEditMode()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            </button>
+          </div>
+          <!-- Edit mode toolbar -->
+          <div id="editToolbar" style="display:none">
+            <button class="sld-tool active" id="toolSelect" title="Select (V)" onclick="setTool('select')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+            </button>
+            <button class="sld-tool" id="toolPan" title="Pan (H)" onclick="setTool('pan')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 0 0-4 0v5m0 0V4a2 2 0 0 0-4 0v7m0 0V7a2 2 0 0 0-4 0v7m12-2v4a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-3"/></svg>
+            </button>
+            <div class="tool-sep"></div>
+            <button class="sld-tool" id="toolAdd" title="Add (A)" onclick="openAddPanel()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <div class="tool-sep"></div>
+            <button class="sld-tool" title="Fit to screen">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+            <div class="tool-sep"></div>
+            <button class="sld-tool sld-tool-done" id="toolDone" title="Finish editing" onclick="exitEditMode()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+              <span>Done</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Component Panel -->
+        <div class="add-panel" id="addPanel">
+          <div class="add-panel-header" id="addPanelHeader">
+            <div class="title"><span id="addPanelTitle">Add component</span></div>
+            <button class="close" onclick="closeAddPanel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>
+          <div class="add-panel-body" id="addPanelBody"></div>
+          <div class="add-panel-footer" id="addPanelFooter" style="display:none"></div>
+        </div>
+
+        <!-- Context menu -->
+        <div class="ctx-menu" id="ctxMenu"></div>
+
+        <!-- Info Panel -->
+        <div class="info-panel" id="infoPanel">
+          <div class="info-panel-header">
+            <span class="title" id="infoPanelTitle">Component</span>
+            <div class="actions">
+              <button title="Expand" onclick=""><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+              <button title="Close" onclick="closeInfoPanel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+          </div>
+          <div class="info-panel-body" id="infoPanelBody"></div>
+          <div class="info-panel-footer" id="infoPanelFooter" style="display:none"></div>
+        </div>
+
+        <!-- Pick on map banner -->
+        <div class="pick-mode-banner" id="pickBanner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          Click a structure on the map to bind
+          <button onclick="cancelPickMode()">Cancel</button>
+        </div>
+
+        <div class="conductor-picker" id="conductorPicker">
+          <div id="conductorPickerContent"></div>
+        </div>
+
+        <div class="toast" id="toast"><span id="toastIcon">✓</span> <span id="toastText"></span></div>
+        <div class="snackbar" id="snackbar">
+          <span id="snackbarText"></span>
+          <button class="sb-undo" id="snackbarUndo">Undo</button>
+        </div>
+        <div class="hint" id="hint" style="opacity:1">Press A to add component, or hover and drag from ports to connect</div>
+
+        <div class="validation-mini" id="validationMini">
+          <div class="validation-mini-header">
+            <span class="validation-mini-title">Live validation</span>
+            <button class="validation-mini-close" onclick="document.getElementById('validationMini').classList.remove('visible')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div id="validationItems"></div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span style="display:flex;align-items:center;gap:6px"><span class="status-dot green"></span> <span id="statusText">Ready</span></span>
+        <span style="color:var(--border)">|</span>
+        <span id="hoverInfo" style="color:var(--foreground);font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <span id="connectionCount" style="margin-left:auto">Connections: 0</span>
+        <span>Components: 6</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Drag ghost for Add panel drag-and-drop -->
+<div class="add-drag-ghost" id="addDragGhost"></div>
+
+<script>
+const svgNS = 'http://www.w3.org/2000/svg';
+const sld = document.getElementById('sldCanvas');
+const map = document.getElementById('mapCanvas');
+
+let currentTool = 'select';
+let dragging = false, dragSource = null, dragLine = null, dragElbow = null;
+let connections = [], validationErrors = [], connectionCount = 0;
+let pendingConnection = null;
+let draggingMid = null, draggingMidConn = null, draggingMidAxis = null;
+let hoveredComp = null;
+let hoveredConn = null;
+let draggingComp = null, dragCompOffset = null;
+let dragPending = null; // {comp, dx, dy, startX, startY} — waits for 5px threshold
+const DRAG_THRESHOLD = 5;
+let selectedComps = [];
+let infoPanelComp = null, infoPanelStruct = null;
+let pickMode = false, pickTarget = null;
+let highlightedStruct = null;
+let addGhostPos = null; // {x, y} on SLD — ghost preview during Add
+let addDragging = false; // dragging from Add panel list
+
+// ─── UNDO ───────────────────────────────────────────────
+const undoStack = [];
+const MAX_UNDO = 50;
+
+function saveUndo() {
+  undoStack.push({
+    components: JSON.parse(JSON.stringify(components)),
+    connections: JSON.parse(JSON.stringify(connections)),
+    aggregates: JSON.parse(JSON.stringify(aggregates)),
+    connectionCount
+  });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const state = undoStack.pop();
+  components.length = 0;
+  state.components.forEach(c => components.push(c));
+  connections.length = 0;
+  state.connections.forEach(c => connections.push(c));
+  aggregates.length = 0;
+  (state.aggregates||[]).forEach(a => aggregates.push(a));
+  connectionCount = state.connectionCount;
+  renderSLD(); renderMap(); updateComponentCount();
+  document.getElementById('connectionCount').textContent = `Connections: ${connections.length}`;
+  showToast('Undo');
+}
+
+// ─── COMPONENTS ─────────────────────────────────────────
+const components = [
+  { id:'BUS', type:'bus', label:'Bus 12kV', x:140, y:60, w:340, h:10,
+    gps: null, bindings: [],
+    terminals:[
+      {id:'BUS-P1',name:'Pos1',side:'bottom',offset:0.1,phases:'ABC-N',connected:false},
+      {id:'BUS-P2',name:'Pos2',side:'bottom',offset:0.3,phases:'ABC-N',connected:false},
+      {id:'BUS-P3',name:'Pos3',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'BUS-P4',name:'Pos4',side:'bottom',offset:0.7,phases:'ABC-N',connected:false},
+      {id:'BUS-P5',name:'Pos5',side:'bottom',offset:0.9,phases:'ABC-N',connected:false},
+    ]},
+  { id:'TR1', type:'transformer', label:'TR-312', x:155, y:140, w:44, h:44,
+    gps:{lat:38.905,lng:-77.035, mx:120, my:180}, bindings:[],
+    terminals:[
+      {id:'TR1-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'TR1-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ]},
+  { id:'TR2', type:'transformer', label:'TR-415', x:310, y:140, w:44, h:44,
+    gps:{lat:38.906,lng:-77.032, mx:240, my:160}, bindings:[],
+    terminals:[
+      {id:'TR2-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'TR2-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ]},
+  { id:'SW1', type:'switch', label:'SW-42', x:230, y:255, w:30, h:30,
+    gps:{lat:38.904,lng:-77.033, mx:180, my:270}, bindings:[],
+    terminals:[
+      {id:'SW1-A',name:'A',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:'SW1-B',name:'B',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ]},
+  { id:'MT1', type:'meter', label:'MT-101', x:155, y:350, w:26, h:26,
+    gps:{lat:38.902,lng:-77.036, mx:100, my:350}, bindings:[],
+    terminals:[
+      {id:'MT1-T',name:'Terminal',side:'top',offset:0.5,phases:'AB-N',connected:false},
+    ]},
+  { id:'MT2', type:'meter', label:'MT-102', x:310, y:350, w:26, h:26,
+    gps:{lat:38.902,lng:-77.031, mx:260, my:350}, bindings:[],
+    terminals:[
+      {id:'MT2-T',name:'Terminal',side:'top',offset:0.5,phases:'A-N',connected:false},
+    ]},
+  { id:'GEN1', type:'switch', label:'DG-201', x:420, y:255, w:30, h:30,
+    gps:{lat:38.903,lng:-77.030, mx:300, my:290}, bindings:[],
+    terminals:[
+      {id:'GEN1-A',name:'Output',side:'top',offset:0.5,phases:'DC',connected:true},
+      {id:'GEN1-B',name:'Grid',side:'bottom',offset:0.5,phases:'DC',connected:false},
+    ]},
+];
+
+// Physical structures on map
+const structures = [
+  { id:'POLE-1', type:'pole', label:'P-1201', mx:120, my:180 },
+  { id:'POLE-2', type:'pole', label:'P-1202', mx:180, my:270 },
+  { id:'POLE-3', type:'pole', label:'P-1203', mx:100, my:350 },
+  { id:'VAULT-1', type:'vault', label:'VLT-01', mx:240, my:160 },
+  { id:'VAULT-2', type:'vault', label:'VLT-02', mx:260, my:350 },
+];
+const physConnections = [];
+
+// ─── AGGREGATES ─────────────────────────────────────────
+const aggregates = [];
+let aggIdCounter = 0;
+let dragOverAgg = null;
+let hoveredAgg = null;
+
+const aggTemplates = {
+  substation: { id:'substation', name:'Substation', color:'#8B5CF6', desc:'Collection of equipment at a single location', icon:'S',
+    rules: [{type:'bus',min:1,max:20,label:'Bus'},{type:'transformer',min:1,max:10,label:'Transformer'},{type:'switch',min:0,max:50,label:'Switch'},{type:'meter',min:0,max:100,label:'Meter'}], mustHave:['bus'] },
+  circuit: { id:'circuit', name:'Circuit', color:'#0EA5E9', desc:'Network section between two substations', icon:'C',
+    rules: [{type:'switch',min:1,max:20,label:'Switch'},{type:'meter',min:0,max:50,label:'Meter'},{type:'transformer',min:0,max:5,label:'Transformer'}], mustHave:['switch'] },
+  feeder: { id:'feeder', name:'Feeder', color:'#F59E0B', desc:'Distribution line from a substation', icon:'F',
+    rules: [{type:'transformer',min:1,max:20,label:'Transformer'},{type:'switch',min:0,max:30,label:'Switch'},{type:'meter',min:0,max:100,label:'Meter'}], mustHave:['transformer'] },
+};
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const [k,v] of Object.entries(attrs||{})) e.setAttribute(k,v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function getPortXY(comp, t) {
+  if (t.side==='top') return {x:comp.x+comp.w*t.offset, y:comp.y};
+  if (t.side==='bottom') return {x:comp.x+comp.w*t.offset, y:comp.y+comp.h};
+  if (t.side==='left') return {x:comp.x, y:comp.y+comp.h*t.offset};
+  return {x:comp.x+comp.w, y:comp.y+comp.h*t.offset};
+}
+
+// Orthogonal 4-segment path: start → right to midX → down to midY → right to end → down to end
+function orthoPath(p1, p2, midX, midY) {
+  const my = midY !== undefined ? midY : (p1.y + p2.y) / 2;
+  const mx = midX !== undefined ? midX : p1.x;
+  return `M${p1.x},${p1.y} L${mx},${p1.y} L${mx},${my} L${p2.x},${my} L${p2.x},${p2.y}`;
+}
+
+// Distance from point to line segment
+function distToSegment(px,py,x1,y1,x2,y2) {
+  const dx=x2-x1, dy=y2-y1;
+  if (dx===0 && dy===0) return Math.hypot(px-x1,py-y1);
+  let t = ((px-x1)*dx+(py-y1)*dy)/(dx*dx+dy*dy);
+  t = Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(x1+t*dx), py-(y1+t*dy));
+}
+
+// Get 4 segments of ortho path for hit testing
+function getOrthoSegments(p1, p2, midX, midY) {
+  const my = midY !== undefined ? midY : (p1.y + p2.y) / 2;
+  const mx = midX !== undefined ? midX : p1.x;
+  return [
+    {x1:p1.x,y1:p1.y, x2:mx,y2:p1.y, dir:'h'},      // top horizontal (may be zero-length)
+    {x1:mx,y1:p1.y, x2:mx,y2:my, dir:'v'},             // left vertical
+    {x1:mx,y1:my, x2:p2.x,y2:my, dir:'h'},             // middle horizontal
+    {x1:p2.x,y1:my, x2:p2.x,y2:p2.y, dir:'v'},         // right vertical
+  ];
+}
+
+// ─── RENDER SLD ─────────────────────────────────────────
+function renderSLD() {
+  sld.innerHTML = '';
+  // Grid
+  const defs = el('defs',{},sld);
+  const pat = el('pattern',{id:'grid',width:20,height:20,patternUnits:'userSpaceOnUse'},defs);
+  el('path',{d:'M 20 0 L 0 0 0 20',fill:'none',stroke:'#ececec','stroke-width':0.5},pat);
+  el('rect',{width:'100%',height:'100%',fill:'url(#grid)'},sld);
+
+  // Aggregate backgrounds
+  aggregates.forEach(agg => {
+    const tmpl = aggTemplates[agg.type]; if (!tmpl) return;
+    const children = agg.children.map(id => components.find(c=>c.id===id)).filter(Boolean);
+    const isH = hoveredAgg === agg.id || dragOverAgg === agg.id;
+    const isDrop = dragOverAgg === agg.id;
+    if (agg.collapsed) {
+      const cx = agg.cx||300, cy = agg.cy||200;
+      el('rect',{x:cx-60,y:cy-20,width:120,height:40,rx:6,fill:tmpl.color+'18',stroke:isH?'#00BFFF':tmpl.color,'stroke-width':isH?2:1.5,'data-agg':agg.id,cursor:'pointer'},sld);
+      el('text',{x:cx,y:cy-4,'text-anchor':'middle',fill:tmpl.color,'font-size':11,'font-weight':600,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=agg.name;
+      el('text',{x:cx,y:cy+10,'text-anchor':'middle',fill:'#737373','font-size':10,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=`${children.length} components`;
+    } else if (children.length > 0) {
+      const pad=24; let mnX=Infinity,mnY=Infinity,mxX=-Infinity,mxY=-Infinity;
+      children.forEach(c=>{mnX=Math.min(mnX,c.x);mnY=Math.min(mnY,c.y);mxX=Math.max(mxX,c.x+c.w);mxY=Math.max(mxY,c.y+c.h);});
+      el('rect',{x:mnX-pad,y:mnY-pad-16,width:mxX-mnX+pad*2,height:mxY-mnY+pad*2+16,rx:8,fill:tmpl.color+'0A',stroke:isDrop?'#00BFFF':isH?tmpl.color+'60':tmpl.color+'30','stroke-width':isDrop?2:1,'stroke-dasharray':isDrop?'6,3':'none','data-agg':agg.id,cursor:'pointer'},sld);
+      el('text',{x:mnX-pad+8,y:mnY-pad-4,fill:tmpl.color+'99','font-size':11,'font-weight':600,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=`${tmpl.icon} ${agg.name}`;
+    } else {
+      const cx=agg.cx||400,cy=agg.cy||300;
+      el('rect',{x:cx-80,y:cy-40,width:160,height:80,rx:8,fill:isDrop?tmpl.color+'10':'transparent',stroke:isDrop?'#00BFFF':isH?tmpl.color:tmpl.color+'50','stroke-width':isDrop?2:1.5,'stroke-dasharray':'6,4','data-agg':agg.id,cursor:'pointer'},sld);
+      el('text',{x:cx,y:cy-6,'text-anchor':'middle',fill:tmpl.color+'80','font-size':12,'font-weight':600,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=agg.name;
+      el('text',{x:cx,y:cy+10,'text-anchor':'middle',fill:'#A3A3A3','font-size':11,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent='Drag components here';
+    }
+  });
+
+  // Connections
+  const cg = el('g',{},sld);
+  connections.forEach(conn => {
+    const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+    const ft = fc.terminals.find(t=>t.id===conn.from);
+    const tt = tc.terminals.find(t=>t.id===conn.to);
+    const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+    const path = orthoPath(p1, p2, conn.midX, conn.midY);
+    const isH = hoveredConn === conn.id;
+    const segs = getOrthoSegments(p1, p2, conn.midX, conn.midY);
+
+    // Hit area
+    el('path',{d:path,fill:'none',stroke:'transparent','stroke-width':12,
+      'data-conn':conn.id, class:'conn-hit', cursor:'pointer'},cg);
+
+    // Line color by validation status (shadcn tokens)
+    const connStatus = conn.status || 'success';
+    const lineColor = isH ? '#00BFFF' : connStatus === 'error' ? 'var(--destructive)' : connStatus === 'warning' ? 'var(--warning)' : 'var(--success)';
+    el('path',{d:path,fill:'none',
+      stroke: lineColor,
+      'stroke-width': isH ? 3 : 2,
+      'stroke-dasharray': 'none',
+      'pointer-events':'none'
+    },cg);
+
+    if (conn.conductor) {
+      const my = conn.midY || (p1.y+p2.y)/2;
+      const mx2 = conn.midX !== undefined ? (conn.midX + p2.x)/2 : (p1.x+p2.x)/2;
+      el('text',{x:mx2,y:my-8,'text-anchor':'middle',fill: isH?'#00BFFF': connStatus==='warning'?'var(--warning)':connStatus==='error'?'var(--destructive)':'var(--success)',
+        'font-size':10,'font-family':'var(--font-mono)','pointer-events':'none'},cg).textContent = conn.conductor;
+    }
+
+    if (isH) {
+      // Handle on horizontal segment (seg index 2) — drags midY (up/down)
+      const hSeg = segs[2];
+      const hx = (hSeg.x1 + hSeg.x2)/2;
+      const hy = hSeg.y1;
+      el('rect',{x:hx-10,y:hy-3,width:20,height:6,rx:3,
+        fill:'#7C3AED',opacity:0.9,
+        class:'mid-handle','data-conn':conn.id,'data-axis':'y',cursor:'ns-resize'},cg);
+
+      // Handle on vertical segment (seg index 1) — drags midX (left/right)
+      const vSeg = segs[1];
+      const vx = vSeg.x1;
+      const vy = (vSeg.y1 + vSeg.y2)/2;
+      if (Math.abs(vSeg.y2 - vSeg.y1) > 20) {
+        el('rect',{x:vx-3,y:vy-10,width:6,height:20,rx:3,
+          fill:'#7C3AED',opacity:0.9,
+          class:'mid-handle','data-conn':conn.id,'data-axis':'x',cursor:'ew-resize'},cg);
+      }
+    }
+  });
+
+  // Components
+  const compG = el('g',{},sld);
+  const hc = hoveredComp;
+  components.forEach(comp => {
+    const g = el('g',{'data-id':comp.id,cursor:'pointer'},compG);
+    const isH = hc===comp.id;
+    const isSel = selectedComps.includes(comp.id);
+    const stk = isSel ? '#00BFFF' : isH ? '#00BFFF' : '#404040';
+    const sw = isSel ? 2.5 : isH ? 2 : 1.5;
+    const txtColor = isSel ? '#00BFFF' : isH ? '#00BFFF' : '#525252';
+
+    if (comp.type==='bus') {
+      el('rect',{x:comp.x,y:comp.y,width:comp.w,height:comp.h,fill: (isSel||isH)?'#00BFFF':'#171717',rx:2},g);
+      el('text',{x:comp.x+comp.w/2,y:comp.y-8,'text-anchor':'middle',fill:txtColor,
+        'font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    } else if (comp.type==='transformer') {
+      const cx=comp.x+comp.w/2, cy=comp.y+comp.h/2;
+      el('circle',{cx,cy:cy-7,r:14,fill:'white',stroke:stk,'stroke-width':sw},g);
+      el('circle',{cx,cy:cy+7,r:14,fill:'white',stroke:stk,'stroke-width':sw},g);
+      el('text',{x:cx+26,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    } else if (comp.type==='switch') {
+      const cx=comp.x+comp.w/2, cy=comp.y+comp.h/2;
+      el('rect',{x:comp.x,y:comp.y,width:comp.w,height:comp.h,fill:'white',stroke:stk,'stroke-width':sw,rx:2},g);
+      el('line',{x1:cx-6,y1:cy,x2:cx+6,y2:cy,stroke:'#16A34A','stroke-width':2},g);
+      el('text',{x:cx+22,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    } else if (comp.type==='meter') {
+      const cx=comp.x+comp.w/2, cy=comp.y+comp.h/2;
+      el('circle',{cx,cy,r:13,fill:'white',stroke:stk,'stroke-width':sw},g);
+      el('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#404040','font-size':9,'font-weight':600},g).textContent='M';
+      el('text',{x:cx+20,y:cy+4,fill:txtColor,'font-size':11,'font-family':'var(--font-sans)'},g).textContent=comp.label;
+    }
+    // Ports (visible on hover, always during drag)
+    comp.terminals.forEach(t => {
+      const p = getPortXY(comp,t);
+      el('circle',{cx:p.x,cy:p.y,r:6,fill:'white',stroke:'#A3A3A3','stroke-width':1.5,
+        class:'port','data-terminal':t.id,'data-comp':comp.id,
+        opacity: dragging ? 0.8 : 0, cursor:'crosshair'},g);
+    });
+
+    // Orphan badge (not bound, not bus)
+    if (comp.bindings.length === 0 && comp.type !== 'bus') {
+      const bx = comp.x + comp.w - 2, by = comp.y - 2;
+      el('circle',{cx:bx,cy:by,r:6,fill:'#FFF7ED',stroke:'#EA580C','stroke-width':1},g);
+      el('text',{x:bx,y:by+3.5,'text-anchor':'middle',fill:'#EA580C','font-size':8,'font-weight':700},g).textContent='!';
+    }
+  });
+
+  // Ghost preview for Add flow — dashed outline at placement position
+  if (addGhostPos && document.getElementById('addPanel').classList.contains('visible')) {
+    const gw = addVariant ? addVariant.w : 40;
+    const gh = addVariant ? addVariant.h : 40;
+    const gx = addGhostPos.x - gw/2;
+    const gy = addGhostPos.y - gh/2;
+    el('rect',{x:gx,y:gy,width:gw,height:gh,fill:'none',
+      stroke:'var(--neutral-400)','stroke-width':1.5,'stroke-dasharray':'4,3',rx:3,opacity:0.6},sld);
+    // Crosshair at center
+    el('line',{x1:addGhostPos.x-6,y1:addGhostPos.y,x2:addGhostPos.x+6,y2:addGhostPos.y,
+      stroke:'var(--neutral-400)','stroke-width':1,opacity:0.5},sld);
+    el('line',{x1:addGhostPos.x,y1:addGhostPos.y-6,x2:addGhostPos.x,y2:addGhostPos.y+6,
+      stroke:'var(--neutral-400)','stroke-width':1,opacity:0.5},sld);
+  }
+}
+
+// ─── RENDER MAP ─────────────────────────────────────────
+function renderMap() {
+  map.innerHTML = '';
+  // Dark bg
+  el('rect',{width:'100%',height:'100%',fill:'#2d2d2d'},map);
+  // Fake street grid
+  for (let i=0;i<8;i++) {
+    el('line',{x1:0,y1:i*60+40,x2:600,y2:i*60+40,stroke:'#3a3a3a','stroke-width':0.5},map);
+    el('line',{x1:i*60+40,y1:0,x2:i*60+40,y2:600,stroke:'#3a3a3a','stroke-width':0.5},map);
+  }
+
+  // Aggregate boundaries on map
+  aggregates.forEach(agg => {
+    const tmpl = aggTemplates[agg.type]; if (!tmpl) return;
+    const gps = agg.children.map(id=>components.find(c=>c.id===id)).filter(c=>c&&c.gps);
+    if (gps.length===0) return;
+    const isH = hoveredAgg===agg.id;
+    if (gps.length===1) {
+      el('circle',{cx:gps[0].gps.mx,cy:gps[0].gps.my,r:isH?18:14,fill:tmpl.color+'20',stroke:isH?'#00BFFF':tmpl.color,'stroke-width':isH?2:1.5,'stroke-dasharray':'4,3'},map);
+      el('text',{x:gps[0].gps.mx,y:gps[0].gps.my-20,'text-anchor':'middle',fill:isH?'#00BFFF':tmpl.color,'font-size':10,'font-weight':600,'font-family':'var(--font-sans)'},map).textContent=agg.name;
+    } else {
+      const pad=25; let mnX=Infinity,mnY=Infinity,mxX=-Infinity,mxY=-Infinity;
+      gps.forEach(c=>{mnX=Math.min(mnX,c.gps.mx);mnY=Math.min(mnY,c.gps.my);mxX=Math.max(mxX,c.gps.mx);mxY=Math.max(mxY,c.gps.my);});
+      el('rect',{x:mnX-pad,y:mnY-pad,width:mxX-mnX+pad*2,height:mxY-mnY+pad*2,rx:8,fill:tmpl.color+'12',stroke:isH?'#00BFFF':tmpl.color+'60','stroke-width':isH?2:1,'stroke-dasharray':'6,4'},map);
+      el('text',{x:(mnX+mxX)/2,y:mnY-pad-6,'text-anchor':'middle',fill:isH?'#00BFFF':tmpl.color,'font-size':10,'font-weight':600,'font-family':'var(--font-sans)'},map).textContent=agg.name;
+    }
+  });
+
+  // Physical connections (structure to structure)
+  const pcg = el('g',{},map);
+  physConnections.forEach(pc => {
+    const s1 = structures.find(s=>s.id===pc.from);
+    const s2 = structures.find(s=>s.id===pc.to);
+    if (!s1||!s2) return;
+    el('line',{x1:s1.mx,y1:s1.my,x2:s2.mx,y2:s2.my,
+      stroke: pc.type==='OH'?'#16A34A':'#16A34A',
+      'stroke-width':2,
+      'stroke-dasharray': pc.type==='UG'?'6,4':'none',
+      opacity:0.8
+    },pcg);
+  });
+
+  // Electrical connections reflected on map
+  connections.forEach(conn => {
+    if (!conn.conductor) return;
+    const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+    if (!fc.gps||!tc.gps) return;
+    const isUG = conn.conductor.includes('UG');
+    const isH = hoveredConn === conn.id;
+    const mapLineColor = isH ? '#00BFFF' : conn.status==='warning' ? 'var(--warning)' : conn.status==='error' ? 'var(--destructive)' : 'var(--success)';
+    el('line',{x1:fc.gps.mx,y1:fc.gps.my,x2:tc.gps.mx,y2:tc.gps.my,
+      stroke: mapLineColor,'stroke-width': isH?3:2,
+      'stroke-dasharray': isUG?'6,4':'none', opacity: isH?1:0.7
+    },pcg);
+  });
+
+  // Structures
+  const sg = el('g',{},map);
+  structures.forEach(s => {
+    const isPick = pickMode;
+    const isHL = highlightedStruct === s.id;
+    
+    // Pick mode: green ring on compatible structures
+    if (isPick) {
+      el('circle',{cx:s.mx,cy:s.my,r:18,fill:'none',stroke:'#16A34A','stroke-width':1.5,opacity:0.5,'stroke-dasharray':'3,3'},sg);
+    }
+    // Hover highlight from dropdown
+    if (isHL) {
+      el('circle',{cx:s.mx,cy:s.my,r:16,fill:'none',stroke:'#00BFFF','stroke-width':2,opacity:0.8},sg);
+    }
+    
+    if (s.type==='pole') {
+      el('circle',{cx:s.mx,cy:s.my,r:5,fill: isHL?'#00BFFF':'#8B6914',stroke: isHL?'#00BFFF':'#d4a84b','stroke-width':1.5},sg);
+    } else if (s.type==='pad') {
+      el('rect',{x:s.mx-7,y:s.my-5,width:14,height:10,fill: isHL?'#00BFFF':'#666',stroke: isHL?'#00BFFF':'#999','stroke-width':1.5,rx:1},sg);
+    } else {
+      el('rect',{x:s.mx-6,y:s.my-6,width:12,height:12,fill: isHL?'#00BFFF':'#555',stroke: isHL?'#00BFFF':'#888','stroke-width':1.5,rx:2},sg);
+    }
+    el('text',{x:s.mx+10,y:s.my+4,fill: isHL?'#00BFFF':'#999','font-size':10,'font-family':'var(--font-sans)'},sg).textContent=s.label;
+  });
+
+  // Equipment markers from SLD (if GPS)
+  components.forEach(comp => {
+    if (!comp.gps) return;
+    const isHighlighted = connections.some(c => c.from.startsWith(comp.id) || c.to.startsWith(comp.id));
+    const isHovered = hoveredComp === comp.id;
+    const isSel = selectedComps.includes(comp.id);
+
+    if (isSel) {
+      el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r:12,
+        fill:'none',stroke:'#00BFFF','stroke-width':1.5,opacity:0.8},sg);
+    } else if (isHovered) {
+      el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r:12,
+        fill:'none',stroke:'#00BFFF','stroke-width':1.5,opacity:0.7},sg);
+    }
+
+    el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r: (isHovered||isSel)?5:4,
+      fill: (isSel||isHovered)?'#00BFFF': isHighlighted?'var(--success)':'var(--warning)',
+      stroke:'white','stroke-width':1.5},sg);
+
+    if (isHovered || isSel) {
+      el('text',{x:comp.gps.mx,y:comp.gps.my-16,'text-anchor':'middle',
+        fill:'#00BFFF','font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},sg).textContent=comp.label;
+    }
+  });
+}
+
+// ─── INTERACTION: SLD ───────────────────────────────────
+sld.addEventListener('mousemove', e => {
+  const rect = sld.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  if (draggingMid) {
+    if (draggingMidAxis === 'y') draggingMidConn.midY = my;
+    if (draggingMidAxis === 'x') draggingMidConn.midX = mx;
+    renderSLD(); renderMap();
+    return;
+  }
+
+  // Component drag (with threshold)
+  if (draggingComp) {
+    draggingComp.x = mx - dragCompOffset.dx;
+    draggingComp.y = my - dragCompOffset.dy;
+    renderSLD(); renderMap();
+    return;
+  }
+
+  // Drag threshold: only start dragging after 3px movement
+  if (dragPending) {
+    const dist = Math.hypot(mx - dragPending.startX, my - dragPending.startY);
+    if (dist >= DRAG_THRESHOLD) {
+      saveUndo();
+      draggingComp = dragPending.comp;
+      dragCompOffset = { dx: dragPending.dx, dy: dragPending.dy };
+      sld.style.cursor = 'grabbing';
+      dragPending = null;
+    }
+    return;
+  }
+
+  if (dragging && dragLine) {
+    // Orthogonal ghost line
+    const fc = components.find(c=>c.terminals.some(t=>t.id===dragSource));
+    const ft = fc.terminals.find(t=>t.id===dragSource);
+    const p1 = getPortXY(fc,ft);
+    const midY = (p1.y + my) / 2;
+    dragLine.setAttribute('d', `M${p1.x},${p1.y} L${p1.x},${midY} L${mx},${midY} L${mx},${my}`);
+  }
+
+  // Show ports on hover + hover highlight (all modes)
+  if (!dragging && !draggingComp && !dragPending) {
+    let found = null;
+    components.forEach(comp => {
+      if (mx>=comp.x-14 && mx<=comp.x+comp.w+14 && my>=comp.y-14 && my<=comp.y+comp.h+14) found=comp;
+    });
+
+    // Update hover glow
+    const newHover = found ? found.id : null;
+    if (newHover !== hoveredComp) {
+      hoveredComp = newHover;
+      renderSLD();
+      renderMap();
+      updateHoverInfo(found);
+    }
+
+    // Aggregate hover (only when not on a component)
+    if (!found) {
+      const ha = aggHitTest(mx, my);
+      const newAggId = ha ? ha.id : null;
+      if (newAggId !== hoveredAgg) {
+        hoveredAgg = newAggId;
+        renderSLD(); renderMap();
+        if (ha) { const t = aggTemplates[ha.type]; document.getElementById('hoverInfo').textContent = `${ha.name}  ·  ${t.name}  ·  ${ha.children.length} components`; }
+      }
+    } else if (hoveredAgg) { hoveredAgg = null; renderSLD(); renderMap(); }
+
+    document.querySelectorAll('.port').forEach(p => {
+      p.setAttribute('opacity', found && found.id===p.getAttribute('data-comp') ? 1 : 0);
+    });
+  }
+
+  // Connection line hover (all modes, when not dragging)
+  if (!dragging && !draggingMid && !draggingComp && !dragPending) {
+    let foundConn = null;
+    connections.forEach(conn => {
+      const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+      const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+      const ft = fc.terminals.find(t=>t.id===conn.from);
+      const tt = tc.terminals.find(t=>t.id===conn.to);
+      const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+      const segs = getOrthoSegments(p1, p2, conn.midX, conn.midY);
+      const near = segs.some(s => distToSegment(mx,my,s.x1,s.y1,s.x2,s.y2) < 8);
+      if (near) foundConn = conn;
+    });
+    const newHC = foundConn ? foundConn.id : null;
+    if (newHC !== hoveredConn) {
+      hoveredConn = newHC;
+      renderSLD(); renderMap();
+      if (foundConn) {
+        const ft = components.flatMap(c=>c.terminals).find(t=>t.id===foundConn.from);
+        const tt = components.flatMap(c=>c.terminals).find(t=>t.id===foundConn.to);
+        const fc = components.find(c=>c.terminals.some(t=>t.id===foundConn.from));
+        const tc = components.find(c=>c.terminals.some(t=>t.id===foundConn.to));
+        const info = `${fc.label}:${ft.name} → ${tc.label}:${tt.name}` +
+          (foundConn.conductor ? `  ·  ${foundConn.conductor}` : '  ·  direct') +
+          `  ·  Phases: ${ft.phases}`;
+        document.getElementById('hoverInfo').textContent = info;
+      } else if (!hoveredComp) {
+        document.getElementById('hoverInfo').textContent = '';
+      }
+    }
+  }
+
+  // Snap target highlighting during drag — show ALL ports, highlight nearest
+  if (dragging) {
+    // Show all ports on all components during drag
+    document.querySelectorAll('.port').forEach(p => {
+      p.setAttribute('opacity', 0.6);
+      p.setAttribute('r', 6);
+    });
+
+    let bestDist=45, bestPort=null;
+    components.forEach(c => c.terminals.forEach(t => {
+      if (t.id===dragSource) return;
+      const p = getPortXY(c,t);
+      const d = Math.hypot(mx-p.x,my-p.y);
+      if (d<bestDist) { bestDist=d; bestPort=t; }
+    }));
+    document.querySelectorAll('.port').forEach(p => {
+      const tid = p.getAttribute('data-terminal');
+      if (tid===dragSource) { p.setAttribute('fill','#16A34A'); p.setAttribute('stroke','#16A34A'); p.setAttribute('opacity',1); return; }
+      if (bestPort && bestPort.id===tid) {
+        const compat = getPhaseCompat(dragSource,tid);
+        p.setAttribute('stroke', compat==='full'?'#16A34A':compat==='partial'?'#EA580C':'#DC2626');
+        p.setAttribute('r',8); p.setAttribute('stroke-width',2.5); p.setAttribute('opacity',1);
+      } else {
+        p.setAttribute('stroke','#A3A3A3'); p.setAttribute('r',6); p.setAttribute('stroke-width',1.5);
+      }
+    });
+  }
+});
+
+sld.addEventListener('mousedown', e => {
+  // Midpoint drag
+  const midH = e.target.closest('.mid-handle');
+  if (midH) {
+    saveUndo();
+    const connId = midH.getAttribute('data-conn');
+    draggingMid = true;
+    draggingMidConn = connections.find(c=>c.id===connId);
+    draggingMidAxis = midH.getAttribute('data-axis') || 'y';
+    hoveredConn = connId;
+    e.preventDefault();
+    return;
+  }
+
+  const port = e.target.closest('.port');
+  if (port && !(e.shiftKey || e.ctrlKey || e.metaKey)) {
+    if (!editMode) return;
+    if (currentTool!=='select') return;
+
+    dragSource = port.getAttribute('data-terminal');
+    dragging = true;
+    const fc = components.find(c=>c.terminals.some(t=>t.id===dragSource));
+    const ft = fc.terminals.find(t=>t.id===dragSource);
+    const p = getPortXY(fc,ft);
+
+    dragLine = el('path',{d:`M${p.x},${p.y} L${p.x},${p.y}`,
+      fill:'none',stroke:'#171717','stroke-width':1.5,'stroke-dasharray':'6,4',opacity:0.6},sld);
+
+    port.setAttribute('fill','#16A34A'); port.setAttribute('stroke','#16A34A');
+    document.querySelectorAll('.port').forEach(p=>p.setAttribute('opacity',1));
+    document.getElementById('hint').style.opacity='0';
+    return;
+  }
+
+  // Component body: select / multi-select / drag (select mode only)
+  if (currentTool === 'select') {
+    const rect = sld.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let found = null;
+    components.forEach(comp => {
+      if (mx>=comp.x-5 && mx<=comp.x+comp.w+5 && my>=comp.y-5 && my<=comp.y+comp.h+5) found = comp;
+    });
+
+    if (found && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+      // Shift/Ctrl+click → toggle in multi-selection (no drag)
+      const idx = selectedComps.indexOf(found.id);
+      if (idx >= 0) selectedComps.splice(idx, 1);
+      else selectedComps.push(found.id);
+      renderSLD(); renderMap();
+      updateSelectionHint();
+      e.preventDefault();
+    } else if (found) {
+      // Regular click → select + open info panel + prepare for potential drag (edit only)
+      if (!selectedComps.includes(found.id)) selectedComps = [found.id];
+      if (editMode) dragPending = { comp: found, dx: mx - found.x, dy: my - found.y, startX: mx, startY: my };
+      openInfoPanel(found.id);
+      renderSLD(); renderMap();
+      updateSelectionHint();
+      e.preventDefault();
+    } else {
+      // Click on empty → check aggregate first, else clear
+      const clickedAgg = aggHitTest(mx, my);
+      if (clickedAgg) {
+        openAggInfoPanel(clickedAgg);
+        selectedComps = [];
+        renderSLD(); renderMap();
+      } else {
+        if (selectedComps.length > 0) {
+          selectedComps = [];
+          renderSLD(); renderMap();
+          updateSelectionHint();
+        }
+        closeInfoPanel();
+      }
+    }
+  }
+});
+
+window.addEventListener('mouseup', e => {
+  if (draggingMid) { draggingMid=false; draggingMidConn=null; draggingMidAxis=null; return; }
+  if (draggingComp) { draggingComp=null; dragCompOffset=null; sld.style.cursor='default'; return; }
+  if (dragPending) { dragPending=null; return; } // click without drag — selection already applied
+  if (!dragging) return;
+
+  const port = e.target.closest('.port');
+  if (port) {
+    const tid = port.getAttribute('data-terminal');
+    if (tid!==dragSource) completeConnection(dragSource,tid);
+  }
+
+  if (dragLine) dragLine.remove();
+  dragLine=null; dragging=false;
+  document.querySelectorAll('.port').forEach(p => {
+    p.setAttribute('fill','white'); p.setAttribute('stroke','#A3A3A3');
+    p.setAttribute('r',6); p.setAttribute('stroke-width',1.5);
+    p.setAttribute('opacity',0);
+  });
+  dragSource=null;
+});
+
+function getPhaseCompat(fromId, toId) {
+  const ft = components.flatMap(c=>c.terminals).find(t=>t.id===fromId);
+  const tt = components.flatMap(c=>c.terminals).find(t=>t.id===toId);
+  if (!ft||!tt) return 'none';
+  if (ft.phases===tt.phases) return 'full';
+  // Check for any common phase letters (A,B,C)
+  const p1 = ft.phases.replace(/[-N]/g,'');
+  const p2 = tt.phases.replace(/[-N]/g,'');
+  const common = [...p1].filter(ch => p2.includes(ch));
+  if (common.length === 0) return 'none'; // no common phases = error
+  return 'partial';
+}
+
+// ─── CONDUCTOR LIBRARY ──────────────────────────────────
+const conductorLibrary = [
+  { name: '2/0 Cu (UG)', voltage: '600V', type: 'UG', ampacity: '175A' },
+  { name: '4/0 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '340A' },
+  { name: '336 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '530A' },
+  { name: '477 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '670A' },
+  { name: '795 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '900A' },
+  { name: '1/0 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '230A' },
+  { name: '#2 ACSR (OH)', voltage: '12kV', type: 'OH', ampacity: '180A' },
+  { name: '#4 Cu (OH)', voltage: '12kV', type: 'OH', ampacity: '135A' },
+  { name: 'XLPE 500 (UG)', voltage: '12kV', type: 'UG', ampacity: '460A' },
+  { name: 'XLPE 750 (UG)', voltage: '12kV', type: 'UG', ampacity: '590A' },
+  { name: 'XLPE 1000 (UG)', voltage: '12kV', type: 'UG', ampacity: '700A' },
+  { name: 'EPR 1/0 (UG)', voltage: '12kV', type: 'UG', ampacity: '220A' },
+  { name: 'EPR 4/0 (UG)', voltage: '12kV', type: 'UG', ampacity: '320A' },
+  { name: 'TR-XLPE 500 (UG)', voltage: '35kV', type: 'UG', ampacity: '430A' },
+  { name: 'TR-XLPE 750 (UG)', voltage: '35kV', type: 'UG', ampacity: '550A' },
+  { name: '636 ACSR (OH)', voltage: '69kV', type: 'OH', ampacity: '780A' },
+  { name: '954 ACSR (OH)', voltage: '69kV', type: 'OH', ampacity: '1010A' },
+  { name: '556 AAC (OH)', voltage: '12kV', type: 'OH', ampacity: '730A' },
+  { name: '#6 Cu (OH)', voltage: '240V', type: 'OH', ampacity: '75A' },
+  { name: '2/0 Al (UG)', voltage: '600V', type: 'UG', ampacity: '140A' },
+  { name: '350 Al (UG)', voltage: '600V', type: 'UG', ampacity: '310A' },
+  { name: '500 Al (UG)', voltage: '600V', type: 'UG', ampacity: '400A' },
+];
+let recentConductors = ['2/0 Cu (UG)', '4/0 ACSR (OH)', '336 ACSR (OH)'];
+let conductorShowAll = false;
+
+function renderConductorPicker() {
+  const container = document.getElementById('conductorPickerContent');
+  let html = '';
+  
+  // Header
+  html += '<div class="conductor-picker-header">Select conductor type</div>';
+  
+  // Search
+  html += '<div class="conductor-picker-search" style="position:relative">';
+  html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:20px;top:15px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>';
+  html += '<input id="conductorSearchInput" placeholder="Search conductors..." oninput="filterConductors()">';
+  html += '</div>';
+  
+  // Recent section
+  if (recentConductors.length > 0) {
+    html += '<div class="conductor-section-label">Recent</div>';
+    recentConductors.forEach(name => {
+      const c = conductorLibrary.find(x => x.name === name);
+      if (!c) return;
+      html += `<div class="conductor-item" onclick="pickConductor('${c.name}')">`;
+      html += `<span class="name">${c.name}</span>`;
+      html += `<span class="meta">${c.voltage} · ${c.ampacity}</span></div>`;
+    });
+  }
+  
+  // All conductors
+  html += '<div class="conductor-section-label">All conductors</div>';
+  html += '<div class="conductor-list" id="conductorAllList">';
+  conductorLibrary.forEach(c => {
+    html += `<div class="conductor-item" data-name="${c.name.toLowerCase()}" onclick="pickConductor('${c.name}')">`;
+    html += `<span class="name">${c.name}</span>`;
+    html += `<span class="meta">${c.voltage} · ${c.type} · ${c.ampacity}</span></div>`;
+  });
+  html += '</div>';
+  
+  // Footer
+  html += '<div class="conductor-picker-footer"><button class="conductor-picker-cancel" onclick="cancelPicker()">Cancel</button></div>';
+  
+  container.innerHTML = html;
+  // Focus search after render
+  setTimeout(() => document.getElementById('conductorSearchInput')?.focus(), 50);
+}
+
+function filterConductors() {
+  const q = (document.getElementById('conductorSearchInput')?.value || '').toLowerCase();
+  if (!q) { renderConductorPicker(); return; }
+  
+  const container = document.getElementById('conductorPickerContent');
+  let html = '<div class="conductor-picker-header">Select conductor type</div>';
+  html += '<div class="conductor-picker-search" style="position:relative">';
+  html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:20px;top:15px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>';
+  html += `<input id="conductorSearchInput" value="${q}" placeholder="Search conductors..." oninput="filterConductors()">`;
+  html += '</div>';
+  
+  const results = conductorLibrary.filter(c => c.name.toLowerCase().includes(q) || c.voltage.toLowerCase().includes(q) || c.type.toLowerCase().includes(q));
+  html += '<div class="conductor-list">';
+  if (results.length > 0) {
+    results.forEach(c => {
+      html += `<div class="conductor-item" onclick="pickConductor('${c.name}')">`;
+      html += `<span class="name">${c.name}</span>`;
+      html += `<span class="meta">${c.voltage} · ${c.type} · ${c.ampacity}</span></div>`;
+    });
+  } else {
+    html += '<div style="padding:12px;font-size:12px;color:var(--neutral-400);text-align:center">No conductors found</div>';
+  }
+  html += '</div>';
+  html += '<div class="conductor-picker-footer"><button class="conductor-picker-cancel" onclick="cancelPicker()">Cancel</button></div>';
+  
+  container.innerHTML = html;
+  // Re-focus and restore cursor
+  const input = document.getElementById('conductorSearchInput');
+  if (input) { input.focus(); input.setSelectionRange(q.length, q.length); }
+}
+
+function completeConnection(fromId, toId) {
+  const fc = components.find(c=>c.terminals.some(t=>t.id===fromId));
+  const tc = components.find(c=>c.terminals.some(t=>t.id===toId));
+  const needsConductor = fc.type!=='bus' && tc.type!=='bus' && Math.hypot(fc.x-tc.x, fc.y-tc.y)>80;
+
+  if (needsConductor) {
+    pendingConnection = {from:fromId, to:toId};
+    const ft = fc.terminals.find(t=>t.id===fromId);
+    const tt = tc.terminals.find(t=>t.id===toId);
+    const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+    const picker = document.getElementById('conductorPicker');
+    picker.style.left = ((p1.x+p2.x)/2 - 140) + 'px';
+    picker.style.top = ((p1.y+p2.y)/2 - 40) + 'px';
+    conductorShowAll = false;
+    renderConductorPicker();
+    picker.classList.add('visible');
+  } else {
+    createConnection(fromId, toId, null);
+  }
+}
+
+function pickConductor(name) {
+  if (!pendingConnection) return;
+  // Track recent
+  recentConductors = [name, ...recentConductors.filter(n => n !== name)].slice(0, 3);
+  createConnection(pendingConnection.from, pendingConnection.to, name);
+  pendingConnection=null;
+  document.getElementById('conductorPicker').classList.remove('visible');
+}
+function cancelPicker() {
+  pendingConnection=null;
+  document.getElementById('conductorPicker').classList.remove('visible');
+}
+
+function createConnection(fromId, toId, conductor) {
+  saveUndo();
+  const compat = getPhaseCompat(fromId, toId);
+  const status = compat === 'full' ? 'success' : compat === 'partial' ? 'warning' : 'error';
+  connections.push({
+    id:'conn-'+(++connectionCount), from:fromId, to:toId, conductor,
+    status, midY: undefined, midX: undefined
+  });
+
+  components.forEach(c=>c.terminals.forEach(t=>{
+    if (t.id===fromId||t.id===toId) t.connected=true;
+  }));
+
+  if (compat==='partial') {
+    const ft = components.flatMap(c=>c.terminals).find(t=>t.id===fromId);
+    const tt = components.flatMap(c=>c.terminals).find(t=>t.id===toId);
+    validationErrors.push({code:'V-E02',type:'warning',title:'Phase Continuity',
+      desc:`${ft.phases} → ${tt.phases} — partial phase match`});
+    updateValidation();
+  }
+
+  // Auto-add physical connection on map if conductor
+  if (conductor) {
+    const fc = components.find(c=>c.terminals.some(t=>t.id===fromId));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===toId));
+    if (fc.gps && tc.gps) {
+      const isUG = conductor.includes('UG');
+      // Find nearest structures
+      physConnections.push({from: nearestStruct(fc.gps.mx,fc.gps.my), to: nearestStruct(tc.gps.mx,tc.gps.my), type: isUG?'UG':'OH'});
+    }
+  }
+
+  renderSLD(); renderMap();
+  showToast(conductor ? `Connected via ${conductor}` : 'Connected');
+  document.getElementById('connectionCount').textContent = `Connections: ${connections.length}`;
+}
+
+function nearestStruct(mx,my) {
+  let best=null, bestD=Infinity;
+  structures.forEach(s=>{
+    const d = Math.hypot(s.mx-mx,s.my-my);
+    if (d<bestD) { bestD=d; best=s.id; }
+  });
+  return best;
+}
+
+function updateValidation() {
+  const panel = document.getElementById('validationMini');
+  const items = document.getElementById('validationItems');
+  panel.classList.add('visible');
+  items.innerHTML='';
+  validationErrors.forEach(err => {
+    const div = document.createElement('div');
+    div.className = 'validation-item ' + (err.type||'');
+    div.innerHTML = `<div><span class="code">${err.code}</span> ${err.title}</div><div class="desc">${err.desc}</div>`;
+    items.appendChild(div);
+  });
+  document.getElementById('errorText').textContent = validationErrors.length;
+  document.getElementById('errorCount').style.color = validationErrors.length>0?'var(--warning)':'var(--neutral-400)';
+}
+
+function updateHoverInfo(comp) {
+  const el = document.getElementById('hoverInfo');
+  if (!comp) { el.textContent = ''; return; }
+  const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+  const termCount = comp.terminals.length;
+  const connCount = comp.terminals.filter(t=>t.connected).length;
+  const phases = comp.terminals[0]?.phases || '—';
+  el.textContent = `${comp.label}  ·  ${typeLabels[comp.type]}  ·  Phases: ${phases}  ·  Terminals: ${connCount}/${termCount} connected`;
+}
+
+function updateSelectionHint() {
+  const hint = document.getElementById('hint');
+  if (selectedComps.length === 2) {
+    const c1 = components.find(c=>c.id===selectedComps[0]);
+    const c2 = components.find(c=>c.id===selectedComps[1]);
+    hint.textContent = `${c1.label} + ${c2.label} selected — press Enter to connect`;
+    hint.style.opacity = '1';
+  } else if (selectedComps.length > 2) {
+    hint.textContent = `${selectedComps.length} selected — select exactly 2 to connect`;
+    hint.style.opacity = '1';
+  } else {
+    hint.style.opacity = '0';
+  }
+  // Update status bar
+  if (selectedComps.length > 0) {
+    const names = selectedComps.map(id => components.find(c=>c.id===id)?.label).join(', ');
+    document.getElementById('hoverInfo').textContent = `Selected: ${names}`;
+  }
+}
+
+function connectSelected() {
+  if (selectedComps.length !== 2) return;
+  const c1 = components.find(c=>c.id===selectedComps[0]);
+  const c2 = components.find(c=>c.id===selectedComps[1]);
+  if (!c1 || !c2) return;
+
+  // Find best matching free terminals
+  const free1 = c1.terminals.filter(t=>!t.connected);
+  const free2 = c2.terminals.filter(t=>!t.connected);
+
+  if (free1.length === 0 || free2.length === 0) {
+    showToast('No free terminals on one of the selected components');
+    return;
+  }
+
+  // If exactly one pair → connect immediately
+  if (free1.length === 1 && free2.length === 1) {
+    completeConnection(free1[0].id, free2[0].id);
+    selectedComps = [];
+    renderSLD(); renderMap();
+    document.getElementById('hint').style.opacity = '0';
+    return;
+  }
+
+  // Multiple options → use first available pair (MVP simplification)
+  // Find best by phase compatibility
+  let bestFrom = null, bestTo = null, bestScore = -1;
+  free1.forEach(t1 => {
+    free2.forEach(t2 => {
+      const compat = getPhaseCompat(t1.id, t2.id);
+      const score = compat === 'full' ? 2 : compat === 'partial' ? 1 : 0;
+      if (score > bestScore) { bestScore = score; bestFrom = t1; bestTo = t2; }
+    });
+  });
+
+  if (bestFrom && bestTo) {
+    completeConnection(bestFrom.id, bestTo.id);
+    selectedComps = [];
+    renderSLD(); renderMap();
+    document.getElementById('hint').style.opacity = '0';
+  }
+}
+
+function setTool(tool) {
+  currentTool=tool;
+  document.querySelectorAll('.sld-tool').forEach(t=>t.classList.remove('active'));
+  const btn = document.getElementById('tool'+tool.charAt(0).toUpperCase()+tool.slice(1));
+  if (btn) btn.classList.add('active');
+  sld.style.cursor = tool==='pan'?'grab':'default';
+  document.getElementById('statusText').textContent = {select:'Ready',pan:'Pan mode'}[tool]||'Ready';
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  t.classList.add('visible');
+  setTimeout(()=>t.classList.remove('visible'),2000);
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
+  if (e.key==='Enter' && selectedComps.length === 2) { connectSelected(); return; }
+  if (e.key==='v'||e.key==='V') setTool('select');
+  if (e.key==='h'||e.key==='H') setTool('pan');
+  if ((e.key==='a'||e.key==='A') && editMode) { openAddPanel(); }
+  if (e.key==='e'||e.key==='E') { if (!editMode) enterEditMode(); }
+  if (e.key==='Escape') { setTool('select'); cancelPicker(); closeAddPanel(); cancelPickMode(); cancelMapPlace(); bindPickerCompId=null; mountPickerStructId=null; closeInfoPanel(); selectedComps=[]; genericPlacePending=null; renderSLD(); renderMap(); }
+});
+
+// ─── ADD COMPONENT FLOW ─────────────────────────────────
+const library = {
+  categories: [
+    { id:'connector', name:'Connector', icon:'⊕' },
+    { id:'transformer', name:'Transformer', icon:'⊙' },
+    { id:'switch', name:'Switch', icon:'⊙' },
+    { id:'shunt', name:'Shunt', icon:'⊙' },
+    { id:'voltage_reg', name:'Voltage Regulator', icon:'⊙' },
+    { id:'protection', name:'Protection', icon:'⊙' },
+    { id:'meter', name:'Meter', icon:'⊙' },
+  ],
+  variants: {
+    transformer: [
+      { id:'padmount500', name:'Pad-mount 500 kVA', meta:'500 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'padmount250', name:'Pad-mount 250 kVA', meta:'250 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'padmount167', name:'Pad-mount 167 kVA', meta:'167 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'polemount50', name:'Pole-mount 50 kVA', meta:'50 kVA · 12kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+      { id:'polemount37', name:'Pole-mount 37.5 kVA', meta:'37.5 kVA · 12kV', phases:'AB-N', type:'transformer', w:44, h:44 },
+      { id:'power10mva', name:'Power Transformer 10 MVA', meta:'10 MVA · 69kV', phases:'ABC-N', type:'transformer', w:44, h:44 },
+    ],
+    switch: [
+      { id:'poleswitch', name:'Pole Switch', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+      { id:'gasswitch', name:'Gas Switch (SF6)', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+      { id:'loadbreak', name:'Load Break Switch', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+    meter: [
+      { id:'ami', name:'AMI Meter', meta:'240V', phases:'AB-N', type:'meter', w:26, h:26 },
+      { id:'standard', name:'Standard Meter', meta:'240V', phases:'A-N', type:'meter', w:26, h:26 },
+    ],
+    protection: [
+      { id:'recloser', name:'Recloser', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+      { id:'fuse', name:'Fuse', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+    connector: [
+      { id:'bus_section', name:'Bus Section', meta:'12kV', phases:'ABC-N', type:'bus', w:200, h:10 },
+    ],
+    shunt: [
+      { id:'capbank', name:'Capacitor Bank', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+    voltage_reg: [
+      { id:'vreg', name:'Voltage Regulator', meta:'12kV', phases:'ABC-N', type:'switch', w:30, h:30 },
+    ],
+  },
+  recent: [
+    { catId:'transformer', varId:'padmount250', name:'Pad-mount', meta:'250 kVA · 12kV' },
+    { catId:'transformer', varId:'padmount167', name:'Pad-mount', meta:'167 kVA · 12kV' },
+    { catId:'transformer', varId:'power10mva', name:'Pad-mount', meta:'20 MVA · 69kV' },
+  ],
+  libInfo: { height:'84 in', length:'144 in', loadCapacity:'300 psf', material:'Concrete', maxRuns200:'3', maxRuns600:'4', modelNumber:'100011014' }
+};
+
+let addStep = 0, addCategory = null, addVariant = null;
+let compCounter = 100;
+let addOrigin = null; // {source:'sld'|'map', x, y, mapMx, mapMy} — where right-click happened
+
+function openAddPanel(origin) {
+  addStep = 1; addCategory = null; addVariant = null;
+  addOrigin = origin || null;
+  // Show ghost at click position
+  if (origin && origin.source === 'sld') {
+    addGhostPos = { x: origin.x, y: origin.y };
+  } else {
+    addGhostPos = null;
+  }
+  renderAddStep1();
+  document.getElementById('addPanel').classList.add('visible');
+  renderSLD(); // re-render to show ghost
+}
+
+function closeAddPanel() {
+  document.getElementById('addPanel').classList.remove('visible');
+  addStep = 0;
+  addOrigin = null;
+  addGhostPos = null;
+  renderSLD();
+}
+
+function renderAddStep1() {
+  addStep = 1;
+  document.getElementById('addPanelTitle').textContent = 'Add component';
+  document.getElementById('addPanelHeader').style.display = '';
+  document.getElementById('addPanelHeader').querySelector('.back')?.remove();
+  document.getElementById('addPanelFooter').style.display = 'none';
+
+  let html = '';
+
+  // Generic types grid — sketch-first
+  html += '<div style="padding:12px 16px 4px"><div style="font-size:11px;font-weight:500;color:var(--neutral-400);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Quick add</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">';
+  paletteTypes.forEach(pt => {
+    html += `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;cursor:pointer;border:1px solid var(--border);border-radius:var(--radius-sm);transition:all 0.15s" onmouseenter="this.style.borderColor='var(--neutral-400)';this.style.background='var(--neutral-50)'" onmouseleave="this.style.borderColor='var(--border)';this.style.background=''" onclick="closeAddPanel();enterGenericPlacement('${pt.type}')">
+      <span style="color:var(--neutral-600)">${pt.icon.replace('viewBox','width="22" height="22" viewBox')}</span>
+      <span style="font-size:11px;color:var(--neutral-600)">${pt.label}</span>
+    </div>`;
+  });
+  html += '</div></div>';
+
+  // Separator
+  html += '<div style="padding:8px 16px;font-size:11px;color:var(--neutral-400);text-align:center;border-top:1px solid var(--neutral-100);margin-top:8px">— or specify from library —</div>';
+
+  // Library categories (detailed flow)
+  library.categories.forEach(cat => {
+    html += `<div class="add-list-item" onclick="selectCategory('${cat.id}')">
+      <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="item-text"><div class="item-name">${cat.name}</div></div>
+      <div class="arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>`;
+  });
+
+  if (library.recent.length) {
+    html += '<div class="add-section-label">Recent</div>';
+    library.recent.forEach(r => {
+      html += `<div class="add-list-item" onclick="selectCategory('${r.catId}');selectVariant('${r.varId}')">
+        <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="item-text"><div class="item-name">${r.name}</div><div class="item-meta">${r.meta}</div></div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('addPanelBody').innerHTML = html;
+}
+
+function selectCategory(catId) {
+  addCategory = catId;
+  addStep = 2;
+  const cat = library.categories.find(c=>c.id===catId);
+  document.getElementById('addPanelTitle').textContent = cat.name;
+
+  // Add back button
+  if (!document.getElementById('addPanelHeader').querySelector('.back')) {
+    const btn = document.createElement('button');
+    btn.className = 'back';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>';
+    btn.onclick = renderAddStep1;
+    document.getElementById('addPanelHeader').querySelector('.title').prepend(btn);
+  }
+
+  const variants = library.variants[catId] || [];
+  let html = '<div class="add-search" style="position:relative"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:24px;top:20px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="Search equipment" style="padding-left:30px"></div>';
+
+  variants.forEach(v => {
+    html += `<div class="add-list-item" onclick="selectVariant('${v.id}')" onmousedown="startAddDrag(event,'${v.id}','${catId}')" style="cursor:grab">
+      <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="item-text"><div class="item-name">${v.name}</div><div class="item-meta">${v.meta}</div></div>
+    </div>`;
+  });
+
+  document.getElementById('addPanelBody').innerHTML = html;
+}
+
+function selectVariant(varId) {
+  if (addDragActive) return; // Don't fire on drag end
+  const variants = library.variants[addCategory] || [];
+  addVariant = variants.find(v=>v.id===varId);
+  if (!addVariant) return;
+
+  compCounter++;
+  const compId = addVariant.type.substring(0,2).toUpperCase() + '-' + compCounter;
+
+  // Determine placement position
+  let sldX, sldY, gpsData = null;
+
+  if (addOrigin && addOrigin.source === 'sld') {
+    sldX = addOrigin.x;
+    sldY = addOrigin.y;
+  } else if (addOrigin && addOrigin.source === 'map') {
+    sldX = 380 + (components.length % 3) * 70;
+    sldY = 160 + Math.floor(components.length / 3) * 80;
+    gpsData = { lat: addOrigin.lat, lng: addOrigin.lng, mx: addOrigin.mapMx, my: addOrigin.mapMy };
+  } else {
+    // Toolbar/keyboard — place at center of SLD
+    sldX = 300 + (components.length % 3) * 70;
+    sldY = 200 + Math.floor(components.length / 3) * 80;
+  }
+
+  // Place immediately with defaults
+  placeComponentDirect(compId, addVariant, sldX, sldY, gpsData);
+}
+
+function placeComponentDirect(compId, variant, x, y, gpsData) {
+  saveUndo();
+  const id = compId.replace(/[^A-Z0-9-]/gi,'');
+
+  let terminals = [];
+  if (variant.type === 'transformer') {
+    terminals = [
+      {id:id+'-PRI',name:'Primary',side:'top',offset:0.5,phases:variant.phases,connected:false},
+      {id:id+'-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:variant.phases,connected:false},
+    ];
+  } else if (variant.type === 'switch') {
+    terminals = [
+      {id:id+'-A',name:'A',side:'top',offset:0.5,phases:variant.phases,connected:false},
+      {id:id+'-B',name:'B',side:'bottom',offset:0.5,phases:variant.phases,connected:false},
+    ];
+  } else if (variant.type === 'meter') {
+    terminals = [
+      {id:id+'-T',name:'Terminal',side:'top',offset:0.5,phases:variant.phases,connected:false},
+    ];
+  } else if (variant.type === 'bus') {
+    for (let i=1;i<=5;i++) terminals.push({id:id+'-P'+i,name:'Pos'+i,side:'bottom',offset:i/6,phases:variant.phases,connected:false});
+  }
+
+  components.push({
+    id, type: variant.type, label: compId,
+    x: x - variant.w/2, y: y - variant.h/2, w: variant.w, h: variant.h,
+    gps: gpsData || null, bindings: [], terminals
+  });
+
+  closeAddPanel();
+  renderSLD(); renderMap();
+  updateComponentCount();
+
+  // Toast with Add more button
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').innerHTML = `${compId} added <span onclick="openAddPanel()" style="text-decoration:underline;cursor:pointer;margin-left:8px">+ Add more</span>`;
+  t.classList.add('visible');
+  setTimeout(()=>t.classList.remove('visible'),4000);
+
+  // Open Info Panel for the new component
+  selectedComps = [id];
+  openInfoPanel(id);
+}
+
+function updateComponentCount() {
+  document.querySelector('.status-bar span:last-child').textContent = `Components: ${components.length}`;
+}
+
+// ─── DRAG FROM ADD PANEL ────────────────────────────────
+let addDragVariant = null, addDragStartX = 0, addDragStartY = 0, addDragActive = false;
+const ADD_DRAG_THRESHOLD = 5;
+
+function startAddDrag(e, varId, catId) {
+  addDragVariant = (library.variants[catId] || []).find(v => v.id === varId);
+  if (!addDragVariant) return;
+  addDragStartX = e.clientX;
+  addDragStartY = e.clientY;
+  addDragActive = false;
+  e.preventDefault();
+}
+
+window.addEventListener('mousemove', e => {
+  if (!addDragVariant) return;
+  const dist = Math.hypot(e.clientX - addDragStartX, e.clientY - addDragStartY);
+  if (dist < ADD_DRAG_THRESHOLD && !addDragActive) return;
+
+  if (!addDragActive) {
+    addDragActive = true;
+    const ghost = document.getElementById('addDragGhost');
+    ghost.textContent = addDragVariant.name;
+    ghost.style.display = 'block';
+  }
+
+  const ghost = document.getElementById('addDragGhost');
+  ghost.style.left = (e.clientX + 12) + 'px';
+  ghost.style.top = (e.clientY - 14) + 'px';
+
+  // Update ghost preview on SLD
+  const sldRect = sld.getBoundingClientRect();
+  if (e.clientX >= sldRect.left && e.clientX <= sldRect.right && e.clientY >= sldRect.top && e.clientY <= sldRect.bottom) {
+    addGhostPos = { x: e.clientX - sldRect.left, y: e.clientY - sldRect.top };
+    sld.style.cursor = 'copy';
+  } else {
+    addGhostPos = null;
+    sld.style.cursor = '';
+  }
+  renderSLD();
+});
+
+window.addEventListener('mouseup', e => {
+  if (!addDragVariant) return;
+  const ghost = document.getElementById('addDragGhost');
+  ghost.style.display = 'none';
+
+  if (addDragActive) {
+    // Check if dropped on SLD
+    const sldRect = sld.getBoundingClientRect();
+    if (e.clientX >= sldRect.left && e.clientX <= sldRect.right && e.clientY >= sldRect.top && e.clientY <= sldRect.bottom) {
+      const dropX = e.clientX - sldRect.left;
+      const dropY = e.clientY - sldRect.top;
+      addCategory = addDragVariant.type; // not strictly needed but for consistency
+      compCounter++;
+      const compId = addDragVariant.type.substring(0,2).toUpperCase() + '-' + compCounter;
+      placeComponentDirect(compId, addDragVariant, dropX, dropY, null);
+    }
+    addGhostPos = null;
+    sld.style.cursor = 'default';
+    renderSLD();
+  }
+
+  addDragVariant = null;
+  addDragActive = false;
+});
+
+// Pre-create an error connection (DC generator → AC bus = incompatible)
+connections.push({
+  id:'conn-err-1', from:'GEN1-A', to:'BUS-P5', conductor:null,
+  status:'error', midY: undefined, midX: undefined
+});
+components.find(c=>c.id==='BUS').terminals.find(t=>t.id==='BUS-P5').connected = true;
+connectionCount = 1;
+validationErrors.push({code:'V-E01',type:'error',title:'Phase Incompatible',
+  desc:'DC → ABC-N — no common phases between DG-201 and Bus 12kV'});
+
+renderSLD(); renderMap();
+
+// Show validation panel for the pre-existing error
+updateValidation();
+
+// Clear hover when leaving SLD canvas
+sld.addEventListener('mouseleave', () => {
+  if (hoveredComp || hoveredConn) { hoveredComp=null; hoveredConn=null; renderSLD(); renderMap(); updateHoverInfo(null); }
+});
+
+// ─── MAP HOVER ──────────────────────────────────────────
+let hoveredMapStruct = null;
+
+map.addEventListener('mousemove', e => {
+  if (pickMode) return;
+  if (mapPlaceMode) { map.style.cursor = 'crosshair'; return; }
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  
+  let found = null;
+  structures.forEach(s => {
+    if (Math.hypot(mx - s.mx, my - s.my) < 18) found = s;
+  });
+  
+  const newId = found ? found.id : null;
+  if (newId !== hoveredMapStruct) {
+    hoveredMapStruct = newId;
+    highlightedStruct = newId;
+    renderMap();
+    // Show structure info in status bar
+    if (found) {
+      document.getElementById('hoverInfo').textContent = `${found.label}  ·  ${found.type==='pole'?'Pole (Wood)':'Vault'}`;
+    } else if (!hoveredComp) {
+      document.getElementById('hoverInfo').textContent = '';
+    }
+  }
+  
+  map.style.cursor = found ? 'pointer' : (pickMode ? 'crosshair' : 'default');
+});
+
+map.addEventListener('mouseleave', () => {
+  if (hoveredMapStruct) { hoveredMapStruct=null; highlightedStruct=null; renderMap(); }
+});
+
+// ─── MAP CONTEXT MENU + ADD STRUCTURE ───────────────────
+let mapPlaceMode = false, mapPlaceType = null;
+let structCounter = 100;
+const mapCtxMenu = document.getElementById('mapCtxMenu');
+
+function hideMapCtxMenu() { mapCtxMenu.classList.remove('visible'); }
+
+const mapPanel = document.getElementById('mapPanel');
+
+mapPanel.addEventListener('contextmenu', e => {
+  if (!map.contains(e.target)) return;
+  e.preventDefault();
+  hideCtxMenu(); hideMapCtxMenu();
+
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  // Check if right-clicked on a structure
+  let clickedStruct = null;
+  structures.forEach(s => {
+    if (Math.hypot(mx - s.mx, my - s.my) < 15) clickedStruct = s;
+  });
+
+  const ic_info = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
+  const ic_plus = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg>';
+  const ic_trash = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
+  const ic_link = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+  let html = '';
+
+  if (clickedStruct) {
+    const mounted = components.filter(c => c.bindings.some(b => b.structId === clickedStruct.id));
+    html = `<div class="ctx-menu-title">${clickedStruct.label}</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideMapCtxMenu();openStructureInfoPanel('${clickedStruct.id}')">${ic_info} Show info</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideMapCtxMenu();mountFromCtx('${clickedStruct.id}')">${ic_link} Mount equipment...</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item danger" onclick="hideMapCtxMenu();deleteStructure('${clickedStruct.id}')">${ic_trash} Delete</div>`;
+  } else {
+    html = `<div class="ctx-menu-item" onclick="hideMapCtxMenu();showAddStructPicker(event)">${ic_plus} Add structure...</div>`;
+  }
+
+  mapCtxMenu.innerHTML = html;
+  const panelRect = mapPanel.getBoundingClientRect();
+  let left = e.clientX - panelRect.left;
+  let top = e.clientY - panelRect.top;
+  mapCtxMenu.classList.add('visible');
+  const mw = mapCtxMenu.offsetWidth, mh = mapCtxMenu.offsetHeight;
+  if (left + mw > panelRect.width) left = panelRect.width - mw - 4;
+  if (top + mh > panelRect.height) top = panelRect.height - mh - 4;
+  mapCtxMenu.style.left = left + 'px';
+  mapCtxMenu.style.top = top + 'px';
+});
+
+document.addEventListener('click', () => {
+  hideMapCtxMenu();
+  document.getElementById('addStructPicker').style.display = 'none';
+});
+
+function showAddStructPicker(e) {
+  const picker = document.getElementById('addStructPicker');
+  const panelRect = mapPanel.getBoundingClientRect();
+  picker.style.left = (e.clientX - panelRect.left) + 'px';
+  picker.style.top = (e.clientY - panelRect.top) + 'px';
+  picker.style.display = 'block';
+  e.stopPropagation();
+}
+
+function startAddStructure(type) {
+  document.getElementById('addStructPicker').style.display = 'none';
+  mapPlaceMode = true;
+  mapPlaceType = type;
+  const labels = {pole:'Pole',vault:'Vault',pad:'Pad/Cabinet'};
+  document.getElementById('mapPlaceText').textContent = `Click on the map to place ${labels[type]}`;
+  document.getElementById('mapPlaceHint').classList.add('visible');
+  map.style.cursor = 'crosshair';
+}
+
+function cancelMapPlace() {
+  mapPlaceMode = false;
+  mapPlaceType = null;
+  document.getElementById('mapPlaceHint').classList.remove('visible');
+  map.style.cursor = 'default';
+}
+
+function placeStructure(mx, my, typeOverride) {
+  const sType = typeOverride || mapPlaceType;
+  if (!sType) return;
+  saveUndo();
+  structCounter++;
+  const labels = {pole:'P',vault:'VLT',pad:'PAD',duct:'DCT'};
+  const id = sType.toUpperCase() + '-' + structCounter;
+  const label = (labels[sType]||sType.toUpperCase()) + '-' + structCounter;
+
+  structures.push({ id, type: sType, label, mx, my });
+
+  if (mapPlaceMode) cancelMapPlace();
+  renderMap();
+  showToast(`${label} placed`);
+  openStructureInfoPanel(id);
+}
+
+function mountFromCtx(structId) {
+  openMountPicker(structId);
+}
+
+function deleteStructure(structId) {
+  const mounted = components.filter(c => c.bindings.some(b => b.structId === structId));
+  if (mounted.length > 0) {
+    showToast('Unbind all equipment first');
+    return;
+  }
+  saveUndo();
+  const idx = structures.findIndex(s => s.id === structId);
+  if (idx >= 0) {
+    const s = structures[idx];
+    structures.splice(idx, 1);
+    renderMap();
+    showToast(`Deleted ${s.label}`);
+    closeInfoPanel();
+  }
+}
+
+// Update map click to handle structure placement
+const origMapClick = map.onclick;
+map.addEventListener('click', e => {
+  if (mapPlaceMode) {
+    const rect = map.getBoundingClientRect();
+    placeStructure(e.clientX - rect.left, e.clientY - rect.top);
+    e.stopPropagation();
+    return;
+  }
+});
+
+saveUndo(); // save initial state
+
+// ─── CONTEXT MENU ───────────────────────────────────────
+const ctxMenu = document.getElementById('ctxMenu');
+
+function hideCtxMenu() { ctxMenu.classList.remove('visible'); }
+
+document.addEventListener('click', () => hideCtxMenu());
+document.addEventListener('contextmenu', e => {
+  // Only handle right-click on SLD canvas area
+  if (!sld.contains(e.target) && !e.target.closest('.sld-canvas-wrap')) return;
+});
+
+sld.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  hideCtxMenu();
+
+  const rect = sld.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  // Check if right-clicked on a component
+  let foundComp = null;
+  components.forEach(comp => {
+    if (mx>=comp.x-5 && mx<=comp.x+comp.w+5 && my>=comp.y-5 && my<=comp.y+comp.h+5) foundComp = comp;
+  });
+
+  // Check if right-clicked on a connection line
+  let foundConn = null;
+  if (!foundComp) {
+    connections.forEach(conn => {
+      const fc = components.find(c=>c.terminals.some(t=>t.id===conn.from));
+      const tc = components.find(c=>c.terminals.some(t=>t.id===conn.to));
+      const ft = fc.terminals.find(t=>t.id===conn.from);
+      const tt = tc.terminals.find(t=>t.id===conn.to);
+      const p1 = getPortXY(fc,ft), p2 = getPortXY(tc,tt);
+      const segs = getOrthoSegments(p1, p2, conn.midX, conn.midY);
+      if (segs.some(s => distToSegment(mx,my,s.x1,s.y1,s.x2,s.y2) < 10)) foundConn = conn;
+    });
+  }
+
+  // Lucide icon helpers (16px, stroke-width 1.5)
+  const ic = {
+    info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+    mapPin: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    scopeAdd: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>',
+    scopeRemove: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>',
+    folderEdit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+    pencil: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+    replace: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 3l4 4-4 4"/><path d="M20 7H4"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h16"/></svg>',
+    link: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    scissors: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+    copy: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+    plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg>',
+    listTree: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12h-8M21 6h-8M21 18h-8M3 6v4c0 1.1.9 2 2 2h3M3 10v6c0 1.1.9 2 2 2h3"/></svg>',
+    clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    clipboard: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',
+    group: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="8" height="8" rx="2"/><rect x="14" y="2" width="8" height="8" rx="2"/><rect x="2" y="14" width="8" height="8" rx="2"/><rect x="14" y="14" width="8" height="8" rx="2"/></svg>',
+    ungroup: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14h6v6H4z"/><path d="M14 4h6v6h-6z"/><path d="M7 7L17 17M7 17L17 7" stroke-dasharray="2,2"/></svg>',
+  };
+
+  let html = '';
+
+  // Check aggregate hit (only if no component/connection)
+  let foundAgg = null;
+  if (!foundComp && !foundConn) foundAgg = aggHitTest(mx, my);
+  const targetIds = selectedComps.length > 1 ? [...selectedComps] : foundComp ? [foundComp.id] : [];
+  const currentAgg = foundComp ? aggOfComp(foundComp.id) : null;
+
+  // ── VIEW MODE: simplified context menu ──
+  if (!editMode) {
+    if (foundComp) {
+      html = `<div class="ctx-menu-title">${foundComp.label}</div>`;
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openInfoPanel('${foundComp.id}')">${ic.info} Show info</div>`;
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.mapPin} Locate</div>`;
+    } else if (foundAgg) {
+      const tmpl = aggTemplates[foundAgg.type];
+      html = `<div class="ctx-menu-title">${tmpl.icon} ${foundAgg.name}</div>`;
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAggInfoPanel(aggregates.find(a=>a.id==='${foundAgg.id}'))">${ic.info} Show info</div>`;
+    } else if (foundConn) {
+      const title = foundConn.conductor || 'Direct connection';
+      html = `<div class="ctx-menu-title">${title}</div>`;
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.info} Show info</div>`;
+    } else {
+      html = `<div class="ctx-menu-item" onclick="hideCtxMenu();enterEditMode()">${ic.pencil} Edit mode<span class="shortcut">E</span></div>`;
+    }
+    ctxMenu.innerHTML = html;
+    const wrap = sld.parentElement.getBoundingClientRect();
+    let left = e.clientX - wrap.left, top = e.clientY - wrap.top;
+    ctxMenu.classList.add('visible');
+    const mw = ctxMenu.offsetWidth, mh = ctxMenu.offsetHeight;
+    if (left + mw > wrap.width) left = wrap.width - mw - 4;
+    if (top + mh > wrap.height) top = wrap.height - mh - 4;
+    ctxMenu.style.left = left + 'px';
+    ctxMenu.style.top = top + 'px';
+    return;
+  }
+
+  // ── EDIT MODE: full context menu ──
+  if (foundAgg) {
+    // Aggregate context menu
+    const tmpl = aggTemplates[foundAgg.type];
+    html = `<div class="ctx-menu-title">${tmpl.icon} ${foundAgg.name}</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAggInfoPanel(aggregates.find(a=>a.id==='${foundAgg.id}'))">${ic.info} Show info</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();toggleAggCollapse('${foundAgg.id}')">${ic.eye} ${foundAgg.collapsed?'Expand':'Collapse'}</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-submenu"><div class="ctx-menu-item">${ic.plus} Add component inside<span class="chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span></div><div class="ctx-submenu-items">`;
+    paletteTypes.forEach(pt => { html += `<div class="ctx-menu-item" onclick="hideCtxMenu();enterGenericPlacement('${pt.type}',${mx},${my})">${pt.label}</div>`; });
+    html += `<div class="ctx-menu-sep"></div><div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})">From library...</div>`;
+    html += `</div></div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item danger" onclick="dissolveAggregate('${foundAgg.id}')">${ic.ungroup} Dissolve aggregate</div>`;
+
+  } else if (foundComp) {
+    const conns = connections.filter(c => c.from.startsWith(foundComp.id) || c.to.startsWith(foundComp.id));
+
+    if (selectedComps.length > 1 && selectedComps.includes(foundComp.id)) {
+      html = `<div class="ctx-menu-title">${selectedComps.length} components selected</div>`;
+    } else {
+      html = `<div class="ctx-menu-title">${foundComp.label}</div>`;
+    }
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openInfoPanel('${foundComp.id}')">${ic.info} Show info</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.mapPin} Locate</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+
+    // Aggregate submenu
+    html += `<div class="ctx-submenu"><div class="ctx-menu-item">${ic.group} Add to Aggregate<span class="chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span></div><div class="ctx-submenu-items">`;
+    aggregates.forEach(a => { const t=aggTemplates[a.type]; html += `<div class="ctx-menu-item" onclick="hideCtxMenu();${targetIds.map(id=>"aggAddComp('"+a.id+"','"+id+"')").join(';')}">${t.icon} ${a.name}</div>`; });
+    html += `<div class="ctx-menu-sep"></div><div class="ctx-menu-item" onclick="hideCtxMenu();openAggCreatePanel([${targetIds.map(id=>"'"+id+"'").join(',')}])">${ic.plus} Create new</div></div></div>`;
+    if (currentAgg) {
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu();aggRemoveComp('${currentAgg.id}','${foundComp.id}')">${ic.ungroup} Remove from "${currentAgg.name}"</div>`;
+    }
+    html += `<div class="ctx-menu-sep"></div>`;
+
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.scopeAdd} Add to scope</div>`;
+    html += `<div class="ctx-menu-item disabled">${ic.scopeRemove} Remove from scope</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.folderEdit} Edit in project...</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.pencil} Edit attributes</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.replace} Replace type</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openConnectPanel('${foundComp.id}')">${ic.link} Connect to...<span class="shortcut">list</span></div>`;
+
+    if (conns.length > 0) {
+      conns.forEach(c => {
+        const isFrom = c.from.startsWith(foundComp.id);
+        const otherTid = isFrom ? c.to : c.from;
+        const otherComp = components.find(comp => comp.terminals.some(t=>t.id===otherTid));
+        const otherT = otherComp?.terminals.find(t=>t.id===otherTid);
+        const myT = isFrom ? foundComp.terminals.find(t=>t.id===c.from) : foundComp.terminals.find(t=>t.id===c.to);
+        html += `<div class="ctx-menu-item" onclick="disconnectById('${c.id}')">${ic.scissors} Disconnect → ${otherComp?.label}:${otherT?.name}<span class="shortcut">${myT?.name}</span></div>`;
+      });
+    } else {
+      html += `<div class="ctx-menu-item disabled">${ic.scissors} Disconnect</div>`;
+    }
+
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.copy} Duplicate</div>`;
+    html += `<div class="ctx-menu-item danger" onclick="deleteComponent('${foundComp.id}')">${ic.trash} Delete</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.plus} Add child component</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.listTree} Select children</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clock} History</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.eye} Show/Hide</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.lock} Lock/Unlock</div>`;
+
+  } else if (foundConn) {
+    const fc = components.find(c=>c.terminals.some(t=>t.id===foundConn.from));
+    const tc = components.find(c=>c.terminals.some(t=>t.id===foundConn.to));
+    const title = foundConn.conductor || 'Direct connection';
+    html = `<div class="ctx-menu-title">${title}</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.info} Show info</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.mapPin} Locate both ends</div>`;
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item danger" onclick="disconnectById('${foundConn.id}')">${ic.scissors} Disconnect</div>`;
+
+  } else {
+    // Quick-add submenu with generic types
+    html = `<div class="ctx-submenu"><div class="ctx-menu-item">${ic.plus} Add component<span class="shortcut">A</span><span class="chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span></div><div class="ctx-submenu-items">`;
+    paletteTypes.forEach(pt => {
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu();enterGenericPlacement('${pt.type}',${mx},${my})">${pt.label}</div>`;
+    });
+    html += `<div class="ctx-menu-sep"></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})">From library...</div>`;
+    html += `</div></div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAggCreatePanel([])">${ic.group} Add aggregate</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clipboard} Paste</div>`;
+  }
+
+  ctxMenu.innerHTML = html;
+  // Position within SLD canvas wrap
+  const wrap = sld.parentElement.getBoundingClientRect();
+  let left = e.clientX - wrap.left;
+  let top = e.clientY - wrap.top;
+  // Keep menu within bounds
+  ctxMenu.classList.add('visible');
+  const mw = ctxMenu.offsetWidth, mh = ctxMenu.offsetHeight;
+  if (left + mw > wrap.width) left = wrap.width - mw - 4;
+  if (top + mh > wrap.height) top = wrap.height - mh - 4;
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top = top + 'px';
+});
+
+function disconnectById(connId) {
+  hideCtxMenu();
+  saveUndo();
+  const idx = connections.findIndex(c=>c.id===connId);
+  if (idx >= 0) {
+    const conn = connections[idx];
+    // Mark terminals as disconnected
+    components.forEach(c=>c.terminals.forEach(t=>{
+      if (t.id===conn.from || t.id===conn.to) t.connected = false;
+    }));
+    connections.splice(idx, 1);
+    renderSLD(); renderMap();
+    document.getElementById('connectionCount').textContent = `Connections: ${connections.length}`;
+    showToast('Disconnected');
+  }
+}
+
+function deleteComponent(compId) {
+  hideCtxMenu();
+  // Check if has connections
+  const conns = connections.filter(c => c.from.startsWith(compId) || c.to.startsWith(compId));
+  if (conns.length > 0) {
+    showToast('Disconnect all connections first');
+    return;
+  }
+  saveUndo();
+  const idx = components.findIndex(c=>c.id===compId);
+  if (idx >= 0) {
+    const comp = components[idx];
+    components.splice(idx, 1);
+    selectedComps = selectedComps.filter(id=>id!==compId);
+    renderSLD(); renderMap(); updateComponentCount();
+    showToast(`Deleted ${comp.label}`);
+  }
+}
+
+// ─── INFO PANEL ─────────────────────────────────────────
+
+function openInfoPanel(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  infoPanelComp = comp;
+  infoPanelStruct = null;
+  
+  const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+  document.getElementById('infoPanelTitle').textContent = comp.label;
+  
+  const conns = connections.filter(c => c.from.startsWith(comp.id) || c.to.startsWith(comp.id));
+  const phases = comp.terminals[0]?.phases || '—';
+  const bindings = comp.bindings || [];
+  
+  let html = '';
+  
+  // Defined section
+  html += '<div class="info-section"><div class="info-section-header">Defined <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += `<div class="info-row"><span class="label">Component ID</span><span class="value" style="font-family:var(--font-mono)">${comp.id}</span></div>`;
+  html += `<div class="info-row"><span class="label">Name</span><span class="value">${comp.label}</span></div>`;
+  html += `<div class="info-row"><span class="label">Type</span><span class="value">${typeLabels[comp.type] || comp.type}</span></div>`;
+  html += `<div class="info-row"><span class="label">Phases</span><span class="value">${phases}</span></div>`;
+  html += '</div></div>';
+  
+  // Library info section
+  html += '<div class="info-section"><div class="info-section-header">Library info <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += `<div class="info-row"><span class="label">Terminals</span><span class="value">${comp.terminals.length}</span></div>`;
+  html += `<div class="info-row"><span class="label">Connected</span><span class="value">${comp.terminals.filter(t=>t.connected).length} / ${comp.terminals.length}</span></div>`;
+  if (conns.length > 0) {
+    conns.forEach(c => {
+      const isFrom = c.from.startsWith(comp.id);
+      const otherTid = isFrom ? c.to : c.from;
+      const otherComp = components.find(co => co.terminals.some(t=>t.id===otherTid));
+      html += `<div class="info-row"><span class="label">${isFrom?'→':'←'} ${otherComp?.label||'?'}</span><span class="value">${c.conductor||'direct'}</span></div>`;
+    });
+  }
+  html += '</div></div>';
+  
+  // Calculated section
+  html += '<div class="info-section"><div class="info-section-header">Calculated <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  if (comp.gps) {
+    html += `<div class="info-row"><span class="label">Location</span><span class="value">${comp.gps.lat.toFixed(4)}, ${comp.gps.lng.toFixed(4)}</span></div>`;
+  } else {
+    html += `<div class="info-row"><span class="label">Location</span><span class="value muted">No GPS</span></div>`;
+  }
+  html += '</div></div>';
+  
+  // Physical binding section — compact multi-bind list
+  const bindCount = bindings.length;
+  html += `<div class="info-section" style="background:var(--neutral-50)"><div class="info-section-header">Physical binding${bindCount > 0 ? ' (' + bindCount + ')' : ''} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>`;
+  html += '<div class="info-section-body">';
+  
+  if (bindCount > 0) {
+    bindings.forEach((b, idx) => {
+      const s = structures.find(st => st.id === b.structId);
+      if (!s) return;
+      const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.type] || s.type;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;gap:4px" onmouseenter="highlightStruct('${s.id}')" onmouseleave="highlightStruct(null)">`;
+      html += `<span style="font-size:13px;color:var(--foreground)">${b.prep} <strong>${s.label}</strong> <span style="color:var(--neutral-500);font-weight:400">${typeLabel}</span></span>`;
+      html += `<span style="display:flex;gap:2px;flex-shrink:0">`;
+      html += `<button onclick="rebindOne('${comp.id}',${idx})" style="width:24px;height:24px;border:none;background:none;cursor:pointer;border-radius:var(--radius-sm);color:var(--neutral-500);display:flex;align-items:center;justify-content:center" title="Change"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 3l4 4-4 4"/><path d="M20 7H4"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h16"/></svg></button>`;
+      html += `<button onclick="unbindOne('${comp.id}',${idx})" style="width:24px;height:24px;border:none;background:none;cursor:pointer;border-radius:var(--radius-sm);color:var(--neutral-400);display:flex;align-items:center;justify-content:center" title="Unbind"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+      html += `</span></div>`;
+    });
+  } else {
+    html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Not bound</div>`;
+  }
+  
+  // Add binding button
+  html += `<button class="bind-btn-secondary" onclick="openBindPicker('${comp.id}')" style="width:100%;margin-top:6px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/></svg> Add binding</button>`;
+  
+  html += '</div></div>';
+  
+  // Files section (stub)
+  html += '<div class="info-section"><div class="info-section-header">Files <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += '<div style="font-size:12px;color:var(--neutral-400);padding:8px 0">Drop files here</div>';
+  html += '</div></div>';
+  
+  document.getElementById('infoPanelBody').innerHTML = html;
+  
+  // Footer
+  const footer = document.getElementById('infoPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = '<button style="width:100%;height:32px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;cursor:pointer;font-family:var(--font-sans);display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit</button>';
+  
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+function openStructureInfoPanel(structId) {
+  const struct = structures.find(s=>s.id===structId);
+  if (!struct) return;
+  infoPanelStruct = struct;
+  infoPanelComp = null;
+  
+  document.getElementById('infoPanelTitle').textContent = struct.label;
+  
+  // Find mounted equipment
+  const mounted = components.filter(c => c.bindings.some(b => b.structId === structId));
+  // Find conductors passing through (bound to this structure via connections)
+  
+  let html = '';
+  
+  // Details section
+  html += '<div class="info-section"><div class="info-section-header">Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  html += `<div class="info-row"><span class="label">Type</span><span class="value">${{pole:'Pole (Wood)',vault:'Vault',pad:'Pad / Cabinet'}[struct.type]||struct.type}</span></div>`;
+  html += `<div class="info-row"><span class="label">ID</span><span class="value" style="font-family:var(--font-mono)">${struct.id}</span></div>`;
+  html += `<div class="info-row"><span class="label">GPS</span><span class="value">${struct.mx}, ${struct.my}</span></div>`;
+  if (struct.type === 'pole') {
+    html += `<div class="info-row"><span class="label">Height</span><span class="value">40 ft</span></div>`;
+    html += `<div class="info-row"><span class="label">Material</span><span class="value">Wood</span></div>`;
+    html += `<div class="info-row"><span class="label">Class</span><span class="value">4</span></div>`;
+  }
+  html += '</div></div>';
+  
+  // Mounted equipment section
+  html += '<div class="info-section" style="background:var(--neutral-50)"><div class="info-section-header">Mounted equipment (' + mounted.length + ') <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
+  html += '<div class="info-section-body">';
+  
+  if (mounted.length > 0) {
+    mounted.forEach(c => {
+      const b = c.bindings.find(b => b.structId === structId);
+      html += `<div class="mounted-item"><span class="eq-name">${c.label} · ${c.type}</span><span class="eq-prep">${b?.prep||'ON'}</span></div>`;
+    });
+  } else {
+    html += '<div style="font-size:12px;color:var(--neutral-400);padding:4px 0">No equipment mounted</div>';
+  }
+  
+  // Mount equipment button — always visible (like Add binding in component Info Panel)
+  html += `<div style="margin-top:8px"><button class="bind-btn-secondary" style="width:100%;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openMountPicker('${structId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg> Mount equipment...</button></div>`;
+  html += '</div></div>';
+  
+  document.getElementById('infoPanelBody').innerHTML = html;
+  document.getElementById('infoPanelFooter').style.display = 'none';
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+let recentBindStructs = []; // track recently bound structure IDs
+
+let bindPickerSelected = []; // multi-select struct IDs
+let bindPickerCompId = null;
+
+function openBindPicker(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  bindPickerCompId = compId;
+  bindPickerSelected = [];
+
+  // Enter bind mode — pick on map active simultaneously
+  pickMode = true;
+  pickTarget = compId;
+  document.getElementById('mapPanel').classList.add('bind-mode');
+  renderMap();
+
+  renderBindPickerList(compId);
+}
+
+function renderBindPickerList(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+
+  document.getElementById('infoPanelTitle').textContent = `Bind ${comp.label}`;
+
+  const allStructs = getCompatibleStructures(comp);
+  const recentItems = recentBindStructs.map(id => allStructs.find(s => s.struct.id === id)).filter(Boolean);
+
+  let html = '';
+
+  // Back button row
+  html += `<div style="padding:6px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;cursor:pointer" onclick="exitBindPicker('${compId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span style="font-size:12px;color:var(--neutral-600)">Back to info</span></div>`;
+
+  // Search
+  html += '<div style="padding:6px 16px"><div style="position:relative"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:9px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="bindSearchInput" placeholder="Search structures..." oninput="filterBindList()" style="width:100%;height:28px;padding:0 10px 0 28px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--background);font-family:var(--font-sans);outline:none"></div></div>';
+
+  // Hint
+  html += '<div style="padding:2px 16px 6px;font-size:11px;color:var(--neutral-400)">Click to bind · Pick on map · Hold Shift to add more</div>';
+
+  // Recent
+  if (recentItems.length > 0) {
+    html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">Recent</div>';
+    recentItems.forEach(s => {
+      const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.struct.type] || s.struct.type;
+      html += `<div class="bind-list-item" data-sid="${s.struct.id}" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindPickerClick('${s.struct.id}',event)">`;
+      html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
+      html += `</div>`;
+    });
+  }
+
+  // All structures
+  html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">All structures</div>';
+  html += '<div id="bindListItems" style="max-height:200px;overflow-y:auto">';
+  allStructs.forEach(s => {
+    const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.struct.type] || s.struct.type;
+    const alreadyBound = comp.bindings.some(b => b.structId === s.struct.id);
+    const sel = bindPickerSelected.includes(s.struct.id);
+    if (alreadyBound) {
+      html += `<div class="bind-list-item disabled" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}">`;
+      html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
+      html += `<span class="bl-tag">bound</span></div>`;
+    } else {
+      html += `<div class="bind-list-item" data-sid="${s.struct.id}" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindPickerClick('${s.struct.id}',event)">`;
+      html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
+      html += `</div>`;
+    }
+  });
+  html += '</div>';
+
+  document.getElementById('infoPanelBody').innerHTML = html;
+
+  // Footer — Done button
+  const footer = document.getElementById('infoPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = `<button class="bind-btn-secondary" onclick="exitBindPicker('${compId}')" style="width:100%;font-size:13px">Done</button>`;
+
+  document.getElementById('infoPanel').classList.add('visible');
+  setTimeout(() => document.getElementById('bindSearchInput')?.focus(), 50);
+}
+
+function bindPickerClick(structId, e) {
+  if (e && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+    // Shift+click — bind immediately but stay in picker
+    bindToStructure(bindPickerCompId, structId);
+  } else {
+    // Single click — bind and return to info panel
+    const cid = bindPickerCompId;
+    bindPickerCompId = null;
+    bindToStructure(cid, structId);
+  }
+}
+
+function exitBindPicker(compId) {
+  pickMode = false;
+  pickTarget = null;
+  document.getElementById('mapPanel').classList.remove('bind-mode');
+  highlightedStruct = null;
+  bindPickerSelected = [];
+  renderMap();
+  openInfoPanel(compId);
+}
+
+function filterBindList() {
+  const q = (document.getElementById('bindSearchInput')?.value || '').toLowerCase();
+  document.querySelectorAll('#bindListItems .bind-list-item').forEach(item => {
+    item.style.display = (item.getAttribute('data-name') || '').includes(q) ? '' : 'none';
+  });
+}
+
+let mountPickerStructId = null;
+
+function openMountPicker(structId) {
+  const struct = structures.find(s=>s.id===structId);
+  if (!struct) return;
+  mountPickerStructId = structId;
+
+  // Highlight SLD panel — components live there
+  document.querySelector('.sld-panel').classList.add('bind-mode');
+
+  renderMountPickerList(structId);
+}
+
+function renderMountPickerList(structId) {
+  const struct = structures.find(s=>s.id===structId);
+  if (!struct) return;
+
+  document.getElementById('infoPanelTitle').textContent = `Mount on ${struct.label}`;
+
+  const allComps = components.filter(c => c.type !== 'bus');
+  const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+
+  let html = '';
+
+  // Back button
+  html += `<div style="padding:6px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;cursor:pointer" onclick="exitMountPicker('${structId}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg><span style="font-size:12px;color:var(--neutral-600)">Back to info</span></div>`;
+
+  // Search
+  html += '<div style="padding:6px 16px"><div style="position:relative"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:9px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="mountSearchInput" placeholder="Search components..." oninput="filterMountList()" style="width:100%;height:28px;padding:0 10px 0 28px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--background);font-family:var(--font-sans);outline:none"></div></div>';
+
+  // Hint
+  html += '<div style="padding:2px 16px 6px;font-size:11px;color:var(--neutral-400)">Click to mount · Hold Shift to add more</div>';
+
+  html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">Components</div>';
+  html += '<div id="mountListItems" style="max-height:220px;overflow-y:auto">';
+  allComps.forEach(c => {
+    const prep = getPreposition(c.type, struct.type);
+    const alreadyMounted = c.bindings.some(b => b.structId === structId);
+    if (alreadyMounted) {
+      html += `<div class="bind-list-item disabled" data-name="${c.label.toLowerCase()} ${(typeLabels[c.type]||'').toLowerCase()}">`;
+      html += `<span><span class="bl-name">${c.label}</span> <span class="bl-meta">${typeLabels[c.type]||c.type} · ${c.terminals[0]?.phases||'—'}</span></span>`;
+      html += `<span class="bl-tag">mounted</span></div>`;
+    } else {
+      const isBoundElsewhere = c.bindings.length > 0;
+      html += `<div class="bind-list-item" data-name="${c.label.toLowerCase()} ${(typeLabels[c.type]||'').toLowerCase()}" onmouseenter="hoveredComp='${c.id}';renderSLD()" onmouseleave="hoveredComp=null;renderSLD()" onclick="mountPickerClick('${c.id}',event)">`;
+      html += `<span><span class="bl-name">${c.label}</span> <span class="bl-meta">${typeLabels[c.type]||c.type} · ${c.terminals[0]?.phases||'—'}${isBoundElsewhere?' · bound elsewhere':''}</span></span>`;
+      html += `<span class="bl-tag">${prep}</span>`;
+      html += `</div>`;
+    }
+  });
+  html += '</div>';
+
+  document.getElementById('infoPanelBody').innerHTML = html;
+
+  // Footer — Done button
+  const footer = document.getElementById('infoPanelFooter');
+  footer.style.display = 'block';
+  footer.innerHTML = `<button class="bind-btn-secondary" onclick="exitMountPicker('${structId}')" style="width:100%;font-size:13px">Done</button>`;
+
+  document.getElementById('infoPanel').classList.add('visible');
+  setTimeout(() => document.getElementById('mountSearchInput')?.focus(), 50);
+}
+
+function mountPickerClick(compId, e) {
+  if (e && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+    // Shift+click — mount and stay in picker
+    bindToStructure(compId, mountPickerStructId);
+  } else {
+    // Single click — mount and exit
+    const sid = mountPickerStructId;
+    mountPickerStructId = null;
+    document.querySelector('.sld-panel').classList.remove('bind-mode');
+    bindToStructure(compId, sid);
+  }
+}
+
+function exitMountPicker(structId) {
+  mountPickerStructId = null;
+  document.querySelector('.sld-panel').classList.remove('bind-mode');
+  openStructureInfoPanel(structId);
+}
+
+function filterMountList() {
+  const q = (document.getElementById('mountSearchInput')?.value || '').toLowerCase();
+  document.querySelectorAll('#mountListItems .bind-list-item').forEach(item => {
+    item.style.display = (item.getAttribute('data-name') || '').includes(q) ? '' : 'none';
+  });
+}
+
+function closeInfoPanel() {
+  document.getElementById('infoPanel').classList.remove('visible');
+  infoPanelComp = null;
+  infoPanelStruct = null;
+  // Clean up picker modes
+  if (bindPickerCompId) { bindPickerCompId = null; cancelPickMode(); }
+  if (mountPickerStructId) { mountPickerStructId = null; document.querySelector('.sld-panel').classList.remove('bind-mode'); }
+  document.getElementById('mapPanel').classList.remove('bind-mode');
+  document.querySelector('.sld-panel').classList.remove('bind-mode');
+}
+
+// ─── CONNECT-TO PANEL ────────────────────────────────────
+function openConnectPanel(compId) {
+  const comp = components.find(c=>c.id===compId);
+  if (!comp) return;
+  
+  document.getElementById('infoPanelTitle').textContent = `Connect ${comp.label} to...`;
+  
+  // Find all other components with free terminals
+  const others = components.filter(c => c.id !== comp.id && c.terminals.some(t => !t.connected));
+  const freeSource = comp.terminals.filter(t => !t.connected);
+  
+  if (freeSource.length === 0) {
+    document.getElementById('infoPanelBody').innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--neutral-500);font-size:13px">All terminals on ' + comp.label + ' are connected.</div>';
+    document.getElementById('infoPanelFooter').style.display = 'none';
+    document.getElementById('infoPanel').classList.add('visible');
+    return;
+  }
+  
+  let html = '<div style="padding:8px 16px"><div style="position:relative"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:9px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input id="connectSearch" placeholder="Search components..." oninput="filterConnectList()" style="width:100%;height:32px;padding:0 10px 0 28px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;background:var(--background);font-family:var(--font-sans);outline:none"></div></div>';
+  
+  html += '<div style="padding:4px 16px 8px;font-size:11px;color:var(--neutral-400)">Free terminals: ' + freeSource.map(t=>t.name).join(', ') + '</div>';
+  
+  html += '<div id="connectListItems">';
+  others.forEach(other => {
+    const freeTarget = other.terminals.filter(t => !t.connected);
+    if (freeTarget.length === 0) return;
+    
+    // Best compatibility
+    let bestCompat = 'none';
+    freeSource.forEach(s => {
+      freeTarget.forEach(t => {
+        const c = getPhaseCompat(s.id, t.id);
+        if (c === 'full') bestCompat = 'full';
+        else if (c === 'partial' && bestCompat !== 'full') bestCompat = 'partial';
+      });
+    });
+    
+    const dist = comp.gps && other.gps ? Math.round(Math.hypot(comp.gps.mx - other.gps.mx, comp.gps.my - other.gps.my)) + 'px' : '—';
+    const typeLabels = {bus:'Bus',transformer:'Transformer',switch:'Switch',meter:'Meter'};
+    
+    html += `<div class="connect-list-item" data-name="${other.label.toLowerCase()}" onmouseenter="hoveredComp='${other.id}';renderSLD();renderMap()" onmouseleave="hoveredComp=null;renderSLD();renderMap()" onclick="connectFromPanel('${comp.id}','${other.id}')">`;
+    html += `<div><div class="cl-name">${other.label}</div><div class="cl-meta">${typeLabels[other.type]||other.type} · ${freeTarget.length} free · ${dist}</div></div>`;
+    html += `<span class="cl-compat ${bestCompat}">${bestCompat === 'full' ? 'match' : bestCompat === 'partial' ? 'partial' : '—'}</span>`;
+    html += `</div>`;
+  });
+  html += '</div>';
+  
+  document.getElementById('infoPanelBody').innerHTML = html;
+  document.getElementById('infoPanelFooter').style.display = 'none';
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+function filterConnectList() {
+  const q = document.getElementById('connectSearch').value.toLowerCase();
+  document.querySelectorAll('#connectListItems .connect-list-item').forEach(item => {
+    item.style.display = item.getAttribute('data-name').includes(q) ? '' : 'none';
+  });
+}
+
+function connectFromPanel(fromCompId, toCompId) {
+  const fromComp = components.find(c=>c.id===fromCompId);
+  const toComp = components.find(c=>c.id===toCompId);
+  if (!fromComp || !toComp) return;
+  
+  const freeFrom = fromComp.terminals.filter(t=>!t.connected);
+  const freeTo = toComp.terminals.filter(t=>!t.connected);
+  
+  // Find best pair
+  let bestFrom = null, bestTo = null, bestScore = -1;
+  freeFrom.forEach(t1 => {
+    freeTo.forEach(t2 => {
+      const compat = getPhaseCompat(t1.id, t2.id);
+      const score = compat === 'full' ? 2 : compat === 'partial' ? 1 : 0;
+      if (score > bestScore) { bestScore = score; bestFrom = t1; bestTo = t2; }
+    });
+  });
+  
+  if (bestFrom && bestTo) {
+    completeConnection(bestFrom.id, bestTo.id);
+    closeInfoPanel();
+  }
+}
+
+// ─── BIND MECHANICS ─────────────────────────────────────
+
+function getCompatibleStructures(comp) {
+  // Return structures sorted by distance, filtered by type compatibility
+  const results = [];
+  structures.forEach(s => {
+    const dist = comp.gps ? Math.round(Math.hypot(comp.gps.mx - s.mx, comp.gps.my - s.my)) : '?';
+    results.push({ struct: s, dist });
+  });
+  results.sort((a,b) => (typeof a.dist === 'number' ? a.dist : 999) - (typeof b.dist === 'number' ? b.dist : 999));
+  return results.slice(0, 5);
+}
+
+function getPreposition(compType, structType) {
+  if (structType === 'vault') return 'ON';
+  if (compType === 'transformer' || compType === 'switch') return 'ON';
+  if (compType === 'meter') return 'AT';
+  return 'ON';
+}
+
+function highlightStruct(structId) {
+  highlightedStruct = structId;
+  renderMap();
+}
+
+function bindToStructure(compId, structId) {
+  saveUndo();
+  const comp = components.find(c=>c.id===compId);
+  const struct = structures.find(s=>s.id===structId);
+  if (!comp || !struct) return;
+  
+  const prep = getPreposition(comp.type, struct.type);
+  
+  // Add to bindings array (multi-bind)
+  if (!comp.bindings) comp.bindings = [];
+  comp.bindings.push({ structId: struct.id, prep });
+  
+  // Track recent structures
+  recentBindStructs = [struct.id, ...recentBindStructs.filter(id => id !== struct.id)].slice(0, 3);
+  
+  // Update GPS to first binding's structure location
+  comp.gps = { lat: 38.9 + struct.my * 0.0001, lng: -77.03 + struct.mx * 0.0001, mx: struct.mx, my: struct.my };
+  
+  // Refresh — stay in picker if active, otherwise exit pick mode and refresh info panel
+  if (bindPickerCompId === compId) {
+    // Stay in bind picker — just re-render list, don't cancel pick mode
+    renderSLD(); renderMap();
+    showToast(`${comp.label} bound ${prep} ${struct.label}`);
+    renderBindPickerList(compId);
+  } else if (mountPickerStructId === structId) {
+    // Stay in mount picker — just re-render list
+    cancelPickMode();
+    renderSLD(); renderMap();
+    showToast(`${comp.label} mounted ${prep} ${struct.label}`);
+    renderMountPickerList(structId);
+  } else {
+    // Not in any picker — exit pick mode and refresh info panel
+    cancelPickMode();
+    renderSLD(); renderMap();
+    showToast(`${comp.label} bound ${prep} ${struct.label}`);
+    if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
+    if (infoPanelStruct && infoPanelStruct.id === structId) openStructureInfoPanel(structId);
+  }
+}
+
+function unbindOne(compId, bindIdx) {
+  saveUndo();
+  const comp = components.find(c=>c.id===compId);
+  if (!comp || !comp.bindings || bindIdx >= comp.bindings.length) return;
+  
+  const removed = comp.bindings.splice(bindIdx, 1)[0];
+  const struct = structures.find(s=>s.id===removed.structId);
+  
+  // If no bindings left, clear GPS
+  if (comp.bindings.length === 0) {
+    comp.gps = null;
+  } else {
+    // Update GPS to first remaining binding
+    const firstStruct = structures.find(s=>s.id===comp.bindings[0].structId);
+    if (firstStruct) comp.gps = { lat: 38.9 + firstStruct.my * 0.0001, lng: -77.03 + firstStruct.mx * 0.0001, mx: firstStruct.mx, my: firstStruct.my };
+  }
+  
+  renderSLD(); renderMap();
+  showToast(`Unbound from ${struct?.label || '?'}`);
+  if (infoPanelComp && infoPanelComp.id === compId) openInfoPanel(compId);
+}
+
+function rebindOne(compId, bindIdx) {
+  // Remove old binding and start pick mode to select new one
+  saveUndo();
+  const comp = components.find(c=>c.id===compId);
+  if (!comp || !comp.bindings || bindIdx >= comp.bindings.length) return;
+  comp.bindings.splice(bindIdx, 1);
+  renderSLD(); renderMap();
+  startPickMode(compId);
+}
+
+function startPickMode(compId) {
+  pickMode = true;
+  pickTarget = compId;
+  document.getElementById('pickBanner').classList.add('visible');
+  map.style.cursor = 'crosshair';
+  
+  // Highlight compatible structures on map
+  renderMap();
+}
+
+function cancelPickMode() {
+  pickMode = false;
+  pickTarget = null;
+  document.getElementById('pickBanner').classList.remove('visible');
+  document.getElementById('mapPanel').classList.remove('bind-mode');
+  map.style.cursor = 'default';
+  highlightedStruct = null;
+  bindPickerSelected = [];
+  renderMap();
+}
+
+// Map click — structure selection or bind
+map.addEventListener('click', e => {
+  if (mapPlaceMode) return; // Structure flow takes priority
+  
+  const rect = map.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  
+  // Find clicked structure
+  let clickedStruct = null;
+  structures.forEach(s => {
+    if (Math.hypot(mx - s.mx, my - s.my) < 15) clickedStruct = s;
+  });
+  
+  if (pickMode && clickedStruct) {
+    // Bind in pick mode
+    const cid = pickTarget;
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      // Shift+click on map — bind and stay in mode
+      bindToStructure(cid, clickedStruct.id);
+    } else {
+      // Regular click — bind and exit
+      if (bindPickerCompId) bindPickerCompId = null;
+      bindToStructure(cid, clickedStruct.id);
+    }
+    return;
+  }
+  
+  if (clickedStruct && !pickMode) {
+    // Open structure info panel
+    openStructureInfoPanel(clickedStruct.id);
+    return;
+  }
+});
+
+// ─── MODIFY CONTEXT MENU: Show info opens Info Panel ────
+// (Already wired — we just need to update onclick handlers)
+
+// ─── ORPHAN BADGE ON SLD ────────────────────────────────
+// Added in renderSLD — see orphan badge rendering below
+
+// ─── AGGREGATE FUNCTIONS ────────────────────────────────
+function aggHitTest(mx, my) {
+  for (let i=aggregates.length-1; i>=0; i--) {
+    const a = aggregates[i];
+    const ch = a.children.map(id=>components.find(c=>c.id===id)).filter(Boolean);
+    if (a.collapsed) {
+      const cx=a.cx||300,cy=a.cy||200;
+      if (mx>=cx-60&&mx<=cx+60&&my>=cy-20&&my<=cy+20) return a;
+    } else if (ch.length>0) {
+      const p=24; let n1=Infinity,n2=Infinity,x1=-Infinity,y1=-Infinity;
+      ch.forEach(c=>{n1=Math.min(n1,c.x);n2=Math.min(n2,c.y);x1=Math.max(x1,c.x+c.w);y1=Math.max(y1,c.y+c.h);});
+      if (mx>=n1-p&&mx<=x1+p&&my>=n2-p-16&&my<=y1+p) return a;
+    } else {
+      const cx=a.cx||400,cy=a.cy||300;
+      if (mx>=cx-80&&mx<=cx+80&&my>=cy-40&&my<=cy+40) return a;
+    }
+  }
+  return null;
+}
+
+function aggOfComp(compId) { return aggregates.find(a=>a.children.includes(compId)); }
+
+function validateAgg(agg) {
+  const tmpl = aggTemplates[agg.type]; if (!tmpl) return [];
+  const ch = agg.children.map(id=>components.find(c=>c.id===id)).filter(Boolean);
+  const res = [];
+  tmpl.rules.forEach(r => {
+    const cnt = ch.filter(c=>c.type===r.type).length;
+    if (cnt<r.min) res.push({lv:'err',text:`Need at least ${r.min} ${r.label} (have ${cnt})`});
+    else if (cnt>r.max) res.push({lv:'err',text:`Max ${r.max} ${r.label} (have ${cnt})`});
+    else if (cnt>0) res.push({lv:'ok',text:`${r.label}: ${cnt} (${r.min}–${r.max})`});
+  });
+  tmpl.mustHave.forEach(type => { if (!ch.some(c=>c.type===type)) { const r=tmpl.rules.find(x=>x.type===type); res.push({lv:'err',text:`Must have at least 1 ${r?.label||type}`}); }});
+  return res;
+}
+
+function aggCreate(type, name, childIds) {
+  saveUndo();
+  const a = { id:'agg-'+(++aggIdCounter), type, name: name||aggTemplates[type].name+' '+aggIdCounter, children:[...childIds], collapsed:false, cx:null, cy:null };
+  childIds.forEach(cid => aggregates.forEach(ag => { const i=ag.children.indexOf(cid); if(i>=0) ag.children.splice(i,1); }));
+  if (childIds.length===0) { a.cx=400; a.cy=300; }
+  aggregates.push(a);
+  renderSLD(); renderMap(); showToast(`Aggregate "${a.name}" created`);
+  return a;
+}
+
+function aggAddComp(aggId, compId) {
+  const a = aggregates.find(x=>x.id===aggId);
+  if (!a||a.children.includes(compId)) return;
+  saveUndo();
+  aggregates.forEach(ag => { const i=ag.children.indexOf(compId); if(i>=0) ag.children.splice(i,1); });
+  a.children.push(compId);
+  renderSLD(); renderMap(); showToast(`Added to "${a.name}"`);
+  if (infoPanelComp===null && document.getElementById('infoPanel').classList.contains('visible')) openAggInfoPanel(a);
+}
+
+function aggRemoveComp(aggId, compId) {
+  const a = aggregates.find(x=>x.id===aggId);
+  if (!a) return;
+  saveUndo();
+  const i=a.children.indexOf(compId); if(i>=0) a.children.splice(i,1);
+  renderSLD(); renderMap();
+  if (document.getElementById('infoPanel').classList.contains('visible')) openAggInfoPanel(a);
+}
+
+function dissolveAggregate(aggId) {
+  hideCtxMenu(); saveUndo();
+  const i = aggregates.findIndex(a=>a.id===aggId);
+  if (i>=0) { const nm=aggregates[i].name; aggregates.splice(i,1); renderSLD(); renderMap(); closeInfoPanel(); showToast(`"${nm}" dissolved`); }
+}
+
+function toggleAggCollapse(aggId) {
+  const a = aggregates.find(x=>x.id===aggId);
+  if (!a) return;
+  if (!a.collapsed) {
+    const ch = a.children.map(id=>components.find(c=>c.id===id)).filter(Boolean);
+    if (ch.length>0) { const p=24; let n1=Infinity,n2=Infinity,x1=-Infinity,y1=-Infinity; ch.forEach(c=>{n1=Math.min(n1,c.x);n2=Math.min(n2,c.y);x1=Math.max(x1,c.x+c.w);y1=Math.max(y1,c.y+c.h);}); a.cx=(n1+x1)/2; a.cy=(n2+y1)/2; }
+  }
+  a.collapsed = !a.collapsed;
+  renderSLD(); renderMap();
+}
+
+// ─── AGGREGATE INFO PANEL (reuses info-panel) ───────────
+function openAggInfoPanel(agg) {
+  infoPanelComp = null; infoPanelStruct = null;
+  const tmpl = aggTemplates[agg.type];
+  const ch = agg.children.map(id=>components.find(c=>c.id===id)).filter(Boolean);
+  const rules = validateAgg(agg);
+  const hasErr = rules.some(r=>r.lv==='err');
+  const hasWarn = rules.some(r=>r.lv==='warn');
+
+  document.getElementById('infoPanelTitle').textContent = agg.name;
+
+  let h = '';
+  // Header with type + status
+  h += `<div class="info-section" style="display:flex;align-items:center;gap:10px;padding:16px">`;
+  h += `<div style="width:32px;height:32px;background:${tmpl.color}18;color:${tmpl.color};border:1px solid ${tmpl.color}30;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0">${tmpl.icon}</div>`;
+  h += `<div style="flex:1"><div style="font-size:14px;font-weight:600">${agg.name}</div><div style="font-size:12px;color:var(--neutral-500)">${tmpl.name} · ${ch.length} components</div></div>`;
+  if (hasErr) h += `<span style="padding:2px 8px;border-radius:var(--radius-sm);background:var(--destructive-wash);color:var(--destructive);font-size:11px;font-weight:500">Invalid</span>`;
+  else if (hasWarn) h += `<span style="padding:2px 8px;border-radius:var(--radius-sm);background:var(--warning-wash);color:var(--warning);font-size:11px;font-weight:500">Warning</span>`;
+  else if (ch.length>0) h += `<span style="padding:2px 8px;border-radius:var(--radius-sm);background:var(--success-wash);color:var(--success);font-size:11px;font-weight:500">Valid</span>`;
+  h += '</div>';
+
+  // Members
+  h += `<div class="info-section"><div class="info-section-header">Members (${ch.length}) <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div><div class="info-section-body">`;
+  if (ch.length===0) h += '<div style="font-size:12px;color:var(--neutral-400);padding:4px 0">No components — drag or right-click to add</div>';
+  ch.forEach(c => {
+    const tl = {bus:'Bus',transformer:'TR',switch:'SW',meter:'MT'}[c.type]||'?';
+    h += `<div class="agg-member-item"><span style="width:20px;height:20px;border:1px solid var(--border);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:var(--neutral-500);flex-shrink:0">${tl}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.label}</span><button class="member-remove" onclick="aggRemoveComp('${agg.id}','${c.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>`;
+  });
+  h += '</div></div>';
+
+  // Composition rules
+  if (rules.length>0) {
+    h += '<div class="info-section"><div class="info-section-header">Composition Rules <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div><div class="info-section-body">';
+    rules.forEach(r => {
+      const icon = r.lv==='ok'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>':r.lv==='warn'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+      h += `<div class="agg-rule-item ${r.lv}"><span class="rule-icon">${icon}</span><span class="rule-text">${r.text}</span></div>`;
+    });
+    h += '</div></div>';
+  }
+
+  document.getElementById('infoPanelBody').innerHTML = h;
+
+  // Footer
+  const ft = document.getElementById('infoPanelFooter');
+  ft.style.display = 'block';
+  ft.innerHTML = `<div style="display:flex;gap:8px"><button style="flex:1;height:32px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-md);font-size:12px;cursor:pointer;font-family:var(--font-sans)" onclick="toggleAggCollapse('${agg.id}');closeInfoPanel()">${agg.collapsed?'Expand':'Collapse'}</button><button style="flex:1;height:32px;background:none;border:1px solid var(--destructive);color:var(--destructive);border-radius:var(--radius-md);font-size:12px;cursor:pointer;font-family:var(--font-sans)" onclick="dissolveAggregate('${agg.id}')">Dissolve</button></div>`;
+  document.getElementById('infoPanel').classList.add('visible');
+}
+
+// ─── AGGREGATE CREATE PANEL (reuses info-panel) ─────────
+function openAggCreatePanel(preselectedIds) {
+  infoPanelComp = null; infoPanelStruct = null;
+  document.getElementById('infoPanelTitle').textContent = 'Create Aggregate';
+  let selType = null;
+
+  function render() {
+    let h = '<div class="info-section"><div class="info-section-header">Type</div><div class="info-section-body">';
+    Object.values(aggTemplates).forEach(t => {
+      h += `<div class="agg-type-option ${selType===t.id?'selected':''}" onclick="window._aggSelType('${t.id}')"><div class="type-icon" style="background:${t.color}18;color:${t.color};border:1px solid ${t.color}30">${t.icon}</div><div><div class="type-name">${t.name}</div><div class="type-meta">${t.desc}</div></div></div>`;
+    });
+    h += '</div></div>';
+    h += '<div class="info-section"><div class="info-section-header">Name</div><div class="info-section-body">';
+    h += `<input id="aggNameIn" value="${selType?aggTemplates[selType].name+' '+(aggIdCounter+1):''}" style="width:100%;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;font-family:var(--font-sans);outline:none" placeholder="Enter name">`;
+    h += '</div></div>';
+    if (preselectedIds.length>0) {
+      const ch = preselectedIds.map(id=>components.find(c=>c.id===id)).filter(Boolean);
+      h += `<div class="info-section"><div class="info-section-header">Members (${ch.length})</div><div class="info-section-body">`;
+      ch.forEach(c=>{const tl={bus:'Bus',transformer:'TR',switch:'SW',meter:'MT'}[c.type]||'?';h+=`<div style="font-size:13px;padding:3px 0">${tl} ${c.label}</div>`;});
+      h += '</div></div>';
+    }
+    if (selType) {
+      const fakeAgg = {type:selType,children:preselectedIds};
+      const rules = validateAgg(fakeAgg);
+      if (rules.length>0) {
+        h += '<div class="info-section"><div class="info-section-header">Validation Preview</div><div class="info-section-body">';
+        rules.forEach(r=>{const icon=r.lv==='ok'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>':r.lv==='err'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>':'';h+=`<div class="agg-rule-item ${r.lv}"><span class="rule-icon">${icon}</span><span class="rule-text">${r.text}</span></div>`;});
+        h += '</div></div>';
+      }
+    }
+    document.getElementById('infoPanelBody').innerHTML = h;
+    const ft = document.getElementById('infoPanelFooter');
+    ft.style.display = selType ? 'block' : 'none';
+    ft.innerHTML = selType ? '<button style="width:100%;height:36px;background:var(--primary);color:var(--primary-foreground);border:none;border-radius:var(--radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-sans)" onclick="window._aggConfirm()">Create Aggregate</button>' : '';
+  }
+
+  window._aggSelType = function(t) { selType=t; render(); };
+  window._aggConfirm = function() {
+    const nm = document.getElementById('aggNameIn')?.value || aggTemplates[selType].name;
+    const a = aggCreate(selType, nm, preselectedIds);
+    closeInfoPanel();
+    setTimeout(()=>openAggInfoPanel(a), 150);
+  };
+  document.getElementById('infoPanel').classList.add('visible');
+  render();
+}
+
+// ─── DRAG-IN TO AGGREGATE (with confirmation) ───────────
+sld.addEventListener('mousemove', e => {
+  if (!draggingComp) { dragOverAgg=null; return; }
+  const rect=sld.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  let found=null;
+  aggregates.forEach(a => {
+    if (a.collapsed||a.children.includes(draggingComp.id)) return;
+    const ch=a.children.map(id=>components.find(c=>c.id===id)).filter(Boolean);
+    if (ch.length===0) { const cx=a.cx||400,cy=a.cy||300; if(mx>=cx-80&&mx<=cx+80&&my>=cy-40&&my<=cy+40) found=a; }
+    else { const p=24;let n1=Infinity,n2=Infinity,x1=-Infinity,y1=-Infinity;ch.forEach(c=>{n1=Math.min(n1,c.x);n2=Math.min(n2,c.y);x1=Math.max(x1,c.x+c.w);y1=Math.max(y1,c.y+c.h);}); if(mx>=n1-p&&mx<=x1+p&&my>=n2-p-16&&my<=y1+p) found=a; }
+  });
+  const nv = found?found.id:null;
+  if (nv!==dragOverAgg) { dragOverAgg=nv; renderSLD(); }
+});
+
+sld.addEventListener('mouseup', e => {
+  if (draggingComp && dragOverAgg) {
+    const comp=draggingComp, a=aggregates.find(x=>x.id===dragOverAgg);
+    if (a) {
+      aggAddComp(a.id, comp.id);
+      showSnackbar(`${comp.label} added to "${a.name}"`);
+    }
+    dragOverAgg=null;
+  }
+  dragOverAgg=null;
+});
+
+let snackTimer=null;
+function showSnackbar(text) {
+  const sb=document.getElementById('snackbar');
+  document.getElementById('snackbarText').textContent=text;
+  sb.classList.add('visible');
+  clearTimeout(snackTimer);
+  const btn=document.getElementById('snackbarUndo');
+  const newBtn=btn.cloneNode(true);
+  btn.replaceWith(newBtn);
+  document.getElementById('snackbarUndo').addEventListener('click',()=>{sb.classList.remove('visible');clearTimeout(snackTimer);undo();});
+  snackTimer=setTimeout(()=>sb.classList.remove('visible'),4000);
+}
+
+// ─── STATUS BAR: AGGREGATE COUNT ────────────────────────
+(function(){const sb=document.querySelector('.status-bar');const s=document.createElement('span');s.id='aggCount';s.textContent='Aggregates: 0';sb.appendChild(s);})();
+
+// ─── COMPONENT PALETTE ──────────────────────────────────
+const paletteTypes = [
+  { type:'connector', label:'Connector', compType:'bus', w:200, h:10,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h16"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/></svg>' },
+  { type:'transformer', label:'Transformer', compType:'transformer', w:44, h:44,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="5"/><circle cx="12" cy="16" r="5"/></svg>' },
+  { type:'switch', label:'Switch', compType:'switch', w:30, h:30,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8"/></svg>' },
+  { type:'shunt', label:'Shunt', compType:'switch', w:30, h:30,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4v16"/><path d="M6 8h12"/><path d="M8 12h8"/><path d="M6 16h12"/></svg>' },
+  { type:'voltage_reg', label:'Voltage reg.', compType:'switch', w:30, h:30,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>' },
+  { type:'protection', label:'Protection', compType:'switch', w:30, h:30,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>' },
+  { type:'meter', label:'Meter', compType:'meter', w:26, h:26,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>' },
+  { type:'sectionalizer', label:'Sectionalizer', compType:'switch', w:30, h:30,
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16"/><circle cx="12" cy="12" r="2"/></svg>' },
+];
+
+const structPaletteTypes = [
+  { type:'pole', label:'Pole', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20"/><path d="M8 6h8"/></svg>' },
+  { type:'vault', label:'Vault', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>' },
+  { type:'pad', label:'Pad', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="14" width="18" height="6" rx="1"/><rect x="6" y="8" width="12" height="6" rx="1"/></svg>' },
+  { type:'duct', label:'Duct', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h16v8H4z"/><path d="M4 12h16"/></svg>' },
+];
+
+let paletteExpanded = false;
+let paletteDragging = null; // {type info} being dragged from palette
+let dragGhost = null;
+
+function buildPalette() {
+  const grid = document.getElementById('paletteGrid');
+  grid.innerHTML = '';
+  paletteTypes.forEach(pt => {
+    const div = document.createElement('div');
+    div.className = 'palette-item';
+    div.setAttribute('data-ptype', pt.type);
+    div.innerHTML = `${pt.icon}<span class="p-label">${pt.label}</span><span class="p-tooltip">${pt.label}</span>`;
+    div.addEventListener('mousedown', e => startPaletteDrag(e, pt));
+    grid.appendChild(div);
+  });
+}
+
+function buildStructPalette() {
+  const pal = document.getElementById('structPalette');
+  pal.innerHTML = '';
+  structPaletteTypes.forEach(st => {
+    const div = document.createElement('div');
+    div.className = 'struct-palette-item';
+    div.innerHTML = `${st.icon}<span class="sp-tooltip">${st.label}</span>`;
+    div.addEventListener('mousedown', e => startStructPaletteDrag(e, st));
+    pal.appendChild(div);
+  });
+}
+
+function togglePalette() {
+  const pal = document.getElementById('compPalette');
+  paletteExpanded = !paletteExpanded;
+  pal.classList.toggle('collapsed', !paletteExpanded);
+  pal.classList.toggle('expanded', paletteExpanded);
+  const btn = document.getElementById('paletteToggle');
+  btn.innerHTML = paletteExpanded
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+}
+
+// ─── DRAG FROM PALETTE TO SLD ───────────────────────────
+function startPaletteDrag(e, pt) {
+  e.preventDefault();
+  paletteDragging = pt;
+
+  // Create ghost
+  dragGhost = document.createElement('div');
+  dragGhost.className = 'drag-ghost';
+  dragGhost.innerHTML = `<div style="width:40px;height:40px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center">${pt.icon}</div>`;
+  dragGhost.querySelector('svg').style.width = '20px';
+  dragGhost.querySelector('svg').style.height = '20px';
+  document.body.appendChild(dragGhost);
+  dragGhost.style.left = e.clientX - 20 + 'px';
+  dragGhost.style.top = e.clientY - 20 + 'px';
+
+  function onMove(ev) {
+    dragGhost.style.left = ev.clientX - 20 + 'px';
+    dragGhost.style.top = ev.clientY - 20 + 'px';
+  }
+
+  function onUp(ev) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+
+    // Check if dropped on SLD canvas
+    const sldRect = sld.getBoundingClientRect();
+    if (ev.clientX >= sldRect.left && ev.clientX <= sldRect.right && ev.clientY >= sldRect.top && ev.clientY <= sldRect.bottom) {
+      const x = ev.clientX - sldRect.left;
+      const y = ev.clientY - sldRect.top;
+      placeGenericComponent(pt, x, y);
+    }
+    paletteDragging = null;
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ─── DRAG FROM STRUCT PALETTE TO MAP ────────────────────
+function startStructPaletteDrag(e, st) {
+  e.preventDefault();
+  dragGhost = document.createElement('div');
+  dragGhost.className = 'drag-ghost';
+  dragGhost.innerHTML = `<div style="width:36px;height:36px;background:#333;border:1px solid #555;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center">${st.icon}</div>`;
+  const svg = dragGhost.querySelector('svg');
+  if (svg) { svg.style.width='18px'; svg.style.height='18px'; svg.style.color='#999'; }
+  document.body.appendChild(dragGhost);
+  dragGhost.style.left = e.clientX - 18 + 'px';
+  dragGhost.style.top = e.clientY - 18 + 'px';
+
+  function onMove(ev) {
+    dragGhost.style.left = ev.clientX - 18 + 'px';
+    dragGhost.style.top = ev.clientY - 18 + 'px';
+  }
+
+  function onUp(ev) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+    const mapRect = map.getBoundingClientRect();
+    if (ev.clientX >= mapRect.left && ev.clientX <= mapRect.right && ev.clientY >= mapRect.top && ev.clientY <= mapRect.bottom) {
+      const mx = ev.clientX - mapRect.left;
+      const my = ev.clientY - mapRect.top;
+      placeStructure(mx, my, st.type);
+    }
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ─── PLACE GENERIC (UNSPECIFIED) COMPONENT ──────────────
+let genericCounter = 200;
+function placeGenericComponent(pt, x, y) {
+  saveUndo();
+  genericCounter++;
+  const id = pt.compType.substring(0,2).toUpperCase() + '-' + genericCounter;
+  const label = pt.label + ' ' + genericCounter;
+
+  let terminals = [];
+  if (pt.compType === 'transformer') {
+    terminals = [
+      {id:id+'-PRI',name:'Primary',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:id+'-SEC',name:'Secondary',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ];
+  } else if (pt.compType === 'switch') {
+    terminals = [
+      {id:id+'-A',name:'A',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+      {id:id+'-B',name:'B',side:'bottom',offset:0.5,phases:'ABC-N',connected:false},
+    ];
+  } else if (pt.compType === 'meter') {
+    terminals = [
+      {id:id+'-T',name:'Terminal',side:'top',offset:0.5,phases:'ABC-N',connected:false},
+    ];
+  } else if (pt.compType === 'bus') {
+    for (let i=1;i<=5;i++) terminals.push({id:id+'-P'+i,name:'Pos'+i,side:'bottom',offset:i/6,phases:'ABC-N',connected:false});
+  }
+
+  components.push({
+    id, type: pt.compType, label,
+    x: x - pt.w/2, y: y - pt.h/2, w: pt.w, h: pt.h,
+    gps: null, bindings: [], terminals,
+    genericType: pt.type, // e.g. 'transformer', 'switch'
+    variant: null, // null = unspecified
+  });
+
+  renderSLD(); renderMap(); updateComponentCount();
+  showToast(`${label} placed — specify type in Info Panel`);
+  updateValidationWithUnspecified();
+}
+
+// Placement mode for generic components (from context menu / Add Panel)
+let genericPlacePending = null;
+
+function enterGenericPlacement(typeKey, immediateX, immediateY) {
+  const pt = paletteTypes.find(p => p.type === typeKey);
+  if (!pt) return;
+
+  // If coordinates provided (from context menu), place immediately
+  if (immediateX !== undefined && immediateY !== undefined) {
+    placeGenericComponent(pt, immediateX, immediateY);
+    return;
+  }
+
+  // Otherwise enter placement mode
+  genericPlacePending = pt;
+  sld.style.cursor = 'crosshair';
+  document.getElementById('placementHint').style.display = 'block';
+  document.getElementById('placementHint').textContent = `Click to place ${pt.label}`;
+  document.getElementById('statusText').textContent = `Place ${pt.label}`;
+}
+
+// Listen for placement clicks in generic mode
+sld.addEventListener('click', e => {
+  if (!genericPlacePending) return;
+  // Don't intercept if clicking on palette or other UI
+  if (e.target.closest('.comp-palette') || e.target.closest('.add-panel') || e.target.closest('.info-panel') || e.target.closest('.ctx-menu')) return;
+
+  const rect = sld.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const pt = genericPlacePending;
+
+  // If shift held, stay in placement mode (multi-place)
+  if (!e.shiftKey) {
+    genericPlacePending = null;
+    sld.style.cursor = 'default';
+    document.getElementById('placementHint').style.display = 'none';
+    document.getElementById('statusText').textContent = 'Ready';
+  }
+
+  placeGenericComponent(pt, x, y);
+}, true);
+
+// Escape cancels generic placement
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && genericPlacePending) {
+    genericPlacePending = null;
+    sld.style.cursor = 'default';
+    document.getElementById('placementHint').style.display = 'none';
+    document.getElementById('statusText').textContent = 'Ready';
+  }
+});
+
+// ─── UNSPECIFIED VARIANT VALIDATION ─────────────────────
+// Patch updateValidation to include unspecified warnings
+const _origUpdateValidation = updateValidation;
+function updateValidationWithUnspecified() {
+  // Count unspecified
+  const unspec = components.filter(c => c.variant === null && c.variant !== undefined);
+  // Remove old unspecified warnings
+  validationErrors = validationErrors.filter(e => e.code !== 'V-U01');
+  if (unspec.length > 0) {
+    validationErrors.push({
+      code: 'V-U01', type: 'warning', title: 'Unspecified Type',
+      desc: `${unspec.length} component${unspec.length>1?'s':''} without specified variant`
+    });
+  }
+  _origUpdateValidation();
+}
+// Override
+updateValidation = updateValidationWithUnspecified;
+
+// ─── RENDER UNSPECIFIED BADGE ON SLD ────────────────────
+// Patch renderSLD to add warning dot on unspecified components
+const _origRenderSLD = renderSLD;
+renderSLD = function() {
+  _origRenderSLD();
+  // Add warning badges for unspecified
+  components.forEach(comp => {
+    if (comp.variant !== null || comp.variant === undefined) return;
+    // variant===null means placed from palette, not yet specified
+    const bx = comp.x + comp.w - 2;
+    const by = comp.y - 2;
+    const g = el('g', {'pointer-events':'none'}, sld);
+    el('circle', {cx:bx, cy:by, r:5, fill:'var(--warning)', stroke:'white', 'stroke-width':1.5}, g);
+    el('text', {x:bx, y:by+3.5, 'text-anchor':'middle', fill:'white', 'font-size':7, 'font-weight':700, 'font-family':'var(--font-sans)'}, g).textContent = '?';
+  });
+};
+
+// ─── PATCH INFO PANEL FOR VARIANT SELECTION ─────────────
+const _origOpenInfoPanel = openInfoPanel;
+openInfoPanel = function(compId) {
+  _origOpenInfoPanel(compId);
+
+  const comp = components.find(c => c.id === compId);
+  if (!comp || comp.variant !== null || comp.variant === undefined) return;
+
+  // Insert variant picker at top of info panel body
+  const body = document.getElementById('infoPanelBody');
+  const variantSection = document.createElement('div');
+  variantSection.className = 'info-section';
+  variantSection.style.background = 'var(--warning-wash)';
+  variantSection.style.borderLeft = '3px solid var(--warning)';
+
+  const catId = comp.genericType || comp.type;
+  const variants = library.variants[catId] || [];
+
+  let vh = '<div class="info-section-header" style="color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Specify type</div>';
+  vh += '<div class="info-section-body">';
+  vh += '<div style="font-size:12px;color:var(--neutral-600);margin-bottom:8px">Select a specific variant:</div>';
+  variants.forEach(v => {
+    vh += `<div style="padding:6px 8px;cursor:pointer;border-radius:var(--radius-sm);font-size:13px;border:1px solid var(--border);margin-bottom:4px;background:var(--background);transition:all 0.15s" onmouseenter="this.style.borderColor='var(--neutral-400)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="specifyVariant('${comp.id}','${v.id}')"><strong>${v.name}</strong><br><span style="font-size:11px;color:var(--neutral-500)">${v.meta}</span></div>`;
+  });
+  vh += '</div>';
+  variantSection.innerHTML = vh;
+
+  body.insertBefore(variantSection, body.firstChild);
+};
+
+function specifyVariant(compId, variantId) {
+  const comp = components.find(c => c.id === compId);
+  if (!comp) return;
+  const catId = comp.genericType || comp.type;
+  const variants = library.variants[catId] || [];
+  const v = variants.find(x => x.id === variantId);
+  if (!v) return;
+  saveUndo();
+  comp.variant = variantId;
+  comp.label = v.name.split(' ')[0] + '-' + comp.id.split('-')[1]; // e.g. Pad-mount → PM-1
+  renderSLD(); renderMap();
+  updateValidationWithUnspecified();
+  openInfoPanel(compId); // refresh panel
+  showToast(`Specified: ${v.name}`);
+}
+
+// ─── INIT PALETTES ──────────────────────────────────────
+buildPalette();
+buildStructPalette();
+
+// ─── EDIT / VIEW MODE ───────────────────────────────────
+let editMode = false;
+
+function enterEditMode() {
+  editMode = true;
+  document.getElementById('viewToolbar').style.display = 'none';
+  document.getElementById('editToolbar').style.display = 'flex';
+  document.getElementById('compPalette').style.display = '';
+  document.getElementById('structPalette').style.display = '';
+  setTool('select');
+  showToast('Edit mode');
+}
+
+function exitEditMode() {
+  editMode = false;
+  document.getElementById('viewToolbar').style.display = 'flex';
+  document.getElementById('editToolbar').style.display = 'none';
+  document.getElementById('compPalette').style.display = 'none';
+  document.getElementById('structPalette').style.display = 'none';
+  closeAddPanel();
+  setTool('select');
+  genericPlacePending = null;
+  sld.style.cursor = 'default';
+  document.getElementById('placementHint').style.display = 'none';
+  showToast('View mode');
+}
+
+// Start in view mode
+exitEditMode();
+
+// Run initial unspecified check
+setTimeout(updateValidationWithUnspecified, 100);
+</script>
+</body>
+</html>
