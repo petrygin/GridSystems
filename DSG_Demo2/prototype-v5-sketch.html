@@ -120,14 +120,16 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 .add-panel-header .back:hover { background: var(--neutral-100); }
 .add-panel-header .close { background: none; border: none; cursor: pointer; color: var(--neutral-400); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
 .add-panel-header .close:hover { background: var(--neutral-100); }
-.add-panel-body { flex: 1; overflow-y: auto; }
+.add-panel-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 .add-panel-footer { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
 .add-search { padding: 12px 16px; }
 .add-search input { width: 100%; height: 32px; padding: 0 10px 0 30px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; background: var(--background); font-family: var(--font-sans); outline: none; }
 .add-search .icon { position: absolute; left: 24px; top: 20px; color: var(--neutral-400); pointer-events: none; }
-.add-list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; transition: background 0.1s; border-bottom: 1px solid var(--neutral-50); }
+.add-list-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; cursor: pointer; transition: background 0.1s; }
 .add-list-item:hover { background: var(--neutral-50); }
+.add-list-item.selected { background: var(--neutral-100); border-radius: var(--radius-sm); margin: 0 8px; padding: 8px; }
 .add-list-item .item-icon { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); flex-shrink: 0; margin-right: 10px; }
+.add-list-item.selected .item-icon { border-color: var(--neutral-400); color: var(--foreground); }
 .add-list-item .item-text { flex: 1; }
 .add-list-item .item-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
 .add-list-item .item-meta { font-size: 12px; color: var(--neutral-500); margin-top: 1px; }
@@ -355,16 +357,20 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
       <div class="add-struct-picker" id="addStructPicker" style="display:none">
         <div style="padding:10px 12px 6px;font-size:12px;font-weight:600;color:var(--neutral-500);text-transform:uppercase;letter-spacing:0.5px">Add to map</div>
         <div class="add-struct-item" onclick="startAddStructure('pole')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="3"/><path d="M12 9v12"/><path d="M8 21h8"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20"/><path d="M6 5h12"/><path d="M8 2v3"/><path d="M16 2v3"/></svg>
           <div><div style="font-size:13px;font-weight:500">Pole</div><div style="font-size:11px;color:var(--neutral-500)">Wood, Steel, Concrete</div></div>
         </div>
         <div class="add-struct-item" onclick="startAddStructure('vault')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M9 10h6v4H9z"/><path d="M12 6V3"/></svg>
           <div><div style="font-size:13px;font-weight:500">Vault</div><div style="font-size:11px;color:var(--neutral-500)">Underground vault, Handhole</div></div>
         </div>
-        <div class="add-struct-item" onclick="startAddStructure('pad')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="12" width="20" height="8" rx="1"/><path d="M6 12V8M18 12V8"/></svg>
-          <div><div style="font-size:13px;font-weight:500">Pad / Cabinet</div><div style="font-size:11px;color:var(--neutral-500)">Equipment pad, Cabinet</div></div>
+        <div class="add-struct-item" onclick="startAddStructure('substation')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21V7l9-5 9 5v14"/><path d="M9 21v-6h6v6"/><path d="M3 10h18"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Substation</div><div style="font-size:11px;color:var(--neutral-500)">Substation site, Building</div></div>
+        </div>
+        <div class="add-struct-item" onclick="startAddStructure('duct')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v18"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="18" r="2"/></svg>
+          <div><div style="font-size:13px;font-weight:500">Duct</div><div style="font-size:11px;color:var(--neutral-500)">Duct bank, Conduit</div></div>
         </div>
       </div>
       <!-- Map placement hint -->
@@ -385,9 +391,14 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
         <!-- Component Palette -->
         <div class="comp-palette collapsed" id="compPalette">
           <div class="palette-grid" id="paletteGrid"></div>
-          <button class="palette-toggle" id="paletteToggle" onclick="togglePalette()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-          </button>
+          <div id="paletteFooter" style="display:flex;flex-direction:column;gap:2px;margin-top:2px">
+            <button class="palette-toggle" id="paletteMore" title="All components" onclick="openAddPanel()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <button class="palette-toggle" id="paletteToggle" onclick="togglePalette()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+          </div>
         </div>
         <svg class="sld-canvas" id="sldCanvas"></svg>
 
@@ -1540,6 +1551,8 @@ function closeAddPanel() {
   renderSLD();
 }
 
+let addSelectedType = null;
+
 function renderAddStep1() {
   addStep = 1;
   document.getElementById('addPanelTitle').textContent = 'Add component';
@@ -1549,40 +1562,81 @@ function renderAddStep1() {
 
   let html = '';
 
-  // Generic types grid — sketch-first
-  html += '<div style="padding:12px 16px 4px"><div style="font-size:11px;font-weight:500;color:var(--neutral-400);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Quick add</div>';
-  html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">';
+  // Search (fixed)
+  html += '<div class="add-search" style="position:relative;flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:24px;top:20px;color:var(--neutral-400)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input placeholder="Search equipment" id="addSearchInput" oninput="filterAddPanel()" style="padding-left:30px"></div>';
+
+  // ── Upper scroll area: icon grid + type list ──
+  html += '<div id="addUpperScroll" style="flex:1;overflow-y:auto;min-height:0">';
+
+  // Icon grid — 3 columns, draggable
+  html += '<div style="padding:0 16px 12px"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">';
   paletteTypes.forEach(pt => {
-    html += `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;cursor:pointer;border:1px solid var(--border);border-radius:var(--radius-sm);transition:all 0.15s" onmouseenter="this.style.borderColor='var(--neutral-400)';this.style.background='var(--neutral-50)'" onmouseleave="this.style.borderColor='var(--border)';this.style.background=''" onclick="closeAddPanel();enterGenericPlacement('${pt.type}')">
-      <span style="color:var(--neutral-600)">${pt.icon.replace('viewBox','width="22" height="22" viewBox')}</span>
-      <span style="font-size:11px;color:var(--neutral-600)">${pt.label}</span>
+    html += `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;cursor:grab;border:1px solid transparent;border-radius:var(--radius-sm);transition:all 0.15s" onmouseenter="this.style.background='var(--neutral-50)'" onmouseleave="this.style.background=''" onmousedown="startPaletteDragFromPanel(event,'${pt.type}')">
+      <span style="color:var(--neutral-600)">${pt.icon.replace('viewBox','width="24" height="24" viewBox')}</span>
+      <span style="font-size:10px;color:var(--neutral-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px;text-align:center">${pt.label}</span>
     </div>`;
   });
   html += '</div></div>';
 
   // Separator
-  html += '<div style="padding:8px 16px;font-size:11px;color:var(--neutral-400);text-align:center;border-top:1px solid var(--neutral-100);margin-top:8px">— or specify from library —</div>';
+  html += '<div style="height:1px;background:var(--border);margin:0 16px"></div>';
 
-  // Library categories (detailed flow)
-  library.categories.forEach(cat => {
-    html += `<div class="add-list-item" onclick="selectCategory('${cat.id}')">
-      <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
-      <div class="item-text"><div class="item-name">${cat.name}</div></div>
-      <div class="arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+  // Full type list
+  paletteTypes.forEach(pt => {
+    html += `<div class="add-list-item" style="cursor:grab" onmousedown="startPaletteDragFromPanel(event,'${pt.type}')" data-type="${pt.type}" data-name="${pt.label.toLowerCase()}">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;pointer-events:none">
+        <div class="item-icon">${pt.icon.replace('viewBox','width="16" height="16" viewBox')}</div>
+        <span class="item-name">${pt.label}</span>
+      </div>
     </div>`;
   });
 
+  html += '</div>'; // end upper scroll
+
+  // ── Lower fixed area: Recent (~200px) ──
   if (library.recent.length) {
-    html += '<div class="add-section-label">Recent</div>';
+    html += '<div id="addRecentArea" style="flex-shrink:0;height:200px;overflow-y:auto;border-top:1px solid var(--border)">';
+    html += '<div class="add-section-label" style="display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--background);z-index:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Recent</div>';
     library.recent.forEach(r => {
-      html += `<div class="add-list-item" onclick="selectCategory('${r.catId}');selectVariant('${r.varId}')">
-        <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg></div>
-        <div class="item-text"><div class="item-name">${r.name}</div><div class="item-meta">${r.meta}</div></div>
+      html += `<div class="add-list-item" onclick="selectCategory('${r.catId}');selectVariant('${r.varId}')" data-name="${r.name.toLowerCase()}">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div class="item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg></div>
+          <div><div class="item-name">${r.name}</div><div class="item-meta">${r.meta}</div></div>
+        </div>
       </div>`;
     });
+    html += '</div>';
   }
 
   document.getElementById('addPanelBody').innerHTML = html;
+}
+
+function selectAddType(typeKey) {
+  addSelectedType = typeKey;
+  closeAddPanel();
+  enterGenericPlacement(typeKey);
+}
+
+function startPaletteDragFromPanel(e, typeKey) {
+  e.preventDefault();
+  const pt = paletteTypes.find(p => p.type === typeKey);
+  if (!pt) return;
+  closeAddPanel();
+  startPaletteDrag(e, pt);
+}
+
+function filterAddPanel() {
+  const q = document.getElementById('addSearchInput')?.value?.toLowerCase() || '';
+  // Filter upper list
+  document.querySelectorAll('#addUpperScroll .add-list-item').forEach(item => {
+    const name = item.getAttribute('data-name') || '';
+    item.style.display = name.includes(q) ? '' : 'none';
+  });
+  // Filter recent
+  document.querySelectorAll('#addRecentArea .add-list-item')?.forEach(item => {
+    const name = item.getAttribute('data-name') || '';
+    item.style.display = name.includes(q) ? '' : 'none';
+  });
 }
 
 function selectCategory(catId) {
@@ -1882,7 +1936,7 @@ function startAddStructure(type) {
   document.getElementById('addStructPicker').style.display = 'none';
   mapPlaceMode = true;
   mapPlaceType = type;
-  const labels = {pole:'Pole',vault:'Vault',pad:'Pad/Cabinet'};
+  const labels = {pole:'Pole',vault:'Vault',substation:'Substation',duct:'Duct'};
   document.getElementById('mapPlaceText').textContent = `Click on the map to place ${labels[type]}`;
   document.getElementById('mapPlaceHint').classList.add('visible');
   map.style.cursor = 'crosshair';
@@ -1900,7 +1954,7 @@ function placeStructure(mx, my, typeOverride) {
   if (!sType) return;
   saveUndo();
   structCounter++;
-  const labels = {pole:'P',vault:'VLT',pad:'PAD',duct:'DCT'};
+  const labels = {pole:'P',vault:'VLT',substation:'SUB',duct:'DCT'};
   const id = sType.toUpperCase() + '-' + structCounter;
   const label = (labels[sType]||sType.toUpperCase()) + '-' + structCounter;
 
@@ -2054,7 +2108,7 @@ sld.addEventListener('contextmenu', e => {
     html += `<div class="ctx-menu-sep"></div>`;
     html += `<div class="ctx-submenu"><div class="ctx-menu-item">${ic.plus} Add component inside<span class="chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span></div><div class="ctx-submenu-items">`;
     paletteTypes.forEach(pt => { html += `<div class="ctx-menu-item" onclick="hideCtxMenu();enterGenericPlacement('${pt.type}',${mx},${my})">${pt.label}</div>`; });
-    html += `<div class="ctx-menu-sep"></div><div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})">From library...</div>`;
+    html += `<div class="ctx-menu-sep"></div><div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg> All components</div>`;
     html += `</div></div>`;
     html += `<div class="ctx-menu-sep"></div>`;
     html += `<div class="ctx-menu-item danger" onclick="dissolveAggregate('${foundAgg.id}')">${ic.ungroup} Dissolve aggregate</div>`;
@@ -2130,7 +2184,7 @@ sld.addEventListener('contextmenu', e => {
       html += `<div class="ctx-menu-item" onclick="hideCtxMenu();enterGenericPlacement('${pt.type}',${mx},${my})">${pt.label}</div>`;
     });
     html += `<div class="ctx-menu-sep"></div>`;
-    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})">From library...</div>`;
+    html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAddPanel({source:'sld',x:${mx},y:${my}})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg> All components</div>`;
     html += `</div></div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu();openAggCreatePanel([])">${ic.group} Add aggregate</div>`;
     html += `<div class="ctx-menu-item" onclick="hideCtxMenu()">${ic.clipboard} Paste</div>`;
@@ -2246,7 +2300,7 @@ function openInfoPanel(compId) {
     bindings.forEach((b, idx) => {
       const s = structures.find(st => st.id === b.structId);
       if (!s) return;
-      const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.type] || s.type;
+      const typeLabel = {pole:'Pole',vault:'Vault',substation:'Substation',duct:'Duct'}[s.type] || s.type;
       html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;gap:4px" onmouseenter="highlightStruct('${s.id}')" onmouseleave="highlightStruct(null)">`;
       html += `<span style="font-size:13px;color:var(--foreground)">${b.prep} <strong>${s.label}</strong> <span style="color:var(--neutral-500);font-weight:400">${typeLabel}</span></span>`;
       html += `<span style="display:flex;gap:2px;flex-shrink:0">`;
@@ -2296,7 +2350,7 @@ function openStructureInfoPanel(structId) {
   // Details section
   html += '<div class="info-section"><div class="info-section-header">Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>';
   html += '<div class="info-section-body">';
-  html += `<div class="info-row"><span class="label">Type</span><span class="value">${{pole:'Pole (Wood)',vault:'Vault',pad:'Pad / Cabinet'}[struct.type]||struct.type}</span></div>`;
+  html += `<div class="info-row"><span class="label">Type</span><span class="value">${{pole:'Pole (Wood)',vault:'Vault',substation:'Substation',duct:'Duct Bank'}[struct.type]||struct.type}</span></div>`;
   html += `<div class="info-row"><span class="label">ID</span><span class="value" style="font-family:var(--font-mono)">${struct.id}</span></div>`;
   html += `<div class="info-row"><span class="label">GPS</span><span class="value">${struct.mx}, ${struct.my}</span></div>`;
   if (struct.type === 'pole') {
@@ -2372,7 +2426,7 @@ function renderBindPickerList(compId) {
   if (recentItems.length > 0) {
     html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">Recent</div>';
     recentItems.forEach(s => {
-      const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.struct.type] || s.struct.type;
+      const typeLabel = {pole:'Pole',vault:'Vault',substation:'Substation',duct:'Duct'}[s.struct.type] || s.struct.type;
       html += `<div class="bind-list-item" data-sid="${s.struct.id}" data-name="${s.struct.label.toLowerCase()} ${typeLabel.toLowerCase()}" onmouseenter="highlightStruct('${s.struct.id}')" onmouseleave="highlightStruct(null)" onclick="bindPickerClick('${s.struct.id}',event)">`;
       html += `<span><span class="bl-name">${s.struct.label}</span> <span class="bl-meta">${typeLabel} · ${s.dist}m</span></span>`;
       html += `</div>`;
@@ -2383,7 +2437,7 @@ function renderBindPickerList(compId) {
   html += '<div class="conductor-section-label" style="padding-top:4px;padding-bottom:2px">All structures</div>';
   html += '<div id="bindListItems" style="max-height:200px;overflow-y:auto">';
   allStructs.forEach(s => {
-    const typeLabel = {pole:'Pole',vault:'Vault',pad:'Pad'}[s.struct.type] || s.struct.type;
+    const typeLabel = {pole:'Pole',vault:'Vault',substation:'Substation',duct:'Duct'}[s.struct.type] || s.struct.type;
     const alreadyBound = comp.bindings.some(b => b.structId === s.struct.id);
     const sel = bindPickerSelected.includes(s.struct.id);
     if (alreadyBound) {
@@ -2635,7 +2689,9 @@ function getCompatibleStructures(comp) {
 }
 
 function getPreposition(compType, structType) {
-  if (structType === 'vault') return 'ON';
+  if (structType === 'vault') return 'IN';
+  if (structType === 'duct') return 'IN';
+  if (structType === 'substation') return 'AT';
   if (compType === 'transformer' || compType === 'switch') return 'ON';
   if (compType === 'meter') return 'AT';
   return 'ON';
@@ -3023,10 +3079,10 @@ const paletteTypes = [
 ];
 
 const structPaletteTypes = [
-  { type:'pole', label:'Pole', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20"/><path d="M8 6h8"/></svg>' },
-  { type:'vault', label:'Vault', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>' },
-  { type:'pad', label:'Pad', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="14" width="18" height="6" rx="1"/><rect x="6" y="8" width="12" height="6" rx="1"/></svg>' },
-  { type:'duct', label:'Duct', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h16v8H4z"/><path d="M4 12h16"/></svg>' },
+  { type:'pole', label:'Pole', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20"/><path d="M6 5h12"/><path d="M8 2v3"/><path d="M16 2v3"/></svg>' },
+  { type:'vault', label:'Vault', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M9 10h6v4H9z"/><path d="M12 6V3"/></svg>' },
+  { type:'substation', label:'Substation', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21V7l9-5 9 5v14"/><path d="M9 21v-6h6v6"/><path d="M3 10h18"/></svg>' },
+  { type:'duct', label:'Duct', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v18"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="18" r="2"/></svg>' },
 ];
 
 let paletteExpanded = false;
@@ -3063,10 +3119,22 @@ function togglePalette() {
   paletteExpanded = !paletteExpanded;
   pal.classList.toggle('collapsed', !paletteExpanded);
   pal.classList.toggle('expanded', paletteExpanded);
+  const footer = document.getElementById('paletteFooter');
   const btn = document.getElementById('paletteToggle');
-  btn.innerHTML = paletteExpanded
-    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>'
-    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+  const more = document.getElementById('paletteMore');
+  if (paletteExpanded) {
+    footer.style.flexDirection = 'row';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>';
+    more.innerHTML = '<span style="font-size:11px;white-space:nowrap">All components</span>';
+    more.style.flex = '1';
+    more.style.height = '28px';
+  } else {
+    footer.style.flexDirection = 'column';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+    more.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>';
+    more.style.flex = '';
+    more.style.height = '';
+  }
 }
 
 // ─── DRAG FROM PALETTE TO SLD ───────────────────────────
@@ -3078,8 +3146,8 @@ function startPaletteDrag(e, pt) {
   dragGhost = document.createElement('div');
   dragGhost.className = 'drag-ghost';
   dragGhost.innerHTML = `<div style="width:40px;height:40px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center">${pt.icon}</div>`;
-  dragGhost.querySelector('svg').style.width = '20px';
-  dragGhost.querySelector('svg').style.height = '20px';
+  const ghostSvg = dragGhost.querySelector('svg');
+  if (ghostSvg) { ghostSvg.style.width = '20px'; ghostSvg.style.height = '20px'; }
   document.body.appendChild(dragGhost);
   dragGhost.style.left = e.clientX - 20 + 'px';
   dragGhost.style.top = e.clientY - 20 + 'px';
