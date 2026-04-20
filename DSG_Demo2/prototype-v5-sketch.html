@@ -16,6 +16,7 @@
   --success: #16A34A; --success-wash: #F0FDF4;
   --warning: #EA580C; --warning-wash: #FFF7ED;
   --orange-500: #F97316;
+  --selection: #2563EB; --selection-wash: rgba(37, 99, 235, 0.08);
   --radius-sm: 4px; --radius-md: 6px;
   --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', monospace;
@@ -231,8 +232,8 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 .add-struct-picker { position: absolute; z-index: 20; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12); width: 220px; overflow: hidden; }
 
 /* Bind/Mount mode — panel highlights (outline renders on top of SVG) */
-.map-panel.bind-mode { outline: 3px solid #00BFFF; outline-offset: -3px; }
-.sld-panel.bind-mode { outline: 3px solid #00BFFF; outline-offset: -3px; }
+.map-panel.bind-mode { outline: 3px solid var(--selection); outline-offset: -3px; }
+.sld-panel.bind-mode { outline: 3px solid var(--selection); outline-offset: -3px; }
 
 /* Compact picker list items */
 .bind-list-item { padding: 5px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.1s; font-size: 12px; }
@@ -299,7 +300,7 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 /* Aggregate type option in info panel */
 .agg-type-option { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 6px; transition: all 0.15s; }
 .agg-type-option:hover { border-color: var(--neutral-400); }
-.agg-type-option.selected { border-color: #00BFFF; background: rgba(0,191,255,0.05); }
+.agg-type-option.selected { border-color: var(--selection); background: var(--selection-wash); }
 .agg-type-option .type-icon { width: 28px; height: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .agg-type-option .type-name { font-size: 13px; font-weight: 500; }
 .agg-type-option .type-meta { font-size: 11px; color: var(--neutral-500); }
@@ -317,7 +318,7 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 /* Action snackbar (undo) */
 .snackbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--primary); color: var(--primary-foreground); padding: 10px 16px; border-radius: var(--radius-md); font-size: 13px; z-index: 35; display: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); align-items: center; gap: 12px; }
 .snackbar.visible { display: flex; }
-.snackbar .sb-undo { padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font-sans); background: transparent; color: #00BFFF; }
+.snackbar .sb-undo { padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font-sans); background: transparent; color: var(--selection); }
 .snackbar .sb-undo:hover { text-decoration: underline; }
 </style>
 </head>
@@ -689,17 +690,17 @@ function renderSLD() {
     const isDrop = dragOverAgg === agg.id;
     if (agg.collapsed) {
       const cx = agg.cx||300, cy = agg.cy||200;
-      el('rect',{x:cx-60,y:cy-20,width:120,height:40,rx:6,fill:tmpl.color+'18',stroke:isH?'#00BFFF':tmpl.color,'stroke-width':isH?2:1.5,'data-agg':agg.id,cursor:'pointer'},sld);
+      el('rect',{x:cx-60,y:cy-20,width:120,height:40,rx:6,fill:tmpl.color+'18',stroke:isH?'var(--selection)':tmpl.color,'stroke-width':isH?2:1.5,'data-agg':agg.id,cursor:'pointer'},sld);
       el('text',{x:cx,y:cy-4,'text-anchor':'middle',fill:tmpl.color,'font-size':11,'font-weight':600,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=agg.name;
       el('text',{x:cx,y:cy+10,'text-anchor':'middle',fill:'#737373','font-size':10,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=`${children.length} components`;
     } else if (children.length > 0) {
       const pad=24; let mnX=Infinity,mnY=Infinity,mxX=-Infinity,mxY=-Infinity;
       children.forEach(c=>{mnX=Math.min(mnX,c.x);mnY=Math.min(mnY,c.y);mxX=Math.max(mxX,c.x+c.w);mxY=Math.max(mxY,c.y+c.h);});
-      el('rect',{x:mnX-pad,y:mnY-pad-16,width:mxX-mnX+pad*2,height:mxY-mnY+pad*2+16,rx:8,fill:tmpl.color+'0A',stroke:isDrop?'#00BFFF':isH?tmpl.color+'60':tmpl.color+'30','stroke-width':isDrop?2:1,'stroke-dasharray':isDrop?'6,3':'none','data-agg':agg.id,cursor:'pointer'},sld);
+      el('rect',{x:mnX-pad,y:mnY-pad-16,width:mxX-mnX+pad*2,height:mxY-mnY+pad*2+16,rx:8,fill:tmpl.color+'0A',stroke:isDrop?'var(--selection)':isH?tmpl.color+'60':tmpl.color+'30','stroke-width':isDrop?2:1,'stroke-dasharray':isDrop?'6,3':'none','data-agg':agg.id,cursor:'pointer'},sld);
       el('text',{x:mnX-pad+8,y:mnY-pad-4,fill:tmpl.color+'99','font-size':11,'font-weight':600,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=`${tmpl.icon} ${agg.name}`;
     } else {
       const cx=agg.cx||400,cy=agg.cy||300;
-      el('rect',{x:cx-80,y:cy-40,width:160,height:80,rx:8,fill:isDrop?tmpl.color+'10':'transparent',stroke:isDrop?'#00BFFF':isH?tmpl.color:tmpl.color+'50','stroke-width':isDrop?2:1.5,'stroke-dasharray':'6,4','data-agg':agg.id,cursor:'pointer'},sld);
+      el('rect',{x:cx-80,y:cy-40,width:160,height:80,rx:8,fill:isDrop?tmpl.color+'10':'transparent',stroke:isDrop?'var(--selection)':isH?tmpl.color:tmpl.color+'50','stroke-width':isDrop?2:1.5,'stroke-dasharray':'6,4','data-agg':agg.id,cursor:'pointer'},sld);
       el('text',{x:cx,y:cy-6,'text-anchor':'middle',fill:tmpl.color+'80','font-size':12,'font-weight':600,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent=agg.name;
       el('text',{x:cx,y:cy+10,'text-anchor':'middle',fill:'#A3A3A3','font-size':11,'font-family':'var(--font-sans)','pointer-events':'none'},sld).textContent='Drag components here';
     }
@@ -723,7 +724,7 @@ function renderSLD() {
 
     // Line color by validation status (shadcn tokens)
     const connStatus = conn.status || 'success';
-    const lineColor = isH ? '#00BFFF' : connStatus === 'error' ? 'var(--destructive)' : connStatus === 'warning' ? 'var(--warning)' : 'var(--success)';
+    const lineColor = isH ? 'var(--selection)' : connStatus === 'error' ? 'var(--destructive)' : connStatus === 'warning' ? 'var(--warning)' : 'var(--success)';
     el('path',{d:path,fill:'none',
       stroke: lineColor,
       'stroke-width': isH ? 3 : 2,
@@ -734,7 +735,7 @@ function renderSLD() {
     if (conn.conductor) {
       const my = conn.midY || (p1.y+p2.y)/2;
       const mx2 = conn.midX !== undefined ? (conn.midX + p2.x)/2 : (p1.x+p2.x)/2;
-      el('text',{x:mx2,y:my-8,'text-anchor':'middle',fill: isH?'#00BFFF': connStatus==='warning'?'var(--warning)':connStatus==='error'?'var(--destructive)':'var(--success)',
+      el('text',{x:mx2,y:my-8,'text-anchor':'middle',fill: isH?'var(--selection)': connStatus==='warning'?'var(--warning)':connStatus==='error'?'var(--destructive)':'var(--success)',
         'font-size':10,'font-family':'var(--font-mono)','pointer-events':'none'},cg).textContent = conn.conductor;
     }
 
@@ -766,12 +767,12 @@ function renderSLD() {
     const g = el('g',{'data-id':comp.id,cursor:'pointer'},compG);
     const isH = hc===comp.id;
     const isSel = selectedComps.includes(comp.id);
-    const stk = isSel ? '#00BFFF' : isH ? '#00BFFF' : '#404040';
+    const stk = isSel ? 'var(--selection)' : isH ? 'var(--selection)' : '#404040';
     const sw = isSel ? 2.5 : isH ? 2 : 1.5;
-    const txtColor = isSel ? '#00BFFF' : isH ? '#00BFFF' : '#525252';
+    const txtColor = isSel ? 'var(--selection)' : isH ? 'var(--selection)' : '#525252';
 
     if (comp.type==='bus') {
-      el('rect',{x:comp.x,y:comp.y,width:comp.w,height:comp.h,fill: (isSel||isH)?'#00BFFF':'#171717',rx:2},g);
+      el('rect',{x:comp.x,y:comp.y,width:comp.w,height:comp.h,fill: (isSel||isH)?'var(--selection)':'#171717',rx:2},g);
       el('text',{x:comp.x+comp.w/2,y:comp.y-8,'text-anchor':'middle',fill:txtColor,
         'font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},g).textContent=comp.label;
     } else if (comp.type==='transformer') {
@@ -797,13 +798,7 @@ function renderSLD() {
         class:'port','data-terminal':t.id,'data-comp':comp.id,
         opacity: dragging ? 0.8 : 0, cursor:'crosshair'},g);
     });
-
-    // Orphan badge (not bound, not bus)
-    if (comp.bindings.length === 0 && comp.type !== 'bus') {
-      const bx = comp.x + comp.w - 2, by = comp.y - 2;
-      el('circle',{cx:bx,cy:by,r:6,fill:'#FFF7ED',stroke:'#EA580C','stroke-width':1},g);
-      el('text',{x:bx,y:by+3.5,'text-anchor':'middle',fill:'#EA580C','font-size':8,'font-weight':700},g).textContent='!';
-    }
+    // Orphan / unified issue badge rendered below via override
   });
 
   // Ghost preview for Add flow — dashed outline at placement position
@@ -840,13 +835,13 @@ function renderMap() {
     if (gps.length===0) return;
     const isH = hoveredAgg===agg.id;
     if (gps.length===1) {
-      el('circle',{cx:gps[0].gps.mx,cy:gps[0].gps.my,r:isH?18:14,fill:tmpl.color+'20',stroke:isH?'#00BFFF':tmpl.color,'stroke-width':isH?2:1.5,'stroke-dasharray':'4,3'},map);
-      el('text',{x:gps[0].gps.mx,y:gps[0].gps.my-20,'text-anchor':'middle',fill:isH?'#00BFFF':tmpl.color,'font-size':10,'font-weight':600,'font-family':'var(--font-sans)'},map).textContent=agg.name;
+      el('circle',{cx:gps[0].gps.mx,cy:gps[0].gps.my,r:isH?18:14,fill:tmpl.color+'20',stroke:isH?'var(--selection)':tmpl.color,'stroke-width':isH?2:1.5,'stroke-dasharray':'4,3'},map);
+      el('text',{x:gps[0].gps.mx,y:gps[0].gps.my-20,'text-anchor':'middle',fill:isH?'var(--selection)':tmpl.color,'font-size':10,'font-weight':600,'font-family':'var(--font-sans)'},map).textContent=agg.name;
     } else {
       const pad=25; let mnX=Infinity,mnY=Infinity,mxX=-Infinity,mxY=-Infinity;
       gps.forEach(c=>{mnX=Math.min(mnX,c.gps.mx);mnY=Math.min(mnY,c.gps.my);mxX=Math.max(mxX,c.gps.mx);mxY=Math.max(mxY,c.gps.my);});
-      el('rect',{x:mnX-pad,y:mnY-pad,width:mxX-mnX+pad*2,height:mxY-mnY+pad*2,rx:8,fill:tmpl.color+'12',stroke:isH?'#00BFFF':tmpl.color+'60','stroke-width':isH?2:1,'stroke-dasharray':'6,4'},map);
-      el('text',{x:(mnX+mxX)/2,y:mnY-pad-6,'text-anchor':'middle',fill:isH?'#00BFFF':tmpl.color,'font-size':10,'font-weight':600,'font-family':'var(--font-sans)'},map).textContent=agg.name;
+      el('rect',{x:mnX-pad,y:mnY-pad,width:mxX-mnX+pad*2,height:mxY-mnY+pad*2,rx:8,fill:tmpl.color+'12',stroke:isH?'var(--selection)':tmpl.color+'60','stroke-width':isH?2:1,'stroke-dasharray':'6,4'},map);
+      el('text',{x:(mnX+mxX)/2,y:mnY-pad-6,'text-anchor':'middle',fill:isH?'var(--selection)':tmpl.color,'font-size':10,'font-weight':600,'font-family':'var(--font-sans)'},map).textContent=agg.name;
     }
   });
 
@@ -872,7 +867,7 @@ function renderMap() {
     if (!fc.gps||!tc.gps) return;
     const isUG = conn.conductor.includes('UG');
     const isH = hoveredConn === conn.id;
-    const mapLineColor = isH ? '#00BFFF' : conn.status==='warning' ? 'var(--warning)' : conn.status==='error' ? 'var(--destructive)' : 'var(--success)';
+    const mapLineColor = isH ? 'var(--selection)' : conn.status==='warning' ? 'var(--warning)' : conn.status==='error' ? 'var(--destructive)' : 'var(--success)';
     el('line',{x1:fc.gps.mx,y1:fc.gps.my,x2:tc.gps.mx,y2:tc.gps.my,
       stroke: mapLineColor,'stroke-width': isH?3:2,
       'stroke-dasharray': isUG?'6,4':'none', opacity: isH?1:0.7
@@ -891,17 +886,17 @@ function renderMap() {
     }
     // Hover highlight from dropdown
     if (isHL) {
-      el('circle',{cx:s.mx,cy:s.my,r:16,fill:'none',stroke:'#00BFFF','stroke-width':2,opacity:0.8},sg);
+      el('circle',{cx:s.mx,cy:s.my,r:16,fill:'none',stroke:'var(--selection)','stroke-width':2,opacity:0.8},sg);
     }
     
     if (s.type==='pole') {
-      el('circle',{cx:s.mx,cy:s.my,r:5,fill: isHL?'#00BFFF':'#8B6914',stroke: isHL?'#00BFFF':'#d4a84b','stroke-width':1.5},sg);
+      el('circle',{cx:s.mx,cy:s.my,r:5,fill: isHL?'var(--selection)':'#8B6914',stroke: isHL?'var(--selection)':'#d4a84b','stroke-width':1.5},sg);
     } else if (s.type==='pad') {
-      el('rect',{x:s.mx-7,y:s.my-5,width:14,height:10,fill: isHL?'#00BFFF':'#666',stroke: isHL?'#00BFFF':'#999','stroke-width':1.5,rx:1},sg);
+      el('rect',{x:s.mx-7,y:s.my-5,width:14,height:10,fill: isHL?'var(--selection)':'#666',stroke: isHL?'var(--selection)':'#999','stroke-width':1.5,rx:1},sg);
     } else {
-      el('rect',{x:s.mx-6,y:s.my-6,width:12,height:12,fill: isHL?'#00BFFF':'#555',stroke: isHL?'#00BFFF':'#888','stroke-width':1.5,rx:2},sg);
+      el('rect',{x:s.mx-6,y:s.my-6,width:12,height:12,fill: isHL?'var(--selection)':'#555',stroke: isHL?'var(--selection)':'#888','stroke-width':1.5,rx:2},sg);
     }
-    el('text',{x:s.mx+10,y:s.my+4,fill: isHL?'#00BFFF':'#999','font-size':10,'font-family':'var(--font-sans)'},sg).textContent=s.label;
+    el('text',{x:s.mx+10,y:s.my+4,fill: isHL?'var(--selection)':'#999','font-size':10,'font-family':'var(--font-sans)'},sg).textContent=s.label;
   });
 
   // Equipment markers from SLD (if GPS)
@@ -913,19 +908,19 @@ function renderMap() {
 
     if (isSel) {
       el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r:12,
-        fill:'none',stroke:'#00BFFF','stroke-width':1.5,opacity:0.8},sg);
+        fill:'none',stroke:'var(--selection)','stroke-width':1.5,opacity:0.8},sg);
     } else if (isHovered) {
       el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r:12,
-        fill:'none',stroke:'#00BFFF','stroke-width':1.5,opacity:0.7},sg);
+        fill:'none',stroke:'var(--selection)','stroke-width':1.5,opacity:0.7},sg);
     }
 
     el('circle',{cx:comp.gps.mx,cy:comp.gps.my,r: (isHovered||isSel)?5:4,
-      fill: (isSel||isHovered)?'#00BFFF': isHighlighted?'var(--success)':'var(--warning)',
+      fill: (isSel||isHovered)?'var(--selection)': isHighlighted?'var(--success)':'var(--warning)',
       stroke:'white','stroke-width':1.5},sg);
 
     if (isHovered || isSel) {
       el('text',{x:comp.gps.mx,y:comp.gps.my-16,'text-anchor':'middle',
-        fill:'#00BFFF','font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},sg).textContent=comp.label;
+        fill:'var(--selection)','font-size':11,'font-weight':600,'font-family':'var(--font-sans)'},sg).textContent=comp.label;
     }
   });
 }
@@ -3322,21 +3317,118 @@ function updateValidationWithUnspecified() {
 updateValidation = updateValidationWithUnspecified;
 
 // ─── RENDER UNSPECIFIED BADGE ON SLD ────────────────────
-// Patch renderSLD to add warning dot on unspecified components
+// ─── UNIFIED COMPONENT ISSUE BADGES ─────────────────────
+// Priority: error (!) > unbound (unlink) > unspecified (?)
+// Shows only the highest-priority badge. Hover = tooltip with all issues.
+
+function getComponentIssues(comp) {
+  const issues = [];
+
+  // Hard errors (severity: error)
+  if (comp.variant !== undefined && comp.variant !== null && comp.phaseMismatch) {
+    issues.push({ severity:'error', code:'V-E02', text:'Phase mismatch on connection' });
+  }
+  if (comp.ampacityViolation) {
+    issues.push({ severity:'error', code:'V-E01', text:'Ampacity exceeded' });
+  }
+  if (comp.bindingBroken) {
+    issues.push({ severity:'error', code:'V-B02', text:'Binding broken (structure deleted)' });
+  }
+  // Orphaned electrically — no connections at all (and not a bus)
+  if (comp.type !== 'bus') {
+    const hasConn = connections.some(c => c.from.startsWith(comp.id) || c.to.startsWith(comp.id));
+    if (!hasConn && comp.terminals && comp.terminals.length > 0) {
+      issues.push({ severity:'error', code:'V-E03', text:'No electrical connections' });
+    }
+  }
+
+  // Soft warnings
+  if (comp.bindings && comp.bindings.length === 0 && comp.type !== 'bus') {
+    issues.push({ severity:'warning-binding', code:'V-B01', text:'Not bound to physical structure' });
+  }
+  if (comp.variant === null) {
+    issues.push({ severity:'warning-info', code:'V-U01', text:'Type not specified' });
+  }
+
+  return issues;
+}
+
+function getTopIssue(issues) {
+  if (!issues.length) return null;
+  // Priority order
+  const order = ['error', 'warning-binding', 'warning-info'];
+  for (const sev of order) {
+    const match = issues.find(i => i.severity === sev);
+    if (match) return match;
+  }
+  return issues[0];
+}
+
+// SVG paths for badge icons (12x12)
+const badgeIcons = {
+  'error': { // AlertCircle (!) — orange
+    fill:'#FFFFFF', stroke:'#EA580C', textColor:'#EA580C',
+    svg:'<circle cx="6" cy="6" r="5" fill="white" stroke="#EA580C" stroke-width="1.5"/><line x1="6" y1="3.5" x2="6" y2="6.5" stroke="#EA580C" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="8.5" r="0.6" fill="#EA580C"/>'
+  },
+  'warning-binding': { // Unlink — grey
+    fill:'#FFFFFF', stroke:'#737373',
+    svg:'<circle cx="6" cy="6" r="5.25" fill="white" stroke="#E5E5E5" stroke-width="0.75"/><path d="M3.5 7 L4.5 6 M7.5 6 L8.5 5 M4.3 4.6 a1.5 1.5 0 0 1 2.1 2.1 M7.7 7.4 a1.5 1.5 0 0 1 -2.1 -2.1" fill="none" stroke="#525252" stroke-width="1.1" stroke-linecap="round"/>'
+  },
+  'warning-info': { // HelpCircle (?) — grey
+    fill:'#FFFFFF', stroke:'#A3A3A3',
+    svg:'<circle cx="6" cy="6" r="5" fill="white" stroke="#A3A3A3" stroke-width="1.25"/><text x="6" y="8.5" text-anchor="middle" fill="#525252" font-size="7" font-weight="600" font-family="var(--font-sans)">?</text>'
+  }
+};
+
+// Patch renderSLD to add unified badge
 const _origRenderSLD = renderSLD;
 renderSLD = function() {
   _origRenderSLD();
-  // Add warning badges for unspecified
   components.forEach(comp => {
-    if (comp.variant !== null || comp.variant === undefined) return;
-    // variant===null means placed from palette, not yet specified
-    const bx = comp.x + comp.w - 2;
-    const by = comp.y - 2;
-    const g = el('g', {'pointer-events':'none'}, sld);
-    el('circle', {cx:bx, cy:by, r:5, fill:'var(--warning)', stroke:'white', 'stroke-width':1.5}, g);
-    el('text', {x:bx, y:by+3.5, 'text-anchor':'middle', fill:'white', 'font-size':7, 'font-weight':700, 'font-family':'var(--font-sans)'}, g).textContent = '?';
+    const issues = getComponentIssues(comp);
+    const top = getTopIssue(issues);
+    if (!top) return;
+
+    const bx = comp.x + comp.w - 6;
+    const by = comp.y - 6;
+    const cfg = badgeIcons[top.severity];
+
+    const g = el('g', {
+      'data-comp-badge': comp.id,
+      cursor: 'pointer'
+    }, sld);
+
+    // Translate 12x12 SVG to position
+    const wrap = el('g', { transform: `translate(${bx},${by})` }, g);
+    wrap.innerHTML = cfg.svg;
+
+    // Tooltip on hover
+    const tooltipText = issues.map(i => `[${i.code}] ${i.text}`).join('\n');
+    g.addEventListener('mouseenter', e => showBadgeTooltip(e, tooltipText));
+    g.addEventListener('mouseleave', hideBadgeTooltip);
+    g.addEventListener('click', e => {
+      e.stopPropagation();
+      openInfoPanel(comp.id);
+    });
   });
 };
+
+// Badge tooltip
+let badgeTooltipEl = null;
+function showBadgeTooltip(e, text) {
+  if (!badgeTooltipEl) {
+    badgeTooltipEl = document.createElement('div');
+    badgeTooltipEl.style.cssText = 'position:fixed;z-index:1000;background:#171717;color:white;padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--font-sans);pointer-events:none;white-space:pre-line;max-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+    document.body.appendChild(badgeTooltipEl);
+  }
+  badgeTooltipEl.textContent = text;
+  badgeTooltipEl.style.left = (e.clientX + 12) + 'px';
+  badgeTooltipEl.style.top = (e.clientY + 12) + 'px';
+  badgeTooltipEl.style.display = 'block';
+}
+function hideBadgeTooltip() {
+  if (badgeTooltipEl) badgeTooltipEl.style.display = 'none';
+}
 
 // ─── PATCH INFO PANEL FOR VARIANT SELECTION ─────────────
 const _origOpenInfoPanel = openInfoPanel;
