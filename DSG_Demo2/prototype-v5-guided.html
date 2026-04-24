@@ -152,6 +152,21 @@ body { font-family: var(--font-sans); background: var(--background); color: var(
 .add-success .msg { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
 .add-success .sub { font-size: 13px; color: var(--neutral-500); margin-bottom: 24px; }
 
+/* Dialog (shadcn) */
+.dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: center; justify-content: center; }
+.dialog-overlay.open { display: flex; }
+.dialog { background: var(--background); border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,0.18); width: 380px; max-width: calc(100vw - 32px); font-family: var(--font-sans); animation: dialog-in 0.15s ease-out; }
+@keyframes dialog-in { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: none; } }
+.dialog-header { padding: 20px 24px 0; }
+.dialog-title { font-size: 16px; font-weight: 600; color: var(--foreground); margin: 0; }
+.dialog-desc { font-size: 13px; color: var(--neutral-500); margin: 8px 0 0; line-height: 1.5; }
+.dialog-body { padding: 16px 24px; }
+.dialog-footer { padding: 0 24px 20px; display: flex; gap: 8px; justify-content: flex-end; }
+.dialog-btn { padding: 8px 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font-sans); border: 1px solid var(--border); background: var(--background); color: var(--foreground); transition: all 0.1s; }
+.dialog-btn:hover { background: var(--neutral-50); }
+.dialog-btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.dialog-btn-primary:hover { opacity: 0.9; background: var(--primary); }
+
 /* Placement mode overlay */
 .placement-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: white; padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; z-index: 15; pointer-events: none; }
 
@@ -2062,7 +2077,7 @@ sld.addEventListener('contextmenu', e => {
   let foundAgg = null;
   if (!foundComp && !foundConn) foundAgg = aggHitTest(mx, my);
   const targetIds = selectedComps.length > 1 ? [...selectedComps] : foundComp ? [foundComp.id] : [];
-  const currentAgg = foundComp ? aggOfComp(foundComp.id) : null;
+  const currentAggs = foundComp ? aggsOfComp(foundComp.id) : [];
 
   // ── VIEW MODE: simplified context menu ──
   if (!editMode) {
@@ -2124,8 +2139,12 @@ sld.addEventListener('contextmenu', e => {
     html += `<div class="ctx-submenu"><div class="ctx-menu-item">${ic.group} Add to Aggregate<span class="chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span></div><div class="ctx-submenu-items">`;
     aggregates.forEach(a => { const t=aggTemplates[a.type]; html += `<div class="ctx-menu-item" onclick="hideCtxMenu();${targetIds.map(id=>"aggAddComp('"+a.id+"','"+id+"')").join(';')}">${t.icon} ${a.name}</div>`; });
     html += `<div class="ctx-menu-sep"></div><div class="ctx-menu-item" onclick="hideCtxMenu();openAggCreatePanel([${targetIds.map(id=>"'"+id+"'").join(',')}])">${ic.plus} Create new</div></div></div>`;
-    if (currentAgg) {
-      html += `<div class="ctx-menu-item" onclick="hideCtxMenu();aggRemoveComp('${currentAgg.id}','${foundComp.id}')">${ic.ungroup} Remove from "${currentAgg.name}"</div>`;
+    if (currentAggs.length === 1) {
+      html += `<div class="ctx-menu-item" onclick="hideCtxMenu();aggRemoveComp('${currentAggs[0].id}','${foundComp.id}')">${ic.ungroup} Remove from "${currentAggs[0].name}"</div>`;
+    } else if (currentAggs.length > 1) {
+      html += `<div class="ctx-submenu"><div class="ctx-menu-item">${ic.ungroup} Remove from<span class="chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span></div><div class="ctx-submenu-items">`;
+      currentAggs.forEach(ca => { html += `<div class="ctx-menu-item" onclick="hideCtxMenu();aggRemoveComp('${ca.id}','${foundComp.id}')">${ca.name}</div>`; });
+      html += `</div></div>`;
     }
     html += `<div class="ctx-menu-sep"></div>`;
 
@@ -2285,6 +2304,21 @@ function openInfoPanel(compId) {
     html += `<div class="info-row"><span class="label">Location</span><span class="value muted">No GPS</span></div>`;
   }
   html += '</div></div>';
+
+  // Aggregate membership section
+  const compAggs = aggsOfComp(comp.id);
+  if (compAggs.length > 0) {
+    html += `<div class="info-section"><div class="info-section-header">Aggregates (${compAggs.length})</div>`;
+    html += '<div class="info-section-body">';
+    compAggs.forEach(a => {
+      const tmpl = aggTemplates[a.type];
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">`;
+      html += `<span style="font-size:13px;cursor:pointer;color:var(--foreground)" onclick="openAggInfoPanel(aggregates.find(x=>x.id==='${a.id}'))">${tmpl?.icon||''} ${a.name}</span>`;
+      html += `<button style="font-size:11px;color:var(--neutral-500);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:var(--radius-sm)" onmouseenter="this.style.color='var(--destructive)'" onmouseleave="this.style.color='var(--neutral-500)'" onclick="aggRemoveComp('${a.id}','${comp.id}');openInfoPanel('${comp.id}')">Remove</button>`;
+      html += `</div>`;
+    });
+    html += '</div></div>';
+  }
   
   // Physical binding section — compact multi-bind list
   const bindCount = bindings.length;
@@ -2851,7 +2885,8 @@ function aggHitTest(mx, my) {
   return null;
 }
 
-function aggOfComp(compId) { return aggregates.find(a=>a.children.includes(compId)); }
+function aggsOfComp(compId) { return aggregates.filter(a=>a.children.includes(compId)); }
+function aggOfComp(compId) { return aggregates.find(a=>a.children.includes(compId)); } // compat — returns first
 
 function validateAgg(agg) {
   const tmpl = aggTemplates[agg.type]; if (!tmpl) return [];
@@ -2881,10 +2916,18 @@ function aggAddComp(aggId, compId) {
   const a = aggregates.find(x=>x.id===aggId);
   if (!a||a.children.includes(compId)) return;
   saveUndo();
-  aggregates.forEach(ag => { const i=ag.children.indexOf(compId); if(i>=0) ag.children.splice(i,1); });
   a.children.push(compId);
   renderSLD(); renderMap(); showToast(`Added to "${a.name}"`);
   if (infoPanelComp===null && document.getElementById('infoPanel').classList.contains('visible')) openAggInfoPanel(a);
+}
+
+function aggMoveComp(toAggId, compId) {
+  // Remove from all other aggregates, add to target
+  saveUndo();
+  aggregates.forEach(ag => { const i=ag.children.indexOf(compId); if(i>=0) ag.children.splice(i,1); });
+  const a = aggregates.find(x=>x.id===toAggId);
+  if (a) { a.children.push(compId); }
+  renderSLD(); renderMap();
 }
 
 function aggRemoveComp(aggId, compId) {
@@ -3028,14 +3071,62 @@ sld.addEventListener('mousemove', e => {
 sld.addEventListener('mouseup', e => {
   if (draggingComp && dragOverAgg) {
     const comp=draggingComp, a=aggregates.find(x=>x.id===dragOverAgg);
-    if (a) {
-      aggAddComp(a.id, comp.id);
-      showSnackbar(`${comp.label} added to "${a.name}"`);
+    if (a && !a.children.includes(comp.id)) {
+      const existingAggs = aggsOfComp(comp.id);
+      if (existingAggs.length > 0 && !existingAggs.some(ea=>ea.id===a.id)) {
+        // Already in other aggregate(s) — show Move/Add snackbar
+        showMoveAddSnackbar(comp, a, existingAggs);
+      } else {
+        aggAddComp(a.id, comp.id);
+        showSnackbar(`${comp.label} added to "${a.name}"`);
+      }
     }
     dragOverAgg=null;
   }
   dragOverAgg=null;
 });
+
+function showMoveAddSnackbar(comp, targetAgg, existingAggs) {
+  const fromNames = existingAggs.map(a=>`"${a.name}"`).join(', ');
+  document.getElementById('aggDialogTitle').textContent = `Add to "${targetAgg.name}"`;
+  document.getElementById('aggDialogDesc').textContent = `${comp.label} already belongs to ${fromNames}. Move it or keep in both?`;
+  document.getElementById('aggDialogOverlay').classList.add('open');
+  // Store references for action
+  window._aggDialogComp = comp.id;
+  window._aggDialogTarget = targetAgg.id;
+}
+
+function closeAggDialog() {
+  document.getElementById('aggDialogOverlay').classList.remove('open');
+}
+
+window.aggDialogAction = function(action) {
+  closeAggDialog();
+  const compId = window._aggDialogComp;
+  const aggId = window._aggDialogTarget;
+  const a = aggregates.find(x=>x.id===aggId);
+  const comp = components.find(c=>c.id===compId);
+  if (!a || !comp) return;
+  if (action === 'move') {
+    aggMoveComp(aggId, compId);
+    showSnackbar(`${comp.label} moved to "${a.name}"`);
+  } else {
+    aggAddComp(aggId, compId);
+    showSnackbar(`${comp.label} added to "${a.name}"`);
+  }
+};
+
+// Close dialog on overlay click
+document.getElementById('aggDialogOverlay')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAggDialog();
+});
+// Close dialog on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('aggDialogOverlay').classList.contains('open')) {
+    closeAggDialog();
+    e.stopPropagation();
+  }
+}, true);
 
 let snackTimer=null;
 function showSnackbar(text) {
@@ -3683,11 +3774,12 @@ const scenarios = [
         { text: 'Select type, enter name → empty container appears with dashed outline: "Drag components here".', },
         { text: 'Drag components onto the container to populate it.', },
       ]},
-      { name: '3. Drag-in with undo', steps: [
+      { name: '3. Drag-in with Move/Add', steps: [
         { text: 'Drag a component onto an existing aggregate area.', },
-        { text: 'Frame highlights with blue selection color. Release — component is added instantly.', },
-        { text: 'Snackbar appears: "TR-312 added to Substation 1" with [Undo] button. Gmail-style. No dialog.', },
-        { text: 'Click Undo within 4 seconds to revert. Otherwise auto-dismisses.', },
+        { text: 'Frame highlights with blue selection color. Release — if not in any aggregate, added instantly with snackbar + Undo.', },
+        { text: 'If component is ALREADY in another aggregate, snackbar shows two choices: [Move] or [Add to both].', },
+        { text: 'Move = remove from old aggregate, add to new. Add to both = keep in both aggregates (many-to-many).', },
+        { text: 'A component CAN belong to multiple aggregates simultaneously.', },
       ]},
       { name: '4. Aggregate Info Panel', steps: [
         { text: 'Click on aggregate background (not on a component inside it).', },
@@ -3813,8 +3905,14 @@ let highlightedEl = null;
 
 toggleBtn.addEventListener('click', () => {
   guideOpen = !guideOpen;
-  listPanel.classList.toggle('open', guideOpen);
-  if (!guideOpen) guideCloseSteps();
+  if (!guideOpen) {
+    listPanel.classList.remove('open');
+    stepPanel.classList.remove('open');
+    clearHighlight();
+  } else {
+    listPanel.classList.add('open');
+    stepPanel.classList.remove('open');
+  }
   toggleBtn.innerHTML = guideOpen ? '✕' : '?';
 });
 
@@ -3841,7 +3939,12 @@ window.guideStepMove = function(dir) {
   currentStep += dir;
   if (currentStep < 0) currentStep = 0;
   if (currentStep >= steps.length) {
-    guideCloseSteps();
+    // Done — close everything
+    stepPanel.classList.remove('open');
+    listPanel.classList.remove('open');
+    guideOpen = false;
+    toggleBtn.innerHTML = '?';
+    clearHighlight();
     return;
   }
   guideRenderStep();
@@ -3873,5 +3976,19 @@ function clearHighlight() {
 
 })();
 </script>
+<!-- Aggregate Move/Add Dialog -->
+<div class="dialog-overlay" id="aggDialogOverlay">
+  <div class="dialog">
+    <div class="dialog-header">
+      <h3 class="dialog-title" id="aggDialogTitle">Add to aggregate</h3>
+      <p class="dialog-desc" id="aggDialogDesc"></p>
+    </div>
+    <div class="dialog-footer">
+      <button class="dialog-btn" id="aggDialogCancel" onclick="closeAggDialog()">Cancel</button>
+      <button class="dialog-btn" id="aggDialogMove" onclick="aggDialogAction('move')">Move</button>
+      <button class="dialog-btn dialog-btn-primary" id="aggDialogAdd" onclick="aggDialogAction('add')">Add to both</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
