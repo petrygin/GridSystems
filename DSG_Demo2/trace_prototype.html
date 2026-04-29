@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GridModel — Trace Flows Prototype v0.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: #FFFFFF;
+  --foreground: #0A0A0A;
+  --primary: #171717;
+  --primary-foreground: #FAFAFA;
+  --secondary: #F5F5F5;
+  --muted: #F5F5F5;
+  --muted-foreground: #737373;
+  --border: #E5E5E5;
+  --input: #FFFFFF;
+  --ring: #D4D4D4;
+
+  --neutral-50: #FAFAFA;
+  --neutral-100: #F5F5F5;
+  --neutral-200: #E5E5E5;
+  --neutral-300: #D4D4D4;
+  --neutral-400: #A3A3A3;
+  --neutral-500: #737373;
+  --neutral-600: #525252;
+  --neutral-700: #404040;
+  --neutral-800: #262626;
+  --neutral-900: #171717;
+  --neutral-950: #0A0A0A;
+
+  --sidebar-bg: #FAFAFA;
+  --sidebar-border: #E5E5E5;
+
+  --destructive: #DC2626;
+  --destructive-wash: #FEF2F2;
+  --warning: #EA580C;
+  --warning-wash: #FFF7ED;
+  --success: #16A34A;
+  --success-wash: #F0FDF4;
+  --info: #2563EB;
+  --info-wash: #EFF6FF;
+
+  --orange-500: #F97316;
+
+  --selection: #2563EB;
+  --selection-wash: rgba(37, 99, 235, 0.1);
+  --selection-border: rgba(37, 99, 235, 0.4);
+
+  --trace: #0EA5E9;
+  --trace-wash: rgba(14, 165, 233, 0.12);
+  --trace-strong: #0369A1;
+  --trace-source: #075985;
+  --trace-load: #7DD3FC;
+
+  --popover: #000000;
+  --popover-foreground: #FFFFFF;
+
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'Fira Code', monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+.header {
+  height: 48px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.header .logo { font-weight: 600; font-size: 14px; color: var(--foreground); }
+.header .project { font-size: 13px; color: var(--muted-foreground); display: flex; align-items: center; gap: 8px; }
+.header .project .sep { color: var(--neutral-300); }
+.header .spacer { flex: 1; }
+.header .help-hint { font-size: 12px; color: var(--neutral-500); display: flex; gap: 12px; align-items: center; }
+.header .help-hint kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; background: var(--neutral-100); border: 1px solid var(--border); border-radius: 3px; color: var(--neutral-700); }
+
+.main { flex: 1; display: flex; min-height: 0; }
+
+.canvas-panel { display: flex; flex-direction: column; background: var(--background); min-width: 0; min-height: 0; }
+.canvas-panel.map { flex: 1.3; border-right: 1px solid var(--border); }
+.canvas-panel.sld { flex: 1; }
+
+.panel-header {
+  height: 40px; min-height: 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  flex-shrink: 0;
+}
+.panel-header .title { font-size: 12px; font-weight: 600; color: var(--neutral-700); letter-spacing: 0.02em; text-transform: uppercase; }
+.panel-header .actions { display: flex; gap: 4px; align-items: center; }
+
+.canvas-body { flex: 1; position: relative; overflow: hidden; background: var(--background); }
+.canvas-body .grid-bg {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+.canvas-svg { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; }
+
+.icon-btn {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  border-radius: var(--radius-sm); color: var(--neutral-500);
+  transition: background 120ms;
+}
+.icon-btn:hover { background: var(--neutral-100); color: var(--neutral-700); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0 12px; height: 32px;
+  border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--background); color: var(--foreground);
+  cursor: pointer; font-family: var(--font-sans);
+  transition: background 120ms, border-color 120ms;
+}
+.btn:hover { background: var(--neutral-50); }
+.btn.primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.btn.primary:hover { background: #2a2a2a; }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+
+.context-menu {
+  position: fixed; min-width: 220px;
+  background: var(--background); border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  padding: 4px; z-index: 1000;
+  font-size: 13px; user-select: none;
+  opacity: 0; pointer-events: none; transform: translateY(-2px);
+  transition: opacity 100ms, transform 100ms;
+}
+.context-menu.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.context-menu .item {
+  display: flex; align-items: center; gap: 10px; justify-content: space-between;
+  padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--foreground);
+}
+.context-menu .item:hover { background: var(--neutral-100); }
+.context-menu .item.disabled { color: var(--neutral-400); cursor: not-allowed; }
+.context-menu .item.disabled:hover { background: transparent; }
+.context-menu .item .left { display: flex; align-items: center; gap: 10px; }
+.context-menu .item .shortcut { font-family: var(--font-mono); font-size: 11px; color: var(--neutral-500); }
+.context-menu .sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+.context-menu.pole-menu { min-width: 280px; padding: 4px; }
+.context-menu .ctx-pole-header { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px 4px; }
+.context-menu .ctx-subheader {
+  font-size: 10px; font-weight: 600; color: var(--muted-foreground);
+  text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 10px 2px;
+}
+.context-menu .ctx-component-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px; border-radius: var(--radius-sm); gap: 12px;
+}
+.context-menu .ctx-component-row:hover { background: var(--neutral-50); }
+.context-menu .ctx-component-info { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.context-menu .ctx-component-info svg { color: var(--neutral-500); flex-shrink: 0; }
+.context-menu .ctx-component-text { display: flex; flex-direction: column; min-width: 0; }
+.context-menu .ctx-component-name { font-size: 12px; font-weight: 500; color: var(--foreground); font-family: var(--font-mono); }
+.context-menu .ctx-component-type { font-size: 10px; color: var(--muted-foreground); margin-top: 1px; }
+.context-menu .ctx-trace-buttons { display: flex; gap: 2px; flex-shrink: 0; }
+.context-menu .ctx-trace-btn {
+  width: 24px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent;
+  border-radius: var(--radius-sm); cursor: pointer; color: var(--neutral-500);
+  transition: background 100ms, color 100ms, border-color 100ms;
+}
+.context-menu .ctx-trace-btn:hover {
+  background: var(--trace-wash); color: var(--trace-strong);
+  border-color: rgba(14,165,233,0.25);
+}
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--popover); color: var(--popover-foreground);
+  padding: 10px 16px; border-radius: var(--radius-md);
+  font-size: 13px; display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+  z-index: 1100; opacity: 0; pointer-events: none;
+  transition: opacity 180ms, transform 180ms;
+}
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+.component { cursor: pointer; transition: opacity 180ms; }
+.component .fill { fill: var(--background); stroke: var(--neutral-800); stroke-width: 1.5; }
+.component .label { font-family: var(--font-mono); font-size: 10px; fill: var(--neutral-700); pointer-events: none; user-select: none; }
+.component.selected .fill { stroke: var(--selection); stroke-width: 2; }
+.component.traced .fill { stroke: var(--trace); stroke-width: 2; fill: var(--trace-wash); }
+.component.traced .label { fill: var(--trace-strong); font-weight: 600; }
+.component.traced.source .fill { stroke: var(--trace-source); stroke-width: 2.5; }
+.component.traced.load .fill { stroke: var(--trace-load); }
+.component.dimmed { opacity: 0.32; }
+.component.dimmed .label { fill: var(--neutral-400); }
+.component.pulsing .fill { animation: pulse 800ms ease-out 2; }
+@keyframes pulse { 0% { stroke-width: 2; } 50% { stroke-width: 4; } 100% { stroke-width: 2; } }
+.component.hovered .fill { stroke: var(--neutral-900); stroke-width: 2; }
+
+.edge { stroke: var(--neutral-400); stroke-width: 1.25; fill: none; transition: opacity 180ms, stroke-width 180ms; }
+.edge.traced { stroke: var(--trace); stroke-width: 2.5; }
+.edge.dimmed { opacity: 0.25; }
+.edge.open-switch { stroke-dasharray: 3,3; stroke: var(--warning); }
+
+.conductor { stroke: var(--neutral-500); fill: none; transition: opacity 180ms, stroke-width 180ms, stroke 180ms; }
+.conductor.traced { stroke: var(--trace) !important; stroke-width: 3 !important; }
+.conductor.dimmed { opacity: 0.22; }
+.conductor.open-switch { stroke-dasharray: 4,3; stroke: var(--warning); }
+
+.pole { cursor: pointer; transition: opacity 180ms; }
+.pole .pole-dot { fill: var(--background); stroke: var(--neutral-700); stroke-width: 1.5; transition: fill 160ms, stroke 160ms; }
+.pole .pole-cross { fill: var(--neutral-700); transition: fill 160ms; }
+.pole .pole-count { font-family: var(--font-mono); font-size: 9px; fill: var(--neutral-700); pointer-events: none; user-select: none; font-weight: 600; }
+.pole .pole-label { font-family: var(--font-mono); font-size: 10px; fill: var(--neutral-500); pointer-events: none; user-select: none; font-weight: 500; transition: fill 160ms; }
+.pole .pole-halo { fill: var(--trace-wash); stroke: var(--trace); stroke-width: 1.5; opacity: 0; transition: opacity 200ms; }
+.substation-halo { rx: 4; }
+.pole:hover .pole-dot { stroke: var(--neutral-900); }
+.pole:hover .pole-label { fill: var(--neutral-700); }
+.pole.dimmed { opacity: 0.4; }
+.pole.dimmed .pole-label { fill: var(--neutral-300); }
+.pole.selected .pole-dot { fill: var(--selection-wash); stroke: var(--selection); stroke-width: 2; }
+.pole.selected .pole-cross { fill: var(--selection); }
+.pole.selected .pole-count { fill: var(--selection); }
+.pole.selected .pole-label { fill: var(--selection); font-weight: 600; }
+.pole.traced .pole-halo { opacity: 1; }
+.pole.traced .pole-dot { fill: var(--trace-wash); stroke: var(--trace); stroke-width: 2; }
+.pole.traced .pole-cross { fill: var(--trace); }
+.pole.traced .pole-count { fill: var(--trace-strong); }
+.pole.traced .pole-label { fill: var(--trace-strong); font-weight: 600; }
+.pole.traced.selected .pole-dot { stroke: var(--selection); }
+.pole.traced.selected .pole-label { fill: var(--selection); }
+
+.statusbar {
+  height: 36px; min-height: 36px;
+  border-top: 1px solid var(--border); background: var(--background);
+  display: flex; align-items: center; padding: 0 16px;
+  font-size: 12px; color: var(--foreground); gap: 12px; flex-shrink: 0;
+}
+.status-section { display: inline-flex; align-items: center; gap: 10px; min-width: 0; flex: 0 1 auto; overflow: hidden; }
+.status-section .status-label { font-size: 10px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+.status-section .status-content { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.status-content .muted { color: var(--muted-foreground); font-family: var(--font-sans); }
+.status-content .sep { color: var(--neutral-300); margin: 0 2px; }
+.status-content .seed-name { font-weight: 500; color: var(--foreground); }
+.status-content .seed-type { color: var(--muted-foreground); font-size: 11px; }
+.status-content .trace-block {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 6px; border-radius: var(--radius-sm);
+  background: var(--trace-wash); color: var(--trace-strong);
+  font-weight: 500; border: 1px solid rgba(14,165,233,0.2);
+}
+.status-content .trace-block .icon { display: inline-flex; align-items: center; }
+.status-content .trace-block.empty { background: var(--warning-wash); color: var(--warning); border-color: rgba(234,88,12,0.18); }
+.status-divider { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; }
+.status-spacer { flex: 1; }
+.status-meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); flex-shrink: 0; }
+
+.floating-clear {
+  position: fixed; bottom: 50px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--background); border: 1px solid var(--border);
+  color: var(--foreground); padding: 6px 12px 6px 10px;
+  border-radius: 999px; font-size: 12px; font-family: var(--font-sans); font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  display: inline-flex; align-items: center; gap: 6px;
+  z-index: 900; opacity: 0; pointer-events: none;
+  transition: opacity 180ms, transform 180ms;
+}
+.floating-clear:not(.hidden) { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.floating-clear:hover { background: var(--neutral-50); border-color: var(--neutral-300); }
+.floating-clear svg { color: var(--neutral-500); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <span class="logo">GridModel</span>
+    <span class="project">
+      <span>Downtown Substation DSG</span>
+      <span class="sep">/</span>
+      <span>main</span>
+    </span>
+    <span class="spacer"></span>
+    <span class="help-hint">
+      <span><kbd>⇧U</kbd> Upstream</span>
+      <span><kbd>⇧D</kbd> Downstream</span>
+      <span><kbd>⇧N</kbd> Neighbors</span>
+      <span><kbd>Esc</kbd> Clear</span>
+    </span>
+  </header>
+
+  <div class="main">
+    <div class="canvas-panel map">
+      <div class="panel-header">
+        <span class="title">Map · Geographic view</span>
+        <div class="actions">
+          <button class="icon-btn" title="Fit to view" id="fit-map-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="canvas-body" id="map-body">
+        <div class="grid-bg"></div>
+        <svg class="canvas-svg" id="map-svg" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+    <div class="canvas-panel sld">
+      <div class="panel-header">
+        <span class="title">SLD · Single-line diagram</span>
+        <div class="actions">
+          <button class="icon-btn" title="Fit to view" id="fit-sld-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="canvas-body" id="sld-body">
+        <div class="grid-bg"></div>
+        <svg class="canvas-svg" id="sld-svg" viewBox="0 0 600 640" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="status-section status-map" id="status-map">
+      <span class="status-label">Map</span>
+      <span class="status-content"><span class="muted">Click a component to select</span></span>
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-section status-sld" id="status-sld">
+      <span class="status-label">SLD</span>
+      <span class="status-content"><span class="muted">Synced with Map</span></span>
+    </div>
+    <span class="status-spacer"></span>
+    <span class="status-meta">16 components · 13 connections · 1 orphan cluster</span>
+  </div>
+</div>
+
+<button class="floating-clear hidden" id="floating-clear">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  <span>Clear trace</span>
+</button>
+
+<div class="context-menu" id="ctx-menu"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================================
+// DATA
+// =============================================================
+const COMPONENTS = [
+  { id: "SUB-North", type: "substation", name: "Substation", label: "SUB-North", phases: ["A","B","C"], voltage: "12.47 kV", mapX: 70, mapY: 260, sldX: 300, sldY: 40 },
+  { id: "F-01", type: "feeder", name: "Feeder", label: "F-01", phases: ["A","B","C"], voltage: "12.47 kV", mapX: 180, mapY: 260, sldX: 300, sldY: 110 },
+  { id: "SW-10", type: "switch", name: "Switch", label: "SW-10", phases: ["A","B","C"], state: "closed", mapX: 290, mapY: 260, sldX: 300, sldY: 180 },
+  { id: "J-1", type: "junction", name: "Junction", label: "J-1", phases: ["A","B","C"], mapX: 400, mapY: 260, sldX: 300, sldY: 250 },
+  { id: "SW-11", type: "switch", name: "Switch", label: "SW-11", phases: ["A","B","C"], state: "closed", mapX: 540, mapY: 160, sldX: 130, sldY: 340 },
+  { id: "T-42", type: "transformer", name: "Transformer", label: "T-42", phases: ["A"], rating: "25 kVA, pad-mount", mapX: 660, mapY: 130, sldX: 130, sldY: 420 },
+  { id: "L-101", type: "load", name: "Load", label: "L-101", phases: ["A"], kw: "18 kW", mapX: 780, mapY: 110, sldX: 130, sldY: 510 },
+  { id: "SW-12", type: "switch", name: "Switch", label: "SW-12", phases: ["A","B","C"], state: "open", mapX: 540, mapY: 280, sldX: 300, sldY: 340 },
+  { id: "T-43", type: "transformer", name: "Transformer", label: "T-43", phases: ["B"], rating: "25 kVA, pad-mount", mapX: 660, mapY: 300, sldX: 300, sldY: 420 },
+  { id: "L-102", type: "load", name: "Load", label: "L-102", phases: ["B"], kw: "14 kW", mapX: 780, mapY: 320, sldX: 300, sldY: 510 },
+  { id: "T-50", type: "transformer", name: "Transformer", label: "T-50", phases: ["A","B","C"], rating: "75 kVA, 3-phase", mapX: 540, mapY: 400, sldX: 470, sldY: 340 },
+  { id: "J-2", type: "junction", name: "Junction", label: "J-2", phases: ["A","B","C"], mapX: 660, mapY: 400, sldX: 470, sldY: 410 },
+  { id: "L-200", type: "load", name: "Load", label: "L-200", phases: ["A"], kw: "22 kW", mapX: 780, mapY: 390, sldX: 410, sldY: 510 },
+  { id: "L-201", type: "load", name: "Load", label: "L-201", phases: ["B"], kw: "19 kW", mapX: 780, mapY: 440, sldX: 530, sldY: 510 },
+  { id: "T-99", type: "transformer", name: "Transformer", label: "T-99", phases: ["A"], rating: "15 kVA (orphan)", mapX: 250, mapY: 450, sldX: 80, sldY: 600 },
+  { id: "L-999", type: "load", name: "Load", label: "L-999", phases: ["A"], kw: "8 kW", mapX: 370, mapY: 450, sldX: 180, sldY: 600 },
+];
+
+const CONNECTIONS = [
+  { id: "c1",  from: "SUB-North", to: "F-01",  phases: ["A","B","C"] },
+  { id: "c2",  from: "F-01",      to: "SW-10", phases: ["A","B","C"] },
+  { id: "c3",  from: "SW-10",     to: "J-1",   phases: ["A","B","C"] },
+  { id: "c4",  from: "J-1",       to: "SW-11", phases: ["A","B","C"] },
+  { id: "c5",  from: "SW-11",     to: "T-42",  phases: ["A"] },
+  { id: "c6",  from: "T-42",      to: "L-101", phases: ["A"] },
+  { id: "c7",  from: "J-1",       to: "SW-12", phases: ["A","B","C"] },
+  { id: "c8",  from: "SW-12",     to: "T-43",  phases: ["B"] },
+  { id: "c9",  from: "T-43",      to: "L-102", phases: ["B"] },
+  { id: "c10", from: "J-1",       to: "T-50",  phases: ["A","B","C"] },
+  { id: "c11", from: "T-50",      to: "J-2",   phases: ["A","B","C"] },
+  { id: "c12", from: "J-2",       to: "L-200", phases: ["A"] },
+  { id: "c13", from: "J-2",       to: "L-201", phases: ["B"] },
+  { id: "c14", from: "T-99",      to: "L-999", phases: ["A"] },
+];
+
+const COMP_BY_ID = Object.fromEntries(COMPONENTS.map(c => [c.id, c]));
+const ADJ = {};
+for (const c of COMPONENTS) ADJ[c.id] = [];
+for (const e of CONNECTIONS) {
+  ADJ[e.from].push({ neighborId: e.to,   connId: e.id, phases: e.phases });
+  ADJ[e.to].push(  { neighborId: e.from, connId: e.id, phases: e.phases });
+}
+
+const POLES = [
+  { id: "P-01", x: 195, y: 260, mounted: ["F-01"] },
+  { id: "P-02", x: 305, y: 260, mounted: ["SW-10"] },
+  { id: "P-03", x: 415, y: 260, mounted: ["J-1", "SW-11", "SW-12"] },
+  { id: "P-04", x: 625, y: 135, mounted: ["T-42", "L-101"] },
+  { id: "P-05", x: 670, y: 300, mounted: ["T-43", "L-102"] },
+  { id: "P-06", x: 555, y: 400, mounted: ["T-50", "J-2"] },
+  { id: "P-07", x: 720, y: 385, mounted: ["L-200"] },
+  { id: "P-08", x: 740, y: 445, mounted: ["L-201"] },
+  { id: "P-99", x: 290, y: 455, mounted: ["T-99", "L-999"] },
+];
+const POLE_BY_ID = Object.fromEntries(POLES.map(p => [p.id, p]));
+const COMP_TO_POLE = {};
+for (const p of POLES) for (const cid of p.mounted) COMP_TO_POLE[cid] = p.id;
+
+function anchorOf(compId) {
+  const c = COMP_BY_ID[compId];
+  if (c.type === "substation") return compId;
+  return COMP_TO_POLE[compId] || null;
+}
+
+function getMapConductors() {
+  const groups = new Map();
+  for (const e of CONNECTIONS) {
+    const aA = anchorOf(e.from);
+    const aB = anchorOf(e.to);
+    if (!aA || !aB) continue;
+    if (aA === aB) continue;
+    const key = aA < aB ? `${aA}|${aB}` : `${aB}|${aA}`;
+    if (!groups.has(key)) groups.set(key, { fromAnchor: aA, toAnchor: aB, connectionIds: [], phases: new Set() });
+    const g = groups.get(key);
+    g.connectionIds.push(e.id);
+    e.phases.forEach(p => g.phases.add(p));
+  }
+  return [...groups.values()];
+}
+
+function anchorPos(anchorId) {
+  if (POLE_BY_ID[anchorId]) return POLE_BY_ID[anchorId];
+  const c = COMP_BY_ID[anchorId];
+  return { x: c.mapX, y: c.mapY };
+}
+
+// =============================================================
+// TRACE ALGORITHMS
+// =============================================================
+function traceNeighbors(compId) {
+  const neighbors = ADJ[compId].map(a => ({ component: COMP_BY_ID[a.neighborId], connId: a.connId, viaPhases: a.phases }));
+  return {
+    kind: "neighbors", seedId: compId,
+    found: neighbors.length > 0,
+    neighbors,
+    componentIds: [compId, ...neighbors.map(n => n.component.id)],
+    connectionIds: neighbors.map(n => n.connId),
+  };
+}
+
+function traceUpstream(compId) {
+  const seed = COMP_BY_ID[compId];
+  const seedPhases = seed.phases;
+  const parent = {}; parent[compId] = null;
+  const parentEdge = {}; parentEdge[compId] = null;
+  const q = [compId];
+  const visited = new Set([compId]);
+  let sourceId = null;
+
+  while (q.length) {
+    const cur = q.shift();
+    const curComp = COMP_BY_ID[cur];
+    if (curComp.type === "substation" && cur !== compId) { sourceId = cur; break; }
+    for (const a of ADJ[cur]) {
+      if (visited.has(a.neighborId)) continue;
+      const sharedPhases = a.phases.filter(p => seedPhases.includes(p));
+      if (sharedPhases.length === 0) continue;
+      const nb = COMP_BY_ID[a.neighborId];
+      if (nb.type === "switch" && nb.state === "open") continue;
+      visited.add(a.neighborId);
+      parent[a.neighborId] = cur;
+      parentEdge[a.neighborId] = a.connId;
+      q.push(a.neighborId);
+      if (nb.type === "substation") { sourceId = a.neighborId; break; }
+    }
+    if (sourceId) break;
+  }
+
+  if (COMP_BY_ID[compId].type === "substation") {
+    return { kind: "upstream", seedId: compId, found: true, alreadyAtSource: true,
+             pathIds: [compId], sourceId: compId, componentIds: [compId], connectionIds: [], hops: 0 };
+  }
+  if (!sourceId) {
+    return { kind: "upstream", seedId: compId, found: false, reason: "no-path",
+             componentIds: [compId], connectionIds: [] };
+  }
+
+  const pathIds = [];
+  const connectionIds = [];
+  let cur = sourceId;
+  while (cur !== null) {
+    pathIds.push(cur);
+    if (parentEdge[cur]) connectionIds.push(parentEdge[cur]);
+    cur = parent[cur];
+  }
+  pathIds.reverse();
+  connectionIds.reverse();
+
+  return { kind: "upstream", seedId: compId, found: true, pathIds, sourceId,
+           componentIds: pathIds, connectionIds, hops: pathIds.length - 1 };
+}
+
+function traceDownstream(compId) {
+  const seed = COMP_BY_ID[compId];
+  const seedPhases = seed.phases;
+  const upstream = traceUpstream(compId);
+  const excludeSet = new Set();
+  if (upstream.found && upstream.pathIds) upstream.pathIds.forEach(id => { if (id !== compId) excludeSet.add(id); });
+  for (const c of COMPONENTS) if (c.type === "substation") excludeSet.add(c.id);
+
+  const visited = new Set([compId]);
+  const reached = [compId];
+  const usedEdges = [];
+  const loads = [];
+  const q = [compId];
+
+  while (q.length) {
+    const cur = q.shift();
+    for (const a of ADJ[cur]) {
+      if (visited.has(a.neighborId)) continue;
+      if (excludeSet.has(a.neighborId)) continue;
+      const sharedPhases = a.phases.filter(p => seedPhases.includes(p));
+      if (sharedPhases.length === 0) continue;
+      const nb = COMP_BY_ID[a.neighborId];
+      if (nb.type === "switch" && nb.state === "open") continue;
+      visited.add(a.neighborId);
+      reached.push(a.neighborId);
+      usedEdges.push(a.connId);
+      if (nb.type === "load") loads.push(a.neighborId);
+      q.push(a.neighborId);
+    }
+  }
+
+  if (reached.length <= 1) {
+    return { kind: "downstream", seedId: compId, found: false, reason: "leaf",
+             componentIds: [compId], connectionIds: [] };
+  }
+
+  return { kind: "downstream", seedId: compId, found: true,
+           reachedIds: reached, loadIds: loads,
+           componentIds: reached, connectionIds: usedEdges,
+           depth: reached.length - 1, totalReached: reached.length };
+}
+
+// =============================================================
+// STATE
+// =============================================================
+const state = { hoveredId: null, selectedId: null, focusedId: null, trace: null };
+
+// =============================================================
+// SYMBOLS
+// =============================================================
+function symbolForType(type, swState, size) {
+  const sm = size === "sm";
+  switch (type) {
+    case "substation":
+      return `<rect class="fill" x="-18" y="-14" width="36" height="28" rx="3" />
+              <line x1="-10" y1="0" x2="10" y2="0" stroke="var(--neutral-700)" stroke-width="1.5" />
+              <line x1="0" y1="-7" x2="0" y2="7" stroke="var(--neutral-700)" stroke-width="1.5" />`;
+    case "feeder":
+      return sm
+        ? `<rect class="fill" x="-9" y="-7" width="18" height="14" rx="2" /><text x="0" y="3" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--neutral-700)" font-weight="600">F</text>`
+        : `<rect class="fill" x="-14" y="-10" width="28" height="20" rx="2" /><text x="0" y="3" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--neutral-700)" font-weight="600">F</text>`;
+    case "switch": {
+      const isOpen = swState === "open";
+      const r = sm ? 7 : 11;
+      const lh = sm ? 4 : 6;
+      return `<circle class="fill" cx="0" cy="0" r="${r}" />
+              ${isOpen
+                ? `<line x1="-${lh}" y1="${lh*0.6}" x2="${lh}" y2="-${lh*0.6}" stroke="var(--warning)" stroke-width="1.5" stroke-linecap="round" />`
+                : `<line x1="-${lh}" y1="0" x2="${lh}" y2="0" stroke="var(--neutral-700)" stroke-width="1.5" stroke-linecap="round" />`}`;
+    }
+    case "junction":
+      return sm ? `<circle class="fill" cx="0" cy="0" r="3" />` : `<circle class="fill" cx="0" cy="0" r="4" />`;
+    case "transformer":
+      return sm
+        ? `<circle class="fill" cx="-3" cy="0" r="4.5" /><circle class="fill" cx="3" cy="0" r="4.5" />`
+        : `<circle class="fill" cx="-5" cy="0" r="7" /><circle class="fill" cx="5" cy="0" r="7" />`;
+    case "load":
+      return sm ? `<path class="fill" d="M -6.5,-5 L 6.5,-5 L 0,5 Z" />` : `<path class="fill" d="M -10,-8 L 10,-8 L 0,8 Z" />`;
+    default:
+      return `<circle class="fill" cx="0" cy="0" r="${sm ? 5 : 8}" />`;
+  }
+}
+
+// =============================================================
+// RENDERERS
+// =============================================================
+function renderCanvases() {
+  renderMap();
+  renderSLD();
+  renderTraceContextUI();
+}
+
+function componentClasses(c) {
+  const classes = ["component", `type-${c.type}`];
+  if (state.hoveredId === c.id) classes.push("hovered");
+  if (state.selectedId === c.id) classes.push("selected");
+  if (state.trace && state.focusedId === c.id) classes.push("selected");
+  if (state.trace && state.trace.found && state.trace.componentIds.includes(c.id)) {
+    classes.push("traced");
+    if (state.trace.kind === "upstream" && state.trace.sourceId === c.id) classes.push("source");
+    if (state.trace.kind === "downstream" && state.trace.loadIds && state.trace.loadIds.includes(c.id)) classes.push("load");
+  }
+  if (state.trace && state.trace.found && !state.trace.componentIds.includes(c.id)) classes.push("dimmed");
+  if (state.trace && state.trace.seedId === c.id && state.trace.justRan) classes.push("pulsing");
+  return classes.join(" ");
+}
+
+function edgeClasses(e) {
+  const classes = ["edge"];
+  const from = COMP_BY_ID[e.from], to = COMP_BY_ID[e.to];
+  const openSwitch = (from.type === "switch" && from.state === "open") || (to.type === "switch" && to.state === "open");
+  if (openSwitch) classes.push("open-switch");
+  if (state.trace && state.trace.found && state.trace.connectionIds.includes(e.id)) classes.push("traced");
+  if (state.trace && state.trace.found && !state.trace.connectionIds.includes(e.id)) classes.push("dimmed");
+  return classes.join(" ");
+}
+
+function renderMap() {
+  const svg = document.getElementById("map-svg");
+
+  const conductors = getMapConductors();
+  const edgesHtml = conductors.map(cond => {
+    const a = anchorPos(cond.fromAnchor);
+    const b = anchorPos(cond.toAnchor);
+    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+    const phases = cond.phases.size;
+    const inTrace = state.trace && state.trace.found && cond.connectionIds.some(cid => state.trace.connectionIds.includes(cid));
+    const dimmed = state.trace && state.trace.found && !inTrace;
+    const involvesOpenSwitch = cond.connectionIds.some(cid => {
+      const e = CONNECTIONS.find(x => x.id === cid);
+      const fromC = COMP_BY_ID[e.from], toC = COMP_BY_ID[e.to];
+      return (fromC.type === "switch" && fromC.state === "open") || (toC.type === "switch" && toC.state === "open");
+    });
+    const cls = ["conductor"];
+    if (inTrace) cls.push("traced");
+    if (dimmed) cls.push("dimmed");
+    if (involvesOpenSwitch) cls.push("open-switch");
+    return `<path class="${cls.join(" ")}" data-conductor-key="${cond.fromAnchor}|${cond.toAnchor}" stroke-width="${1 + phases * 0.4}" d="M ${a.x},${a.y} Q ${midX},${midY} ${b.x},${b.y}" />`;
+  }).join("");
+
+  const polesHtml = POLES.map(p => renderPoleOnMap(p)).join("");
+  const substations = COMPONENTS.filter(c => c.type === "substation");
+  const subsHtml = substations.map(c => renderSubstationOnMap(c)).join("");
+
+  svg.innerHTML = edgesHtml + polesHtml + subsHtml;
+  attachPoleHandlers(svg);
+  attachNodeHandlers(svg);
+}
+
+function renderPoleOnMap(p) {
+  const traceLit = state.trace && state.trace.found && p.mounted.some(cid => state.trace.componentIds.includes(cid));
+  const allDimmed = state.trace && state.trace.found && p.mounted.every(cid => !state.trace.componentIds.includes(cid));
+  const isPoleSelected = state.selectedId === p.id || state.focusedId === p.id;
+  const isCompSelected = state.selectedId && !isPoleId(state.selectedId) && p.mounted.includes(state.selectedId);
+  const isFocusedComp = state.focusedId && !isPoleId(state.focusedId) && p.mounted.includes(state.focusedId);
+  const visuallySelected = isPoleSelected || isCompSelected || isFocusedComp;
+
+  const cls = ["pole"];
+  if (traceLit) cls.push("traced");
+  if (allDimmed) cls.push("dimmed");
+  if (visuallySelected) cls.push("selected");
+
+  const mountedList = p.mounted.map(cid => `${COMP_BY_ID[cid].label} (${COMP_BY_ID[cid].name})`).join("\n  ");
+  const tooltipText = `${p.id} · Pole\nMounted (${p.mounted.length}):\n  ${mountedList}`;
+  const haloHtml = traceLit ? `<circle class="pole-halo" r="14" />` : "";
+  const countBadge = p.mounted.length > 1 ? `<text class="pole-count" y="3" text-anchor="middle">${p.mounted.length}</text>` : "";
+
+  return `
+    <g class="${cls.join(" ")}" data-pole-id="${p.id}" transform="translate(${p.x}, ${p.y})">
+      <title>${tooltipText}</title>
+      <circle class="pole-hit" r="18" fill="transparent" />
+      ${haloHtml}
+      <rect class="pole-cross" x="-9" y="-1" width="18" height="2" rx="1" />
+      <circle class="pole-dot" r="6" />
+      ${countBadge}
+      <text class="pole-label" y="-16" text-anchor="middle">${p.id}</text>
+    </g>`;
+}
+
+function renderSubstationOnMap(c) {
+  const traceLit = state.trace && state.trace.found && state.trace.componentIds.includes(c.id);
+  const allDimmed = state.trace && state.trace.found && !traceLit;
+  const isSelected = state.selectedId === c.id || state.focusedId === c.id;
+  const cls = ["component", "type-substation"];
+  if (traceLit) cls.push("traced");
+  if (allDimmed) cls.push("dimmed");
+  if (isSelected) cls.push("selected");
+  if (state.hoveredId === c.id) cls.push("hovered");
+  if (state.trace && state.trace.kind === "upstream" && state.trace.sourceId === c.id) cls.push("source");
+
+  const haloHtml = traceLit ? `<rect class="pole-halo substation-halo" x="-26" y="-20" width="52" height="40" rx="4" />` : "";
+
+  return `
+    <g class="${cls.join(" ")}" data-id="${c.id}" transform="translate(${c.mapX}, ${c.mapY})">
+      <title>${c.label} · Substation</title>
+      ${haloHtml}
+      <rect class="fill" x="-22" y="-16" width="44" height="32" rx="3" />
+      <line x1="-12" y1="0" x2="12" y2="0" stroke="var(--neutral-700)" stroke-width="1.5" />
+      <line x1="0" y1="-8" x2="0" y2="8" stroke="var(--neutral-700)" stroke-width="1.5" />
+      <text class="label" x="0" y="32" text-anchor="middle">${c.label}</text>
+    </g>`;
+}
+
+function renderSLD() {
+  const svg = document.getElementById("sld-svg");
+  const edges = CONNECTIONS.map(e => {
+    const a = COMP_BY_ID[e.from], b = COMP_BY_ID[e.to];
+    const midY = a.sldY + (b.sldY - a.sldY) / 2;
+    const path = `M ${a.sldX},${a.sldY} L ${a.sldX},${midY} L ${b.sldX},${midY} L ${b.sldX},${b.sldY}`;
+    return `<path class="${edgeClasses(e)}" data-conn-id="${e.id}" d="${path}" />`;
+  }).join("");
+
+  const nodes = COMPONENTS.map(c => `
+    <g class="${componentClasses(c)}" data-id="${c.id}" transform="translate(${c.sldX}, ${c.sldY})">
+      ${symbolForType(c.type, c.state)}
+      <text class="label" x="18" y="4" text-anchor="start">${c.label}</text>
+    </g>`).join("");
+
+  svg.innerHTML = edges + nodes;
+  attachNodeHandlers(svg);
+}
+
+function attachNodeHandlers(svg) {
+  svg.querySelectorAll(".component").forEach(n => {
+    const id = n.getAttribute("data-id");
+    n.addEventListener("click", (ev) => { ev.stopPropagation(); selectComponent(id); });
+    n.addEventListener("contextmenu", (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      selectComponent(id);
+      openContextMenu(ev.clientX, ev.clientY, id);
+    });
+    n.addEventListener("mouseenter", () => { state.hoveredId = id; updateComponentClass(id); });
+    n.addEventListener("mouseleave", () => { state.hoveredId = null; updateComponentClass(id); });
+  });
+  svg.addEventListener("click", () => { closeContextMenu(); clearAll(); });
+  svg.addEventListener("contextmenu", (ev) => { ev.preventDefault(); });
+}
+
+function attachPoleHandlers(svg) {
+  svg.querySelectorAll(".pole").forEach(g => {
+    const poleId = g.getAttribute("data-pole-id");
+    g.addEventListener("click", (ev) => { ev.stopPropagation(); selectPole(poleId); });
+    g.addEventListener("contextmenu", (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      selectPole(poleId);
+      openPoleContextMenu(ev.clientX, ev.clientY, poleId);
+    });
+  });
+}
+
+function openPoleContextMenu(x, y, poleId) {
+  const pole = POLE_BY_ID[poleId];
+  const menu = document.getElementById("ctx-menu");
+
+  const headerHtml = `
+    <div class="ctx-pole-header">
+      <span style="font-weight:600;">${pole.id}</span>
+      <span style="color:var(--muted-foreground); font-size:11px;">Pole · ${pole.mounted.length} mounted</span>
+    </div>
+    <div class="sep"></div>`;
+
+  const poleLevelHtml = `
+    <div class="item" data-pole-action="upstream">
+      <div class="left">${iconUp(14)}<span>Trace upstream</span></div>
+      <span class="shortcut">⇧U</span>
+    </div>
+    <div class="item" data-pole-action="downstream">
+      <div class="left">${iconDown(14)}<span>Trace downstream</span></div>
+      <span class="shortcut">⇧D</span>
+    </div>
+    <div class="item" data-pole-action="neighbors">
+      <div class="left">${iconNeighbors(14)}<span>Show neighbors</span></div>
+      <span class="shortcut">⇧N</span>
+    </div>`;
+
+  let perComponentHtml = "";
+  if (pole.mounted.length > 1) {
+    const rowsHtml = pole.mounted.map(cid => {
+      const c = COMP_BY_ID[cid];
+      return `
+        <div class="ctx-component-row">
+          <div class="ctx-component-info">
+            ${iconForType(c.type, 14)}
+            <div class="ctx-component-text">
+              <span class="ctx-component-name">${c.label}</span>
+              <span class="ctx-component-type">${c.name}</span>
+            </div>
+          </div>
+          <div class="ctx-trace-buttons">
+            <button class="ctx-trace-btn" data-action="upstream" data-comp="${cid}" title="Trace upstream from ${c.label}">${iconUp(13)}</button>
+            <button class="ctx-trace-btn" data-action="downstream" data-comp="${cid}" title="Trace downstream from ${c.label}">${iconDown(13)}</button>
+            <button class="ctx-trace-btn" data-action="neighbors" data-comp="${cid}" title="Neighbors of ${c.label}">${iconNeighbors(13)}</button>
+          </div>
+        </div>`;
+    }).join('');
+    perComponentHtml = `<div class="sep"></div><div class="ctx-subheader">Or trace from specific component</div>${rowsHtml}`;
+  }
+
+  menu.innerHTML = headerHtml + poleLevelHtml + perComponentHtml;
+  menu.style.left = (x + 2) + "px";
+  menu.style.top  = (y + 2) + "px";
+  menu.classList.add("visible");
+  menu.classList.add("pole-menu");
+
+  menu.querySelectorAll("[data-pole-action]").forEach(item => {
+    item.addEventListener("click", () => {
+      const action = item.getAttribute("data-pole-action");
+      closeContextMenu();
+      runTraceFromPole(action, poleId);
+    });
+  });
+  menu.querySelectorAll(".ctx-trace-btn").forEach(btn => {
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const action = btn.getAttribute("data-action");
+      const compId = btn.getAttribute("data-comp");
+      closeContextMenu();
+      runTrace(action, compId);
+    });
+  });
+
+  const rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth - 8) menu.style.left = (x - rect.width - 4) + "px";
+  if (rect.bottom > window.innerHeight - 8) menu.style.top = (y - rect.height - 4) + "px";
+}
+
+function selectPole(poleId) {
+  state.selectedId = poleId;
+  state.focusedId = null;
+  renderCanvases();
+}
+function isPoleId(id) { return id && id.startsWith("P-") && POLE_BY_ID[id]; }
+
+function updateComponentClass(id) {
+  const c = COMP_BY_ID[id];
+  if (!c) return;
+  const cls = componentClasses(c);
+  document.querySelectorAll(`.component[data-id="${id}"]`).forEach(n => n.setAttribute("class", cls));
+}
+
+// =============================================================
+// ACTIONS
+// =============================================================
+function selectComponent(id) {
+  state.selectedId = id;
+  state.focusedId = null;
+  if (state.trace && state.trace.seedId !== id) state.trace = null;
+  renderCanvases();
+}
+function clearSelection() { state.selectedId = null; state.focusedId = null; renderCanvases(); }
+function clearAll() { state.selectedId = null; state.focusedId = null; state.trace = null; renderCanvases(); }
+function clearTrace() { state.trace = null; state.focusedId = null; renderCanvases(); }
+
+function runTrace(kind, compId, options) {
+  options = options || {};
+  const seed = COMP_BY_ID[compId];
+  let result;
+  if (kind === "upstream")        result = traceUpstream(compId);
+  else if (kind === "downstream") result = traceDownstream(compId);
+  else if (kind === "neighbors")  result = traceNeighbors(compId);
+  else return;
+
+  if (options.fromPole) result.fromPole = options.fromPole;
+  result.justRan = true;
+  state.trace = result;
+  state.selectedId = options.fromPole || compId;
+  state.focusedId = null;
+  renderCanvases();
+
+  if (result.found === false) {
+    const seedLabel = options.fromPole || seed.label;
+    let msg;
+    if (result.reason === "no-path") msg = `No path to source from ${seedLabel}. An open switch may block the route, or this is an orphan component.`;
+    else if (result.reason === "leaf") msg = `${seedLabel} is a leaf node — nothing downstream.`;
+    else msg = "No trace result.";
+    showToast(msg, 4500);
+  }
+
+  setTimeout(() => {
+    if (state.trace) state.trace.justRan = false;
+    if (COMP_BY_ID[compId]) updateComponentClass(compId);
+  }, 900);
+}
+
+function runTraceFromPole(kind, poleId) {
+  const pole = POLE_BY_ID[poleId];
+  if (!pole || pole.mounted.length === 0) return;
+  runTrace(kind, pole.mounted[0], { fromPole: poleId });
+}
+
+// =============================================================
+// COMPONENT CONTEXT MENU
+// =============================================================
+function openContextMenu(x, y, compId) {
+  const comp = COMP_BY_ID[compId];
+  const menu = document.getElementById("ctx-menu");
+  const hasTerminals = comp.phases && comp.phases.length > 0;
+  const disabledTooltip = hasTerminals ? "" : "Specify type to trace";
+  const disabledClass = hasTerminals ? "" : "disabled";
+
+  menu.innerHTML = `
+    <div class="item" data-action="info">
+      <div class="left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>Info</span>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="item ${disabledClass}" data-action="upstream" title="${disabledTooltip}">
+      <div class="left">${iconUp(14)}<span>Trace upstream</span></div>
+      <span class="shortcut">⇧U</span>
+    </div>
+    <div class="item ${disabledClass}" data-action="downstream" title="${disabledTooltip}">
+      <div class="left">${iconDown(14)}<span>Trace downstream</span></div>
+      <span class="shortcut">⇧D</span>
+    </div>
+    <div class="item ${disabledClass}" data-action="neighbors" title="${disabledTooltip}">
+      <div class="left">${iconNeighbors(14)}<span>Show neighbors</span></div>
+      <span class="shortcut">⇧N</span>
+    </div>
+    <div class="sep"></div>
+    <div class="item disabled" data-action="edit" title="Edit mode not in this prototype">
+      <div class="left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span>Edit attributes</span>
+      </div>
+    </div>
+    <div class="item disabled" data-action="delete" title="Edit mode not in this prototype">
+      <div class="left">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        <span>Delete</span>
+      </div>
+    </div>`;
+
+  menu.style.left = (x + 2) + "px";
+  menu.style.top  = (y + 2) + "px";
+  menu.classList.add("visible");
+
+  menu.querySelectorAll(".item").forEach(it => {
+    if (it.classList.contains("disabled")) return;
+    it.addEventListener("click", () => {
+      const action = it.getAttribute("data-action");
+      closeContextMenu();
+      handleContextMenuAction(action, compId);
+    });
+  });
+
+  const rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth - 8) menu.style.left = (x - rect.width - 4) + "px";
+  if (rect.bottom > window.innerHeight - 8) menu.style.top = (y - rect.height - 4) + "px";
+}
+
+function closeContextMenu() {
+  const menu = document.getElementById("ctx-menu");
+  menu.classList.remove("visible");
+  menu.classList.remove("pole-menu");
+}
+
+function handleContextMenuAction(action, compId) {
+  if (action === "info") selectComponent(compId);
+  else if (action === "upstream" || action === "downstream" || action === "neighbors") runTrace(action, compId);
+}
+
+// =============================================================
+// STATUS BAR
+// =============================================================
+function renderTraceContextUI() {
+  renderStatusSection("status-map", "map");
+  renderStatusSection("status-sld", "sld");
+  const fc = document.getElementById("floating-clear");
+  if (state.trace) fc.classList.remove("hidden"); else fc.classList.add("hidden");
+}
+
+function renderStatusSection(elementId, viewKind) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  let html = `<span class="status-label">${viewKind.toUpperCase()}</span>`;
+  const selId = state.focusedId || state.selectedId;
+  let selectionHtml = "";
+  if (selId) {
+    if (isPoleId(selId)) {
+      const pole = POLE_BY_ID[selId];
+      const mountedNames = pole.mounted.map(cid => COMP_BY_ID[cid].label).join(", ");
+      selectionHtml = `
+        <span class="seed-name">${pole.id}</span>
+        <span class="seed-type">Pole · ${pole.mounted.length} mounted</span>
+        <span class="muted" style="font-family:var(--font-mono); font-size:11px;">[${mountedNames}]</span>`;
+    } else {
+      const c = COMP_BY_ID[selId];
+      if (c) {
+        const poleId = COMP_TO_POLE[selId];
+        const onPole = poleId ? `· on ${poleId}` : "";
+        selectionHtml = `<span class="seed-name">${c.label}</span><span class="seed-type">${c.name} ${onPole}</span>`;
+      }
+    }
+  } else {
+    selectionHtml = `<span class="muted">${viewKind === "map" ? "Click a component or pole" : "Synced with Map"}</span>`;
+  }
+
+  let traceHtml = "";
+  if (state.trace) traceHtml = `<span class="sep">·</span>` + renderStatusTraceBlock(viewKind);
+
+  html += `<span class="status-content">${selectionHtml}${traceHtml}</span>`;
+  el.innerHTML = html;
+}
+
+function renderStatusTraceBlock(viewKind) {
+  const t = state.trace;
+  const seed = COMP_BY_ID[t.seedId];
+  const seedDescriptor = t.fromPole ? `${t.fromPole} (pole)` : seed.label;
+
+  const kindIcon = t.kind === "upstream" ? iconUp(11) : t.kind === "downstream" ? iconDown(11) : iconNeighbors(11);
+  const kindLabel = t.kind === "upstream" ? "Trace upstream" : t.kind === "downstream" ? "Trace downstream" : "Neighbors";
+
+  if (t.found === false) {
+    let msg = "no result";
+    if (t.reason === "no-path") msg = "no path to source";
+    else if (t.reason === "leaf") msg = "leaf — nothing downstream";
+    return `<span class="trace-block empty" title="${kindLabel} from ${seedDescriptor}"><span class="icon">${kindIcon}</span><span>${kindLabel}: ${msg}</span></span>`;
+  }
+
+  let summary;
+  if (t.kind === "upstream") {
+    const distance = computePathDistance(t.pathIds, viewKind);
+    const distanceLabel = viewKind === "map" ? (distance > 0 ? `~${distance} px` : "") : (distance > 0 ? `${t.hops} hop${t.hops === 1 ? "" : "s"}` : "at source");
+    const sourceLabel = COMP_BY_ID[t.sourceId].label;
+    summary = `${t.componentIds.length} components${distanceLabel ? " · " + distanceLabel : ""} · to ${sourceLabel}`;
+  } else if (t.kind === "downstream") {
+    let totalKw = 0;
+    for (const id of t.reachedIds) {
+      const c = COMP_BY_ID[id];
+      if (c.kw) { const n = parseFloat(c.kw); if (!isNaN(n)) totalKw += n; }
+    }
+    const kwLabel = totalKw > 0 ? ` · ~${totalKw.toFixed(1)} kW` : "";
+    summary = `${t.totalReached} components · ${t.loadIds.length} loads${kwLabel}`;
+  } else {
+    summary = `${t.neighbors.length} neighbor${t.neighbors.length === 1 ? "" : "s"}`;
+  }
+
+  return `<span class="trace-block" title="${kindLabel} from ${seedDescriptor}"><span class="icon">${kindIcon}</span><span>${kindLabel}:</span><span style="font-weight:500;">${summary}</span></span>`;
+}
+
+function showToast(message, duration = 2200) {
+  const t = document.getElementById("toast");
+  t.textContent = message;
+  t.classList.add("visible");
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => t.classList.remove("visible"), duration);
+}
+
+// =============================================================
+// ICONS
+// =============================================================
+function iconClose(sz=16) { return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`; }
+function iconUp(sz=14) { return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>`; }
+function iconDown(sz=14) { return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>`; }
+function iconNeighbors(sz=14) { return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="12" cy="20" r="2"/></svg>`; }
+
+function iconForType(type, sz=16) {
+  switch (type) {
+    case "substation": return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M7 12h10"/><path d="M12 8v8"/></svg>`;
+    case "feeder": return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="8" rx="1"/><path d="M8 12h8"/></svg>`;
+    case "switch": return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 12h10"/></svg>`;
+    case "junction": return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>`;
+    case "transformer": return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg>`;
+    case "load": return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-8 13Z"/></svg>`;
+    default: return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="6"/></svg>`;
+  }
+}
+
+function computePathDistance(ids, coordSystem) {
+  let d = 0;
+  for (let i = 0; i < ids.length - 1; i++) {
+    const a = COMP_BY_ID[ids[i]], b = COMP_BY_ID[ids[i+1]];
+    const dx = a[coordSystem + "X"] - b[coordSystem + "X"];
+    const dy = a[coordSystem + "Y"] - b[coordSystem + "Y"];
+    d += Math.sqrt(dx*dx + dy*dy);
+  }
+  return Math.round(d);
+}
+
+// =============================================================
+// GLOBAL EVENTS
+// =============================================================
+document.addEventListener("keydown", (ev) => {
+  const ae = document.activeElement;
+  const isTyping = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
+  if (isTyping) return;
+
+  if (ev.key === "Escape") {
+    closeContextMenu();
+    if (state.trace) { clearTrace(); return; }
+    if (state.selectedId) { clearSelection(); return; }
+  }
+  if (!state.selectedId) return;
+
+  if (isPoleId(state.selectedId)) {
+    if (ev.shiftKey && ["U","u","D","d","N","n"].includes(ev.key)) {
+      ev.preventDefault();
+      if (ev.key === "U" || ev.key === "u") runTraceFromPole("upstream", state.selectedId);
+      else if (ev.key === "D" || ev.key === "d") runTraceFromPole("downstream", state.selectedId);
+      else if (ev.key === "N" || ev.key === "n") runTraceFromPole("neighbors", state.selectedId);
+    }
+    return;
+  }
+
+  if (ev.shiftKey) {
+    if (ev.key === "U" || ev.key === "u") { ev.preventDefault(); runTrace("upstream", state.selectedId); }
+    else if (ev.key === "D" || ev.key === "d") { ev.preventDefault(); runTrace("downstream", state.selectedId); }
+    else if (ev.key === "N" || ev.key === "n") { ev.preventDefault(); runTrace("neighbors", state.selectedId); }
+  }
+});
+
+document.addEventListener("click", (ev) => {
+  const menu = document.getElementById("ctx-menu");
+  if (menu && menu.classList.contains("visible") && !menu.contains(ev.target)) closeContextMenu();
+});
+
+["map-body","sld-body"].forEach(id => {
+  document.getElementById(id).addEventListener("contextmenu", (ev) => ev.preventDefault());
+});
+
+document.getElementById("fit-map-btn").addEventListener("click", () => showToast("Fit to view (non-functional in prototype)"));
+document.getElementById("fit-sld-btn").addEventListener("click", () => showToast("Fit to view (non-functional in prototype)"));
+document.getElementById("floating-clear").addEventListener("click", () => clearTrace());
+
+// =============================================================
+// BOOT
+// =============================================================
+renderCanvases();
+setTimeout(() => {
+  showToast("Try right-clicking pole P-04 on the map, or right-click any component on SLD", 4500);
+}, 500);
+</script>
+</body>
+</html>
