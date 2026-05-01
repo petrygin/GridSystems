@@ -60,7 +60,7 @@ The branch status pill in the header context (project / branch block) is the pri
 
 | State      | Header section            | Body                                          | Actions (author)               | Actions (reviewer)             |
 |------------|---------------------------|-----------------------------------------------|--------------------------------|--------------------------------|
-| Draft      | Created + author          | Change summary (counters)                     | Send for review · Archive      | —                              |
+| Draft      | Created + author          | Total change count (e.g. `12 changes`)        | Send for review · Archive      | —                              |
 | In review  | Sent + author             | Reviewer list with pending/approved status    | Cancel review                  | Approve · Request changes      |
 | Approved   | Approved + reviewer       | Optional approval message                     | Merge to main · Reopen         | Merge to main                  |
 | Merged     | Merged + actor            | Approved by + integration summary             | Archive                        | —                              |
@@ -84,17 +84,44 @@ Final tokens decided in Figma. Do not specify hex values in specs.
 
 ## Edit-mode coupling
 
-Branch state controls availability of Edit mode:
+Branch state controls whether Edit mode is available:
 
-| Branch state | Edit button                                   |
-|--------------|-----------------------------------------------|
-| Draft        | Enabled — `E` shortcut works                  |
-| In review    | Disabled — tooltip: "Project is under review" |
-| Approved     | Disabled — tooltip: "Project is approved"     |
-| Merged       | Disabled — tooltip: "Branch is merged"        |
-| Archived     | Disabled — tooltip: "Branch is archived"      |
+| Branch state | Edit mode                                                |
+|--------------|----------------------------------------------------------|
+| Draft        | Available — enter via viewport toolbar or `E` shortcut   |
+| In review    | Locked                                                   |
+| Approved     | Locked                                                   |
+| Merged       | Locked — terminal state                                  |
+| Archived     | Locked — terminal state                                  |
+
+When Edit mode is locked, all entry points (viewport toolbar, `E` key, context-menu affordances) are no-ops.
+
+### Locked-state visual cues
+
+When the branch is in any locked state, the user sees:
+
+- **Status pill** in the header reflects the state via a colored accent (see Visual treatment table above)
+- **Banner** above the viewport explains the lock, e.g. "Project is under review. Editing is disabled until the review is approved or cancelled." Banner text varies by state.
+- **Viewport toolbar** has Add / Connect / Bind / Aggregate tools disabled
+
+There is no separate `Edit` button in the header. Mode entry happens through the viewport toolbar only.
 
 Editing during review is not allowed. To edit, the author must `Cancel review` (returns branch to Draft) or `Reopen for review` from Approved.
+
+---
+
+## Change counter format
+
+When the branch summary needs to communicate "how much changed vs main", use this format consistently across popovers, modals, panel headers, and notifications:
+
+- **Headline**: total count, neutral, e.g. `12 changes`
+- **Breakdown** (where space allows): muted secondary line, `X added · Y modified · Z removed`
+
+The unit is `changes` (not `components`, `structures`, or any specific entity type) to avoid implying a single entity scope. The detailed per-entity breakdown lives in the Changes panel (Task 04).
+
+**Empty state**: when the branch has zero changes vs main, the summary line reads `No changes vs main`. Counters are not shown.
+
+**Color**: counters are always rendered in neutral text. Do not color-code added/modified/removed (no green/blue/red treatment) — it competes visually with semantic colors used elsewhere (warnings, errors, success states).
 
 ---
 
@@ -133,6 +160,7 @@ Validation errors **do not block** any transition in the MVP. Errors surface as 
 - Branch-from-branch flows
 - Partial merges (cherry-pick subsets of changes)
 - Conflict resolution beyond keep-main / keep-project
+- Color-coded change counters (kept neutral, see Change counter format)
 
 ---
 
@@ -163,3 +191,4 @@ Validation errors **do not block** any transition in the MVP. Errors surface as 
 | Merge             | The act of integrating an approved branch into main                      |
 | Status pill       | The clickable badge in the header showing branch state                   |
 | Status popover    | The popover opened from the status pill, combining info and actions      |
+| Change            | Any tracked delta vs main: added, modified, or removed entity            |
