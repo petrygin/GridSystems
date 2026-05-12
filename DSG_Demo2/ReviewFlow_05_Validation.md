@@ -4,6 +4,8 @@
 
 **Related:** Review Mode surface and status popover → Task 04. Send-for-review entry → Task 01. Reviews list inbox → Task 03. Project-vs-master sync state → Task 06.
 
+**Design:** [Figma — Validation in Review Mode](https://www.figma.com/design/0FW49cYCouwjKw3YzqQwcI/Grid-Model-Work-in-Progress?node-id=3283-113999)
+
 For shared terminology, state model, and the validation policy at Send for Review, see `ReviewFlow_00_Overview.md`. For the panel design itself (three views, section grouping, severity treatment, cross-highlight), see `UI-VAL-ValidationResultsPanel.md`.
 
 ---
