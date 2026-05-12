@@ -50,16 +50,6 @@ The `Not changed` state is for components that exist in both master and project 
 
 The existing Layers panel gets a `Highlight by: Changes vs Master` toggle. When enabled, diff highlights become more prominent and unchanged components are dimmed. This toggle is a Layers feature, not Review-Mode-specific — it works in Draft as well (author self-review).
 
-### Outdated banner
-
-When master version has changed since send-for-review:
-
-- A warning banner appears above the viewport
-- Banner text explains the diff is computed against the current master
-- Click `Why this matters` opens a modal with detailed explanation
-
-The diff is always computed against the current master. The information is contextual — author may need to rebase before approve/merge.
-
 ---
 
 ## Changes panel (universal sidebar)
@@ -84,7 +74,7 @@ Icon with counter (`N changes` or `99+` if >100). Counter hidden when count is 0
 
 ```
 Changes [N] [×]
-[All zones ▾] [All types ▾]
+[Physical & Electrical ▾] [All component types ▾]
 
 ▾ Added (N)
   cards…
@@ -114,8 +104,10 @@ Sort within group: timestamp descending (newest first).
 
 ### Filters
 
-- `All zones` — multi-select dropdown over project zones
-- `All types` — multi-select dropdown over component types
+Two filters in the panel header:
+
+- `Physical & Electrical` — filter by view type (Physical for Map, Electrical for SLD). Multi-select.
+- `All component types` — filter by component category (Transformer, Pole, Conductor, etc.). Multi-select.
 
 Filters apply to panel content; they do not affect viewport highlighting.
 
@@ -199,31 +191,36 @@ The status pill in the header is clickable and opens a popover. The popover adap
 
 ## Entry points to the popover
 
-The popover has two entry points (kept both for MVP):
+The popover has two entry points:
 
 1. Click `In review` chip in the header
-2. Click `Finish reviewing` button in the bottom bar
+2. Click `Finish reviewing` button in the bottom toolbar
 
 Both open the identical popover. Trade-offs:
 
 - **Plus for chip**: Keeps a single header layout across all project states.
-- **Plus for Finish reviewing button**: Prominent CTA in the bottom bar — hard to miss for new reviewers.
+- **Plus for Finish reviewing button**: Prominent CTA in the bottom toolbar — hard to miss for new reviewers.
 - **Minus**: Two surfaces for the same action.
 
-Recommendation for v1.1: keep only the chip; drop the bottom-bar button.
+Both entry points are kept. If implementing only one is cheaper, choose the chip.
 
 ---
 
-## Bottom status bar
+## Bottom area — status bar + toolbar
 
-A thin strip at the bottom of the viewport contains:
+Two stacked strips under the viewport, with distinct purposes:
 
-- Left: `Review mode` indicator (red dot)
-- Center-left: current selection info (`Selected: <id> (<type>)`)
-- Center-right: `Finish reviewing` button (secondary CTA — opens the popover)
-- Right: zoom controls (Map zoom · SLD zoom)
+**Status bar** — informational, contains no controls:
 
-Outside Review Mode (Draft / Approved / Merged), the bar shows only the selection info and zoom controls; the `Review mode` indicator and `Finish reviewing` button do not appear.
+- `Review mode` indicator (red dot + label) — shown only in Review Mode
+- Selected info (`Selected: <id> (<type>)`)
+
+**Toolbar** — contains controls:
+
+- `Finish reviewing` button — shown only in Review Mode
+- Zoom controls (Map zoom · SLD zoom)
+
+Outside Review Mode the status bar shows Selected info; the toolbar contains zoom controls.
 
 ---
 
@@ -258,5 +255,3 @@ Fully designed (see Figma). Same component palette with dark-mode tokens. Select
 ## Open questions
 
 None for Task 04 — all major decisions resolved.
-
-**Note**: The entry-point redundancy (chip + Finish reviewing button) is explicitly resolved as "keep both for MVP" with the v1.1 collapse recommendation.
