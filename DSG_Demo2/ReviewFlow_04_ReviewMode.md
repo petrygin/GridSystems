@@ -62,10 +62,10 @@ The Changes panel is persistent and universal — it exists for any project stat
 
 ### Toggle location
 
-The Changes panel toggle lives in the right header group next to project status indicators:
+The Changes panel toggle lives in the header in the project-state group, between the status pill and the sync (conflicts) indicator:
 
 ```
-[⚠ N warnings] [Status pill] [● N conflicts] [📋 N changes] [☾] [✨] [🔔] [PP]
+[⚠ N warnings] [Status pill] [📋 N changes] [● N conflicts] [☾] [✨] [🔔] [PP]
 ```
 
 Icon with counter (`N changes` or `99+` if >100). Counter hidden when count is 0. Click toggles the panel.
@@ -194,33 +194,36 @@ The status pill in the header is clickable and opens a popover. The popover adap
 The popover has two entry points:
 
 1. Click `In review` chip in the header
-2. Click `Finish reviewing` button in the bottom toolbar
+2. Click `Finish reviewing` button in the floating toolbar
 
 Both open the identical popover. Trade-offs:
 
 - **Plus for chip**: Keeps a single header layout across all project states.
-- **Plus for Finish reviewing button**: Prominent CTA in the bottom toolbar — hard to miss for new reviewers.
+- **Plus for Finish reviewing button**: Prominent CTA in the floating toolbar — hard to miss for new reviewers.
 - **Minus**: Two surfaces for the same action.
 
 Both entry points are kept. If implementing only one is cheaper, choose the chip.
 
 ---
 
-## Bottom area — status bar + toolbar
+## Bottom area — status bar + floating toolbar
 
-Two stacked strips under the viewport, with distinct purposes:
+Two distinct surfaces at the bottom of the viewport, with different roles.
 
-**Status bar** — informational, contains no controls:
+**Status bar** — thin full-width strip at the very bottom of the viewport, informational only:
 
-- `Review mode` indicator (red dot + label) — shown only in Review Mode
-- Selected info (`Selected: <id> (<type>)`)
+- Left: `Review mode` indicator (shown only in Review Mode), Selected info (`Selected: <id> (<type>)`)
+- Right: project totals (e.g., `184 components`)
 
-**Toolbar** — contains controls:
+**Floating toolbar** — centered island anchored above the status bar, contains controls:
 
-- `Finish reviewing` button — shown only in Review Mode
-- Zoom controls (Map zoom · SLD zoom)
+- Cursor / select tool
+- Comment tool (forward reference to comments thread)
+- `Finish reviewing` button (shown only in Review Mode)
 
-Outside Review Mode the status bar shows Selected info; the toolbar contains zoom controls.
+Outside Review Mode the status bar shows Selected info and totals; the floating toolbar shows the cursor and comment tools.
+
+Zoom controls live on the side strips of the viewport (left for Map, right for SLD) and are outside the scope of Task 04.
 
 ---
 
@@ -232,7 +235,7 @@ Fully designed (see Figma). Same component palette with dark-mode tokens. Select
 
 ## Out of scope (Task 04)
 
-- Comments thread implementation (separate scope, referenced via `Add comment` button)
+- Comments thread implementation (separate scope, referenced via `Add comment` button and comment tool)
 - Re-running validation from Review Mode (Task 05)
 - Real-time updates if author edits during review (separate scope)
 - Side-by-side comparison view (master vs project rendered side by side) — only diff highlighting in proposed state
@@ -240,12 +243,13 @@ Fully designed (see Figma). Same component palette with dark-mode tokens. Select
 - Mark-as-reviewed checkboxes per component
 - Bulk actions in Changes panel
 - Maximize single view (Map only or SLD only) — planned v1.1
+- Zoom controls on the side strips (general viewport infrastructure)
 
 ---
 
 ## Forward references
 
-- Comments thread (`Add comment` CTA in component popover, `N Comments` counter referenced in Task 03 details)
+- Comments thread (`Add comment` CTA in component popover, comment tool in floating toolbar, `N Comments` counter referenced in Task 03 details)
 - Validation re-run in Review Mode (Task 05)
 - Conflict resolution between project and master (Task 06)
 - Maximize single view toggle (v1.1)
