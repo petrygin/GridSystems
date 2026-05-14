@@ -57,11 +57,13 @@ When no conflicts exist, `[Merge to master]` is enabled in the popover immediate
 
 A 320px left-sidebar panel, same slot pattern as the Changes Panel.
 
-### When it opens
+### Open and close behavior
 
-- **Default-open** when the project enters Approved state with at least one conflict, on the user's next view of the project
-- **Manually toggled** via the `● N conflicts` button in the project header
-- **Hidden** when zero conflicts exist; the header indicator is also hidden
+- **Auto-opens** on first view of the project in Approved state when at least one conflict exists
+- **User can close it** at any time via the panel's close control or the `● N conflicts` header toggle
+- **User can reopen it** anytime via the same `● N conflicts` header toggle
+- **Hidden completely** when zero conflicts exist; the header indicator is also hidden
+- Opening the Conflicts Panel closes the Changes Panel and vice versa — shared sidebar slot
 
 ### Header
 
