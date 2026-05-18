@@ -1,6 +1,6 @@
 # Task 05 — Validation in Review Mode
 
-**Scope:** How the existing Validation Results Panel surfaces inside Review Mode. Auto-run policy for reviewers, isolated per-user histories, and the relationship between validation results and the Approve action.
+**Scope:** How the existing Validation Results Panel surfaces inside Review Mode. Run-trigger policy, isolated per-user histories, and the relationship between validation results and the Approve action.
 
 **Related:** Review Mode surface and status popover → Task 04. Send-for-review entry → Task 01. Reviews list inbox → Task 03. Project-vs-master sync state → Task 06.
 
@@ -12,9 +12,9 @@ For shared terminology, state model, and the validation policy at Send for Revie
 
 ## Goal
 
-Give reviewers a confident read on the technical health of the project they're reviewing:
+Give reviewers a path to verify project health on their own terms:
 
-- A fresh validation pass against the current master state on first open
+- Manual control via `[Verify]` to trigger a validation run when needed
 - Direct inspection of each finding (cross-highlight to Map / SLD, Info Panel in read-only)
 - Clean separation between their own validation work and prior author activity
 
@@ -28,7 +28,7 @@ Review Mode reuses the existing Validation Results Panel without structural chan
 
 Task 05 defines wrapper behavior around that panel inside Review Mode:
 
-1. **Auto-run policy** — the one moment validation runs without user action
+1. **Run triggers** — when validation runs happen across the lifecycle
 2. **Access and history** — who can run validation and what they see
 3. **Approve relationship** — how results connect (or don't connect) to the Approve action
 
@@ -36,30 +36,24 @@ Entry point is unchanged: the warnings/errors icon in the project header, presen
 
 ---
 
-## Auto-run policy
+## Run triggers
 
-Validation auto-runs once per reviewer per project — on their first open of the project in Review Mode. Every other moment in the lifecycle relies on manual `[Verify]`.
+Validation runs are triggered **exclusively by the user** via the `[Verify]` button. No moment in the lifecycle triggers an automatic run.
 
 | Event                              | Validation behavior                                     |
 |------------------------------------|---------------------------------------------------------|
 | Author works in Draft              | Manual `[Verify]` runs, recorded in author's history    |
-| Author clicks Send for review      | Author's last manual run carries forward as snapshot    |
-| Reviewer opens project first time  | **Auto-run** establishes reviewer's baseline            |
-| Reviewer reopens later             | Show last reviewer run; stale indicator if master moved |
+| Author clicks Send for review      | Author's last manual run carries forward as the project's validation snapshot on the Reviews list |
+| Reviewer opens project             | Reviewer sees their own (initially empty) Verifications list |
 | Anyone clicks `[Verify]`           | Manual run, recorded in that user's history             |
 
-The auto-run on first reviewer open serves two functions:
-
-- Removes the cold-start empty list the reviewer would otherwise face (histories are isolated — see below)
-- Reflects the **current master state** at the moment of inspection, not whatever master looked like when the author last validated
-
-After this single auto-run, the panel behaves identically to Edit mode — manual control only.
+The reviewer who opens the project for the first time sees an empty Verifications list — histories are isolated per user (see below), so prior runs by the author are not visible to them. When the reviewer wants to inspect the project's current validation state, they press `[Verify]` to trigger a run.
 
 ### Stale state
 
 The project model is locked while in Review Mode, so validation results cannot go stale from within the project. The single trigger for staleness is **master moving** between the reviewer's last run and their current session — i.e., another project merged in the meantime.
 
-When this happens, the Verification Results header shows a `Results may be outdated — master updated` indicator. No automatic re-run; the reviewer presses `[Verify]` when ready.
+When this happens, the Verification Results header shows a `Results may be outdated — master updated` indicator. The reviewer presses `[Verify]` when they want fresh results.
 
 ---
 
@@ -72,14 +66,14 @@ The `[Verify]` button is visible to every viewer of the project in Review Mode: 
 Each user's validation run history is scoped to their identity:
 
 - Author sees runs they triggered (in Draft and any later runs in Review Mode)
-- Reviewer sees runs they triggered (their auto-run on first open plus any subsequent manual runs)
+- Reviewer sees runs they triggered (which starts empty and grows from their first manual `[Verify]`)
 - Watcher sees runs they triggered
 
 A user's history does not include runs triggered by anyone else. Authors don't see what reviewers found; reviewers don't see prior author work.
 
 Cross-user signal travels through other channels:
 
-- **Reviews list** (Task 03) — project-level summary in the `Validation` column (`21 errors`, `7 warnings`, or empty)
+- **Reviews list** (Task 03) — project-level summary in the `Validation` column (`21 errors`, `7 warnings`, or empty), populated from the author's last manual run at the moment of Send for Review
 - **Review comments** — `Request changes` with explicit comment when the reviewer wants the author to address specific findings
 
 The Verifications list (panel header → ☰) shows the current user's runs only, ordered by recency.
@@ -103,7 +97,7 @@ The reviewer is the responsible party at the approval moment. A hard gate would 
 The validation summary already surfaces in two places ahead of the Approve action:
 
 1. **Reviews list** (Task 03) — the `Validation` column gives the reviewer the project-level signal before they ever open the project
-2. **Validation Results Panel** — full detail once inside Review Mode
+2. **Validation Results Panel** — full detail once inside Review Mode (after the reviewer presses `[Verify]`)
 
 Adding the same summary into the Approve popover would duplicate signal already visible upstream.
 
@@ -112,6 +106,7 @@ Adding the same summary into the Approve popover would duplicate signal already 
 ## Out of scope
 
 - Changes to the Validation Results Panel itself (locked design — `UI-VAL-ValidationResultsPanel.md`)
+- Automatic validation runs at any point in the lifecycle — runs are user-triggered only
 - Cross-project conflict detection — Task 06; the `Sync` column on the Reviews list (`Current`, `2 conflicts`) is the upstream signal
 - Per-issue reviewer comments — general review comments are referenced via `Add comment` in Task 04
 - Validation-driven automation (auto-assignment of fixers, suggested fixes, etc.)
