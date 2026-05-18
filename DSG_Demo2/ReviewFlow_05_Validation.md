@@ -1,6 +1,6 @@
 # Task 05 — Validation in Review Mode
 
-**Scope:** How the existing Validation Results Panel surfaces inside Review Mode. Project-scoped run history, auto-run at Send for review, read-only access for reviewers, and the relationship between validation results and the Approve action.
+**Scope:** How the existing Validation panel surfaces inside Review Mode. Project-scoped run history, auto-run at Send for review, read-only access for reviewers, and the relationship between validation results and the Approve action.
 
 **Related:** Review Mode surface and status popover → Task 04. Send-for-review entry → Task 01. Reviews list inbox → Task 03. Project-vs-master sync state → Task 06.
 
@@ -24,7 +24,7 @@ Approving with outstanding errors is allowed — the reviewer carries that decis
 
 ## Architectural framing
 
-Review Mode reuses the existing Validation Results Panel without structural changes: same right drawer, same three views (Verifications list / Results collapsed / Results expanded), same grouping by verification stage, same per-row severity, same click-to-cross-highlight.
+Review Mode reuses the existing Validation panel without structural changes: same right drawer, same three views (Validation history / Results collapsed / Results expanded), same grouping by validation stage, same per-row severity, same click-to-cross-highlight.
 
 Task 05 defines wrapper behavior around that panel inside Review Mode:
 
@@ -33,7 +33,7 @@ Task 05 defines wrapper behavior around that panel inside Review Mode:
 3. **Access in Review Mode** — what users can do once the project is locked
 4. **Approve relationship** — how results connect (or don't connect) to the Approve action
 
-Entry point is unchanged: the warnings/errors icon in the project header, present across Edit and Review modes.
+Entry point is unchanged across modes: the Validation icon (with severity badge) in the project header opens the panel.
 
 ---
 
@@ -53,13 +53,13 @@ The system-triggered run at Send for review guarantees that the snapshot reviewe
 
 The project model is locked while in Review Mode, so runs cannot become stale from within the project. The single trigger for staleness is **master moving** between the snapshot moment and the reviewer's current session — i.e., another project merged in the meantime.
 
-When this happens, the Verification Results header shows `Results may be outdated — master updated`. The indicator is informational. Reviewers cannot refresh from inside Review Mode. The path to a fresh snapshot is `Request changes` → project returns to Draft → author runs `[Verify]` and re-sends for review.
+When this happens, the Validation panel header shows `Results may be outdated — master updated`. The indicator is informational. Reviewers cannot refresh from inside Review Mode. The path to a fresh snapshot is `Request changes` → project returns to Draft → author runs `[Verify]` and re-sends for review.
 
 ---
 
 ## History scope
 
-Validation history is **scoped to the project**, not to individual users. Every user with access to the project — author, reviewers, watchers — sees the same Verifications list ordered by recency.
+Validation history is **scoped to the project**, not to individual users. Every user with access to the project — author, reviewers, watchers — sees the same Validation history ordered by recency.
 
 Each entry in the list shows trigger context:
 
@@ -75,10 +75,14 @@ The auto-run at Send for review is the snapshot. Older entries are the author's 
 
 ## Access in Review Mode
 
-The project model is locked in Review Mode; the Validation Panel follows the same constraint.
+The project model is locked in Review Mode; the Validation panel follows the same constraint — no new runs can be triggered.
 
-- **Author** can run `[Verify]` in Draft. In Review Mode (when the project has been sent), the author has read-only access — the panel behaves identically to a reviewer's view.
-- **Reviewer** has read-only access: the Verifications list is fully inspectable, but no new runs can be triggered. The `[Verify]` button is hidden in Review Mode.
+The **`[Verify]` button inside the panel is hidden** in Review Mode. The **Validation entry point in the project header** (icon + severity badge) remains visible and clickable for every user — it opens the panel in read-only so the history is accessible.
+
+Per role:
+
+- **Author** can run `[Verify]` in Draft. Once the project is sent and switches to Review Mode, the author sees the panel in read-only — same view as the reviewer.
+- **Reviewer** has read-only access: the Validation history is fully inspectable, but the `[Verify]` button is hidden.
 - **Watcher** has read-only access: same as reviewer.
 
 ### Cross-highlight
@@ -100,7 +104,7 @@ The reviewer is the responsible party at the approval moment. A hard gate would 
 The validation summary already surfaces in two places ahead of the Approve action:
 
 1. **Reviews list** (Task 03) — the `Validation` column gives the reviewer the project-level signal before they ever open the project
-2. **Validation Results Panel** — full detail once inside Review Mode
+2. **Validation panel** — full detail once inside Review Mode
 
 Adding the same summary into the Approve popover would duplicate signal already visible upstream.
 
@@ -108,7 +112,7 @@ Adding the same summary into the Approve popover would duplicate signal already 
 
 ## Out of scope
 
-- Changes to the Validation Results Panel itself (locked design — `UI-VAL-ValidationResultsPanel.md`)
+- Changes to the Validation panel itself (locked design — `UI-VAL-ValidationResultsPanel.md`)
 - Reviewer-initiated validation runs in Review Mode — deferred for MVP per PM decision; revisited if reviewers find the read-only constraint blocking in practice
 - Refresh of stale results from inside Review Mode — the path is `Request changes` → Draft → re-send
 - Cross-project conflict detection — Task 06; the `Sync` column on the Reviews list (`Current`, `2 conflicts`) is the upstream signal
