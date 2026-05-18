@@ -1,6 +1,6 @@
 # Task 05 — Validation in Review Mode
 
-**Scope:** How the existing Validation panel surfaces inside Review Mode. Project-scoped run history, auto-run on Send for review dialog open, read-only access for reviewers, and the relationship between validation results and the Approve action.
+**Scope:** How the existing Validation panel surfaces inside Review Mode. Project-scoped run history, manual triggers only, equal access for all users, and the relationship between validation results and the Approve action.
 
 **Related:** Review Mode surface and status popover → Task 04. Send-for-review entry → Task 01. Reviews list inbox → Task 03. Project-vs-master sync state → Task 06.
 
@@ -14,8 +14,8 @@ For shared terminology, state model, and the validation policy at Send for Revie
 
 Give reviewers a confident read on the technical health of the project they're reviewing:
 
-- A fresh validation snapshot captured at the moment of Send for review
-- Full project history of validation runs leading up to that snapshot
+- Project-scoped history of validation runs shared by every viewer
+- Manual `[Verify]` available to everyone — author, reviewer, watcher — across modes
 - Direct inspection of each finding (cross-highlight to Map / SLD, Info Panel in read-only)
 
 Approving with outstanding errors is allowed — the reviewer carries that decision, not the system.
@@ -30,7 +30,7 @@ Task 05 defines wrapper behavior around that panel inside Review Mode:
 
 1. **Run triggers** — when validation runs happen across the lifecycle
 2. **History scope** — where runs are stored and who can see them
-3. **Access in Review Mode** — what users can do once the project is locked
+3. **Access** — what each role can do across modes
 4. **Approve relationship** — how results connect (or don't connect) to the Approve action
 
 Entry point is unchanged across modes: the Validation icon (with severity badge) in the project header opens the panel.
@@ -39,25 +39,23 @@ Entry point is unchanged across modes: the Validation icon (with severity badge)
 
 ## Run triggers
 
-Validation runs come from two paths:
+Validation runs are **manual only** — there are no system-triggered runs anywhere in the lifecycle.
 
-| Event                              | Validation behavior                                                          |
-|------------------------------------|------------------------------------------------------------------------------|
-| Author works in Draft              | Manual `[Verify]` adds an entry to project history                           |
-| Author opens Send for review dialog | Backend runs validation in the background; result populates the dialog's warning banner (when errors exist) and is committed to history on send as the review snapshot |
-| Reviewer or watcher in Review Mode | Read-only access to project history; no new runs                             |
+| Event                              | Validation behavior                                                  |
+|------------------------------------|----------------------------------------------------------------------|
+| Author in Draft clicks `[Verify]`  | New run added to project history                                     |
+| Author opens Send for review dialog | Dialog reflects the latest run already in history (when one exists); no new run is triggered |
+| Reviewer or watcher in Review Mode clicks `[Verify]` | New run added to project history                                     |
 
-The backend run triggered by opening the Send for review dialog guarantees that the snapshot reviewers receive is fresh against the current master state at the moment of handoff. The author sees the same fresh result inside the dialog (validation banner with error count) so they make the send decision with current information, not against whatever the author last validated.
+The latest run in project history at the moment of Send for review serves as the **implicit snapshot** for the review. There is no separate snapshot record — reviewers simply look at the most recent run in the shared history.
 
-If validation is still in progress when the author clicks Send for review, the send action waits for the run to complete before committing. The dialog's primary button stays enabled but reflects the in-progress state until ready.
-
-If the author cancels the dialog, the run is discarded — it does not pollute the project history.
+If no run exists when the author opens Send for review, the dialog's validation banner is empty and the Reviews list `Validation` column shows the project as unvalidated. The author can run `[Verify]` before sending if they want validation context to travel with the project; this is optional.
 
 ### Stale state
 
-The project model is locked while in Review Mode, so runs cannot become stale from within the project. The single trigger for staleness is **master moving** between the snapshot moment and the reviewer's current session — i.e., another project merged in the meantime.
+Results can become stale when **master moves** between a run and the current session — another project merged in the meantime.
 
-When this happens, the Validation panel header shows `Results may be outdated — master updated`. The indicator is informational. Reviewers cannot refresh from inside Review Mode. The path to a fresh snapshot is `Request changes` → project returns to Draft → author opens Send for review again and the dialog triggers a new validation run.
+When this happens, the Validation panel header shows `Results may be outdated — master updated`. The indicator is informational. Any user with access — author, reviewer, watcher — can press `[Verify]` to trigger a fresh run that lands in the shared project history.
 
 ---
 
@@ -68,26 +66,24 @@ Validation history is **scoped to the project**, not to individual users. Every 
 Each entry in the list shows trigger context:
 
 ```
-Run #6 · 12:40 · Auto on Send for review
-Run #5 · 12:34 · P. Petrygin (manual)
-Run #4 · 11:20 · P. Petrygin (manual)
+Run #6 · 12:40 · A. Reviewer
+Run #5 · 12:34 · P. Petrygin
+Run #4 · 11:20 · P. Petrygin
 ```
 
-The auto-run committed at Send for review is the snapshot. Older entries are the author's pre-send manual runs and provide context on how validation evolved during the project's preparation.
+Older entries provide context on how validation evolved during the project's lifecycle, including runs triggered by different users.
 
 ---
 
-## Access in Review Mode
+## Access
 
-The project model is locked in Review Mode; the Validation panel follows the same constraint — no new runs can be triggered.
+The `[Verify]` button is available to every viewer of the project, in any mode:
 
-The **`[Verify]` button inside the panel is hidden** in Review Mode. The **Validation entry point in the project header** (icon + severity badge) remains visible and clickable for every user — it opens the panel in read-only so the history is accessible.
+- **Author** in Draft uses `[Verify]` to validate during edits. In Review Mode the author cannot edit the project but can still trigger validation runs.
+- **Reviewer** in Review Mode uses `[Verify]` to refresh validation against the current master state if they want.
+- **Watcher** in Review Mode uses `[Verify]` the same way.
 
-Per role:
-
-- **Author** can run `[Verify]` in Draft. Once the project is sent and switches to Review Mode, the author sees the panel in read-only — same view as the reviewer.
-- **Reviewer** has read-only access: the Validation history is fully inspectable, but the `[Verify]` button is hidden.
-- **Watcher** has read-only access: same as reviewer.
+All triggered runs land in the shared project history.
 
 ### Cross-highlight
 
@@ -117,8 +113,7 @@ Adding the same summary into the Approve popover would duplicate signal already 
 ## Out of scope
 
 - Changes to the Validation panel itself (locked design — `UI-VAL-ValidationResultsPanel.md`)
-- Reviewer-initiated validation runs in Review Mode — deferred for MVP per PM decision; revisited if reviewers find the read-only constraint blocking in practice
-- Refresh of stale results from inside Review Mode — the path is `Request changes` → Draft → re-open Send for review
+- Automatic validation runs at any point in the lifecycle — runs are manual only
 - Cross-project conflict detection — Task 06; the `Sync` column on the Reviews list (`Current`, `2 conflicts`) is the upstream signal
 - Per-issue reviewer comments — general review comments are referenced via `Add comment` in Task 04
 - Validation-driven automation (auto-assignment of fixers, suggested fixes, etc.)
