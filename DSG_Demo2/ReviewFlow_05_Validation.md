@@ -1,6 +1,6 @@
 # Task 05 — Validation in Review Mode
 
-**Scope:** How the existing Validation panel surfaces inside Review Mode. Project-scoped run history, auto-run at Send for review, read-only access for reviewers, and the relationship between validation results and the Approve action.
+**Scope:** How the existing Validation panel surfaces inside Review Mode. Project-scoped run history, auto-run on Send for review dialog open, read-only access for reviewers, and the relationship between validation results and the Approve action.
 
 **Related:** Review Mode surface and status popover → Task 04. Send-for-review entry → Task 01. Reviews list inbox → Task 03. Project-vs-master sync state → Task 06.
 
@@ -44,16 +44,20 @@ Validation runs come from two paths:
 | Event                              | Validation behavior                                                          |
 |------------------------------------|------------------------------------------------------------------------------|
 | Author works in Draft              | Manual `[Verify]` adds an entry to project history                           |
-| Author clicks Send for review      | System runs validation as part of send; entry added to history and marked as the review snapshot |
+| Author opens Send for review dialog | Backend runs validation in the background; result populates the dialog's warning banner (when errors exist) and is committed to history on send as the review snapshot |
 | Reviewer or watcher in Review Mode | Read-only access to project history; no new runs                             |
 
-The system-triggered run at Send for review guarantees that the snapshot reviewers receive is fresh against the current master state at the moment of handoff. No reliance on whether or when the author last clicked `[Verify]`.
+The backend run triggered by opening the Send for review dialog guarantees that the snapshot reviewers receive is fresh against the current master state at the moment of handoff. The author sees the same fresh result inside the dialog (validation banner with error count) so they make the send decision with current information, not against whatever the author last validated.
+
+If validation is still in progress when the author clicks Send for review, the send action waits for the run to complete before committing. The dialog's primary button stays enabled but reflects the in-progress state until ready.
+
+If the author cancels the dialog, the run is discarded — it does not pollute the project history.
 
 ### Stale state
 
 The project model is locked while in Review Mode, so runs cannot become stale from within the project. The single trigger for staleness is **master moving** between the snapshot moment and the reviewer's current session — i.e., another project merged in the meantime.
 
-When this happens, the Validation panel header shows `Results may be outdated — master updated`. The indicator is informational. Reviewers cannot refresh from inside Review Mode. The path to a fresh snapshot is `Request changes` → project returns to Draft → author runs `[Verify]` and re-sends for review.
+When this happens, the Validation panel header shows `Results may be outdated — master updated`. The indicator is informational. Reviewers cannot refresh from inside Review Mode. The path to a fresh snapshot is `Request changes` → project returns to Draft → author opens Send for review again and the dialog triggers a new validation run.
 
 ---
 
@@ -69,7 +73,7 @@ Run #5 · 12:34 · P. Petrygin (manual)
 Run #4 · 11:20 · P. Petrygin (manual)
 ```
 
-The auto-run at Send for review is the snapshot. Older entries are the author's pre-send manual runs and provide context on how validation evolved during the project's preparation.
+The auto-run committed at Send for review is the snapshot. Older entries are the author's pre-send manual runs and provide context on how validation evolved during the project's preparation.
 
 ---
 
@@ -114,7 +118,7 @@ Adding the same summary into the Approve popover would duplicate signal already 
 
 - Changes to the Validation panel itself (locked design — `UI-VAL-ValidationResultsPanel.md`)
 - Reviewer-initiated validation runs in Review Mode — deferred for MVP per PM decision; revisited if reviewers find the read-only constraint blocking in practice
-- Refresh of stale results from inside Review Mode — the path is `Request changes` → Draft → re-send
+- Refresh of stale results from inside Review Mode — the path is `Request changes` → Draft → re-open Send for review
 - Cross-project conflict detection — Task 06; the `Sync` column on the Reviews list (`Current`, `2 conflicts`) is the upstream signal
 - Per-issue reviewer comments — general review comments are referenced via `Add comment` in Task 04
 - Validation-driven automation (auto-assignment of fixers, suggested fixes, etc.)
