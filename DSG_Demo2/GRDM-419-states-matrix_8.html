@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>GRDM-419 — Component states (WIP)</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* tokens from gs-surface set */
+    --blue-400: #60a5fa;
+    --blue-500: #3b82f6;
+    --blue-600: #2563eb;
+    --sky-400: #38bdf8;
+    --sky-500: #0ea5e9;
+    --green-500: #22c55e;
+    --green-600: #16a34a;
+    --red-500: #ef4444;
+    --red-600: #dc2626;
+    --orange-400: #fb923c;
+    --orange-500: #f97316;
+    --violet-300: #c4b5fd;
+    --violet-400: #a78bfa;
+    --violet-500: #8b5cf6;
+    --neutral-50: #fafafa;
+    --neutral-100: #f5f5f5;
+    --neutral-200: #e5e5e5;
+    --neutral-300: #d4d4d4;
+    --neutral-400: #a3a3a3;
+    --neutral-500: #737373;
+    --neutral-600: #525252;
+    --neutral-700: #404040;
+    --neutral-800: #262626;
+    --neutral-900: #171717;
+    --bg: #ffffff;
+
+    /* halo geometry — single source of truth */
+    --halo-inner-offset: 6px;
+    --halo-outer-offset: 4px;
+    --halo-inner-radius: 4px;
+    --halo-outer-radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    background: var(--neutral-50);
+    color: var(--neutral-900);
+    padding: 32px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Header */
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  .key-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--neutral-500);
+  }
+  .pill {
+    background: var(--neutral-100);
+    color: var(--neutral-700);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* Principle block */
+  .principle {
+    margin-top: 20px;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .principle h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-500); margin-bottom: 12px; }
+  .channels {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .channel {
+    border-left: 2px solid var(--neutral-200);
+    padding: 0 12px;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .channel.ch-body  { border-left-color: var(--orange-400); }
+  .channel.ch-outer { border-left-color: var(--blue-600); }
+  .channel.ch-inner { border-left-color: var(--blue-400); }
+  .channel.ch-badge { border-left-color: var(--orange-500); }
+  .channel-name { font-size: 12px; font-weight: 600; color: var(--neutral-900); margin-bottom: 4px; }
+  .channel-desc { font-size: 12px; color: var(--neutral-600); line-height: 16px; }
+
+  /* Section headings */
+  h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--neutral-500);
+    margin: 32px 0 10px;
+  }
+
+  /* Matrix */
+  .matrix {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr;
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--neutral-200);
+    gap: 1px;
+  }
+  .matrix-head {
+    background: var(--neutral-50);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--neutral-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .state-row {
+    display: contents;
+  }
+  .state-meta {
+    background: var(--bg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .state-name { font-size: 13px; font-weight: 500; color: var(--neutral-900); }
+  .state-desc { font-size: 12px; color: var(--neutral-500); line-height: 16px; }
+  .token-line {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--neutral-500);
+    margin-top: 4px;
+  }
+
+  .canvas-cell {
+    background: var(--bg);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 130px;
+  }
+  .canvas {
+    position: relative;
+    width: 200px;
+    height: 100px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .canvas.sld {
+    background: var(--neutral-50);
+    background-image:
+      radial-gradient(var(--neutral-200) 1px, transparent 1px);
+    background-size: 10px 10px;
+  }
+  .canvas.map {
+    background: linear-gradient(135deg, #f5f5f4 0%, #ebebe7 100%);
+  }
+
+  /* Icon container — has the halos around it */
+  .icon-wrap {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  .halo {
+    position: absolute;
+    pointer-events: none;
+    border-radius: var(--halo-inner-radius);
+  }
+  .halo.inner {
+    inset: calc(var(--halo-inner-offset) * -1);
+    border-radius: var(--halo-inner-radius);
+  }
+  .halo.outer {
+    inset: calc(var(--halo-outer-offset) * -1);
+    border-radius: var(--halo-outer-radius);
+  }
+
+  /* Icons */
+  .transformer {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pole {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--violet-400);
+    border: 1.5px solid var(--violet-500);
+  }
+
+  /* Badges */
+  .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 16px;
+    height: 16px;
+    background: var(--bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    box-shadow: 0 0 0 1px var(--bg);
+  }
+  .badge svg { width: 14px; height: 14px; display: block; }
+  .lock-badge {
+    position: absolute;
+    bottom: -6px; right: -6px;
+    width: 14px; height: 14px;
+    background: var(--bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neutral-600);
+    z-index: 3;
+    box-shadow: 0 0 0 1px var(--neutral-300);
+  }
+
+  /* State variants — applied on .icon-wrap */
+  /* Hover — outer halo */
+  .s-hover .halo.outer { border: 1px solid var(--blue-500); }
+
+  /* Selected — outer halo */
+  .s-selected .halo.outer { border: 2px solid var(--blue-600); }
+
+  /* Multi-select — same ring as selected (count is shown in chrome, not on icon) */
+  .s-multi .halo.outer { border: 2px solid var(--blue-600); }
+
+  /* Trace — no halo on trace icons; signal = dim everything NOT in trace (see .trace-scene .neighbor) */
+  /* Trace + selected — обычная selected-обводка + dim вокруг */
+  .s-trace-sel .halo.outer { border: 2px solid var(--blue-600); }
+
+  /* Snap-target — на Map подсвечиваем халo вокруг всего объекта */
+  .s-snap-map .halo.outer { border: 1.5px solid var(--green-500); }
+  .s-snap-map::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: var(--green-500);
+    opacity: 0.08;
+    border-radius: 6px;
+    z-index: 0;
+  }
+  .s-snap-map-warning .halo.outer { border: 1.5px solid var(--orange-500); }
+  .s-snap-map-warning::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: var(--orange-500);
+    opacity: 0.08;
+    border-radius: 6px;
+    z-index: 0;
+  }
+  .s-snap-map-error .halo.outer { border: 1.5px solid var(--red-500); }
+  .s-snap-map-error::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: var(--red-500);
+    opacity: 0.08;
+    border-radius: 6px;
+    z-index: 0;
+  }
+
+  /* Connection-point dot (on SLD components) */
+  .conn-point {
+    position: absolute;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1.5px solid var(--neutral-400);
+    z-index: 2;
+  }
+  .conn-point.top { top: -4px; left: 50%; transform: translateX(-50%); }
+  .conn-point.bottom { bottom: -4px; left: 50%; transform: translateX(-50%); }
+  .conn-point.left { left: -4px; top: 50%; transform: translateY(-50%); }
+  .conn-point.right { right: -4px; top: 50%; transform: translateY(-50%); }
+  .conn-point.valid   { border-color: var(--green-500); background: var(--green-500); box-shadow: 0 0 0 3px rgba(34,197,94,0.18); }
+  .conn-point.warning { border-color: var(--orange-500); background: var(--orange-500); box-shadow: 0 0 0 3px rgba(249,115,22,0.18); }
+  .conn-point.error   { border-color: var(--red-500); background: var(--red-500); box-shadow: 0 0 0 3px rgba(239,68,68,0.18); }
+
+  /* Connection-point states grid (sub-block 6.2) */
+  .dot-states {
+    display: grid;
+    grid-template-columns: 260px repeat(4, 1fr);
+    gap: 1px;
+    background: var(--neutral-200);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .dsh, .dsr, .dsc {
+    background: var(--bg);
+    padding: 14px 12px;
+    display: flex;
+    align-items: center;
+  }
+  .dsh {
+    background: var(--neutral-50);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--neutral-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    justify-content: center;
+  }
+  .dsr {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--neutral-900);
+    padding-right: 16px;
+    justify-content: flex-end;
+    text-align: right;
+    line-height: 16px;
+  }
+  .dsc {
+    justify-content: center;
+  }
+  .dsc svg { display: block; }
+
+  /* In-flight — фоновая плита (theme bg) под иконкой, всё вместе на opacity 0.5 */
+  .s-inflight { opacity: 0.5; }
+  .s-inflight::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: var(--bg);
+    border-radius: 6px;
+    z-index: -1;
+  }
+
+  /* Read-only — иконка сохраняет нативный вид. На hover курсор показывает not-allowed, клик игнорируется. */
+  .s-readonly { cursor: not-allowed; }
+
+  /* Out-of-scope (ghost rule) — opacity + полная десатурация + no interaction */
+  .s-oos { pointer-events: none; }
+  .s-oos .transformer,
+  .s-oos .pole { opacity: 0.35; filter: grayscale(1); }
+
+  /* Badge stack — до 4 бейджей одновременно справа сверху иконки, overlap -4px */
+  .badge-stack {
+    position: absolute;
+    top: -8px;
+    left: 100%;
+    margin-left: -8px;
+    display: flex;
+    gap: 0;
+    z-index: 3;
+    height: 16px;
+  }
+  .badge-stack > * { position: relative; }
+  .badge-stack > *:nth-child(1) { z-index: 4; }
+  .badge-stack > *:nth-child(2) { z-index: 3; margin-left: -4px; }
+  .badge-stack > *:nth-child(3) { z-index: 2; margin-left: -4px; }
+  .badge-stack > *:nth-child(4) { z-index: 1; margin-left: -4px; }
+  .badge-stack > .b {
+    width: 16px;
+    height: 16px;
+    background: var(--bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 1px var(--bg);
+    flex-shrink: 0;
+  }
+  .badge-stack > .b svg { display: block; }
+  .badge-stack > .b-counter {
+    height: 16px;
+    padding: 0 5px 0 9px;
+    background: var(--bg);
+    border: 1.4px solid var(--orange-500);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--orange-500);
+    font-family: 'Geist Mono', monospace;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 1px var(--bg);
+    flex-shrink: 0;
+  }
+
+    /* Trace context — focal сохраняет нативные цвета, не-trace dim'ится до 30% */
+  .trace-scene .neighbor {
+    opacity: 0.3;
+  }
+  .trace-scene .neighbor.pole {
+    width: 12px; height: 12px;
+  }
+
+  /* ================ INTERACTIVE PLAYGROUND ================ */
+  .playground {
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0 32px;
+  }
+  .playground-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .playground-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--neutral-900);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .playground-title::before {
+    content: '';
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+  }
+  .playground-hint {
+    font-size: 12px;
+    color: var(--neutral-500);
+  }
+  .playground-toolbar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: var(--neutral-50);
+    border-radius: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .pg-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--neutral-700);
+  }
+  .pg-control label { font-weight: 500; color: var(--neutral-600); }
+  .pg-group {
+    display: inline-flex;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 5px;
+    padding: 2px;
+    gap: 1px;
+  }
+  .pg-btn {
+    background: transparent;
+    border: none;
+    padding: 3px 10px;
+    font: inherit;
+    font-size: 11px;
+    color: var(--neutral-600);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 100ms;
+  }
+  .pg-btn:hover { color: var(--neutral-900); }
+  .pg-btn.active {
+    background: var(--neutral-900);
+    color: var(--bg);
+  }
+  .pg-action {
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    padding: 4px 10px;
+    border-radius: 5px;
+    font: inherit;
+    font-size: 11px;
+    color: var(--neutral-700);
+    cursor: pointer;
+    transition: all 100ms;
+  }
+  .pg-action:hover { border-color: var(--neutral-400); color: var(--neutral-900); }
+
+  .playground-canvases {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .pg-canvas {
+    background: var(--neutral-50);
+    border-radius: 6px;
+    padding: 24px;
+    min-height: 180px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pg-canvas.sld {
+    background-image: radial-gradient(var(--neutral-200) 1px, transparent 1px);
+    background-size: 10px 10px;
+  }
+  .pg-canvas.map {
+    background: linear-gradient(135deg, #f5f5f4 0%, #ebebe7 100%);
+  }
+  .pg-canvas-label {
+    position: absolute;
+    top: 8px; left: 10px;
+    font-size: 10px;
+    color: var(--neutral-500);
+    font-family: 'Geist Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pg-canvas-info {
+    position: absolute;
+    bottom: 8px; right: 10px;
+    font-size: 10px;
+    color: var(--neutral-500);
+    font-family: 'Geist Mono', monospace;
+  }
+
+  /* Interactive icon-wrap — uses :hover and .selected class */
+  .iw-interactive {
+    cursor: pointer;
+    user-select: none;
+  }
+  .iw-interactive .halo.outer {
+    border: 2px solid transparent;
+    transition: border-color 100ms;
+  }
+  .iw-interactive:hover:not(.selected) .halo.outer { border: 1px solid var(--blue-500); }
+  .iw-interactive.selected .halo.outer { border: 2px solid var(--blue-600); }
+  .iw-interactive[data-warning="true"] .iw-badge { display: flex; }
+  .iw-badge {
+    position: absolute;
+    top: -8px; right: -8px;
+    width: 16px; height: 16px;
+    background: var(--bg);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    box-shadow: 0 0 0 1px var(--bg);
+  }
+
+  /* Trace-mode dim — non-anchor items get dimmed */
+  .playground[data-trace="true"] .iw-interactive:not(.selected):not(.in-path) {
+    opacity: 0.3;
+  }
+  .playground[data-trace="true"] .pg-line:not(.in-path) {
+    opacity: 0.3;
+  }
+
+  /* B&W body variant — Highlight by None */
+  .playground[data-highlight="none"] .transformer svg circle {
+    stroke: var(--neutral-700) !important;
+  }
+  .playground[data-highlight="none"] .pole {
+    background: var(--bg) !important;
+    border-color: var(--neutral-700) !important;
+  }
+
+  /* Interactive line (SVG g element) */
+  .pg-line .line-hit { stroke: transparent; stroke-width: 14; cursor: pointer; pointer-events: stroke; }
+  .pg-line .line-visible { transition: stroke 100ms, stroke-width 100ms; pointer-events: none; }
+  .pg-line:hover:not(.selected) .line-visible { stroke: var(--blue-500); }
+  .pg-line.selected .line-visible { stroke: var(--blue-600); stroke-width: 2; }
+
+  /* Footer note */
+  .note {
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-600);
+  }
+  .note strong { color: var(--neutral-900); }
+
+  /* Legend tokens line at bottom */
+  .tokens-ref {
+    margin-top: 24px;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .tokens-ref h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-500); margin-bottom: 12px; }
+  .tokens-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 24px;
+    font-size: 12px;
+    color: var(--neutral-700);
+  }
+  .tok-line { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ================ SIDEBAR NAV ================ */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--bg);
+    border-right: 1px solid var(--neutral-200);
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+    font-size: 12px;
+  }
+  .sidebar-header {
+    padding: 0 20px 16px;
+    border-bottom: 1px solid var(--neutral-100);
+    margin-bottom: 12px;
+  }
+  .sidebar-brand {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--neutral-500);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+  .sidebar-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--neutral-900);
+    line-height: 1.4;
+  }
+  .sidebar-nav {
+    list-style: none;
+    padding: 0 12px;
+    margin: 0;
+  }
+  .sidebar-nav li {
+    margin-bottom: 1px;
+  }
+  .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    color: var(--neutral-600);
+    text-decoration: none;
+    transition: background 80ms, color 80ms;
+    line-height: 1.4;
+  }
+  .sidebar-nav a:hover {
+    background: var(--neutral-50);
+    color: var(--neutral-900);
+  }
+  .sidebar-nav a.active {
+    background: var(--neutral-100);
+    color: var(--neutral-900);
+    font-weight: 500;
+  }
+  .sidebar-nav a.active::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: var(--selection);
+    border-radius: 2px;
+    margin-left: -7px;
+    margin-right: 4px;
+  }
+  .sidebar-nav a:not(.active)::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    margin-left: -7px;
+    margin-right: 4px;
+  }
+  .sidebar-nav .nav-sub a {
+    padding-left: 28px;
+    font-size: 11.5px;
+  }
+  .sidebar-nav-divider {
+    height: 1px;
+    background: var(--neutral-100);
+    margin: 8px 12px;
+  }
+  .sidebar-nav-label {
+    padding: 12px 18px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--neutral-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Shift main container right of sidebar */
+  body { margin: 0; padding: 0; }
+  .container {
+    margin-left: 240px;
+    padding-left: 32px;
+    padding-right: 32px;
+    max-width: 1100px;
+    box-sizing: border-box;
+  }
+  /* Narrow screens — hide sidebar, restore container */
+  @media (max-width: 960px) {
+    .sidebar { display: none; }
+    .container { margin-left: 0; }
+  }
+
+  /* Anchor offset (so headings don't hide under top of viewport) */
+  [id^="sec-"], #principle, #playground-section, #top, #tokens {
+    scroll-margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">GRDM-419 · spec</div>
+    <div class="sidebar-title">Component icon — unified state system</div>
+  </div>
+  <ul class="sidebar-nav">
+    <li><a href="#top">Обзор</a></li>
+    <li><a href="#principle">Принцип — 3 канала</a></li>
+    <li><a href="#playground-section">Интерактивная песочница</a></li>
+
+    <div class="sidebar-nav-label">Состояния иконки</div>
+    <li><a href="#sec-1">1. Default & Hover</a></li>
+    <li><a href="#sec-2">2. Selection</a></li>
+    <li><a href="#sec-3">3. Trace</a></li>
+    <li><a href="#sec-4">4. Validation — стопка бейджей</a></li>
+    <li><a href="#sec-5">5. DRAFT · Read-only · OOS</a></li>
+
+    <div class="sidebar-nav-label">Edit-mode</div>
+    <li><a href="#sec-6">6. Add / Connect</a></li>
+    <li class="nav-sub"><a href="#sec-6-1">6.1 Snap-target по классам</a></li>
+    <li class="nav-sub"><a href="#sec-6-2">6.2 Connection points</a></li>
+
+    <div class="sidebar-nav-label">Комбинации и линии</div>
+    <li><a href="#sec-7">7. Комбинации</a></li>
+    <li><a href="#sec-8">8. Connections (lines)</a></li>
+    <li><a href="#sec-9">9. Trace для линий</a></li>
+    <li><a href="#sec-10">10. Bundle (multi-conductor)</a></li>
+
+    <div class="sidebar-nav-divider"></div>
+    <li><a href="#tokens">Токены</a></li>
+  </ul>
+</aside>
+<div class="container">
+
+  <h1 id="top">Component icon — unified state system</h1>
+  <div class="key-meta">
+    <span class="pill">GRDM-419</span>
+    <span>WIP · принцип на эталонной паре · halo прямоугольником</span>
+  </div>
+
+  <!-- ============ PRINCIPLE ============ -->
+  <div class="principle">
+    <h2 id="principle">Принцип — 3 канала сигнала</h2>
+    <div class="channels" style="grid-template-columns:repeat(3,1fr)">
+      <div class="channel ch-body">
+        <div class="channel-name">Тело иконки</div>
+        <div class="channel-desc"><strong>Зависит от текущего «Highlight by»</strong>: Components → цвет = тип; Zones → цвет = зона; None → IEC ч/б. Тип компонента известен всегда — это атрибут модели, а цвет — только режим отображения.</div>
+      </div>
+      <div class="channel ch-outer">
+        <div class="channel-name">Halo вокруг иконки</div>
+        <div class="channel-desc">Первичное интерактивное состояние: Hover, Selected, Snap-target (Map), In-flight. Один цвет за раз. Работает поверх ЛЮБОГО highlight-режима.</div>
+      </div>
+      <div class="channel ch-badge">
+        <div class="channel-name">Бейдж + opacity</div>
+        <div class="channel-desc">Validation — стопка бейджей (<code>?</code> / Unlink / <code>!</code> / counter). DRAFT/Pending = <code>?</code>. Out-of-scope = opacity + grayscale. Read-only = только <code>cursor: not-allowed</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ INTERACTIVE PLAYGROUND ============ -->
+  <div class="playground" id="playground-section" data-highlight="components" data-trace="false">
+    <div class="playground-header">
+      <div class="playground-title">Интерактивная песочница</div>
+      <div class="playground-hint">Наводи / кликай по элементам. Активные тогглы влияют на сцену.</div>
+    </div>
+
+    <div class="playground-toolbar">
+      <div class="pg-control">
+        <label>Highlight by:</label>
+        <div class="pg-group" data-toggle="highlight">
+          <button class="pg-btn active" data-value="components">Components</button>
+          <button class="pg-btn" data-value="none">None (IEC ч/б)</button>
+        </div>
+      </div>
+      <div class="pg-control">
+        <label>Trace mode:</label>
+        <div class="pg-group" data-toggle="trace">
+          <button class="pg-btn active" data-value="false">Off</button>
+          <button class="pg-btn" data-value="true">On (dim non-trace)</button>
+        </div>
+      </div>
+      <button class="pg-action" id="toggleWarning">Toggle Warning на выбранном</button>
+      <button class="pg-action" id="clearSel">Снять выделение</button>
+    </div>
+
+    <div class="playground-canvases">
+      <!-- SLD canvas -->
+      <div class="pg-canvas sld">
+        <div class="pg-canvas-label">SLD</div>
+        <div class="pg-canvas-info">2 трансформера, ortho-линия</div>
+        <svg viewBox="0 0 380 130" width="100%" height="130" style="display:block">
+          <!-- ortho line with step: from (60,65) down then right then up to (320, 65) — but here simple straight horizontal -->
+          <g class="pg-line" data-line="L1">
+            <line class="line-hit" x1="78" y1="65" x2="302" y2="65"/>
+            <line class="line-visible" x1="78" y1="65" x2="302" y2="65" stroke="#f59e0b" stroke-width="2"/>
+          </g>
+          <!-- Left transformer -->
+          <foreignObject x="34" y="21" width="88" height="88" style="overflow:visible">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:88px;height:88px">
+              <div class="icon-wrap iw-interactive" data-icon="T1" style="position:absolute;left:8px;top:8px;width:72px;height:72px">
+                <div class="transformer" style="position:absolute;left:18px;top:18px;width:36px;height:36px">
+                  <svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg>
+                </div>
+                <div class="halo outer" style="inset:14px"></div>
+                <div class="iw-badge"><svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div>
+              </div>
+            </div>
+          </foreignObject>
+          <!-- Right transformer -->
+          <foreignObject x="258" y="21" width="88" height="88" style="overflow:visible">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:88px;height:88px">
+              <div class="icon-wrap iw-interactive" data-icon="T2" style="position:absolute;left:8px;top:8px;width:72px;height:72px">
+                <div class="transformer" style="position:absolute;left:18px;top:18px;width:36px;height:36px">
+                  <svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg>
+                </div>
+                <div class="halo outer" style="inset:14px"></div>
+                <div class="iw-badge"><svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div>
+              </div>
+            </div>
+          </foreignObject>
+        </svg>
+      </div>
+
+      <!-- Map canvas -->
+      <div class="pg-canvas map">
+        <div class="pg-canvas-label">MAP</div>
+        <div class="pg-canvas-info">3 опоры, polyline</div>
+        <svg viewBox="0 0 380 130" width="100%" height="130" style="display:block">
+          <!-- Two segments: pole1-pole2-pole3 with a slight bend at pole2 -->
+          <g class="pg-line" data-line="M1">
+            <polyline class="line-hit" points="50,65 195,90 330,55" fill="none"/>
+            <polyline class="line-visible" points="50,65 195,90 330,55" stroke="#0ea5e9" stroke-width="2" fill="none"/>
+          </g>
+          <!-- 3 poles -->
+          <foreignObject x="10" y="25" width="80" height="80" style="overflow:visible">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:80px;height:80px">
+              <div class="icon-wrap iw-interactive" data-icon="P1" style="position:absolute;left:12px;top:12px;width:56px;height:56px">
+                <div class="pole" style="position:absolute;left:21px;top:21px"></div>
+                <div class="halo outer" style="inset:14px"></div>
+                <div class="iw-badge"><svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div>
+              </div>
+            </div>
+          </foreignObject>
+          <foreignObject x="155" y="50" width="80" height="80" style="overflow:visible">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:80px;height:80px">
+              <div class="icon-wrap iw-interactive" data-icon="P2" style="position:absolute;left:12px;top:12px;width:56px;height:56px">
+                <div class="pole" style="position:absolute;left:21px;top:21px"></div>
+                <div class="halo outer" style="inset:14px"></div>
+                <div class="iw-badge"><svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div>
+              </div>
+            </div>
+          </foreignObject>
+          <foreignObject x="290" y="15" width="80" height="80" style="overflow:visible">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:80px;height:80px">
+              <div class="icon-wrap iw-interactive" data-icon="P3" style="position:absolute;left:12px;top:12px;width:56px;height:56px">
+                <div class="pole" style="position:absolute;left:21px;top:21px"></div>
+                <div class="halo outer" style="inset:14px"></div>
+                <div class="iw-badge"><svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div>
+              </div>
+            </div>
+          </foreignObject>
+        </svg>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:12px">
+      Hover на любом элементе → blue-500 halo (или blue-500 цвет линии). Click → selected (blue-600). «Toggle Warning» добавит оранжевый бейдж на выбранную иконку. Trace mode переключит контекст в инверсию — выбранный элемент остаётся ярким, остальное тускнеет до 30%.
+    </div>
+  </div>
+
+  <!-- ============ BASELINE ============ -->
+  <h3 id="sec-1">1. Default & Hover</h3>
+  <div class="matrix">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Default · rest</div>
+        <div class="state-desc">Базовая отрисовка. Цвет тела = тип компонента.</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Default · hover</div>
+        <div class="state-desc">Курсор над иконкой. Тонкая нейтральная обводка — приглашает к клику, не конфликтует с селектом.</div>
+        <div class="token-line">outer: blue-500 · 1px</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-hover"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-hover"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ SELECTION ============ -->
+  <h3 id="sec-2">2. Selection</h3>
+  <div class="matrix">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Selected · rest</div>
+        <div class="state-desc">Иконка выбрана. Внешняя обводка blue-600 · 2px — главный сигнал внимания, виден издалека.</div>
+        <div class="token-line">outer: blue-600 · 2px</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-selected"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-selected"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Multi-select</div>
+        <div class="state-desc">≥2 выбрано — обводка на каждой. Количество показываем в info-panel или status bar.</div>
+        <div class="token-line">outer: blue-600 · 2px (на каждой)</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div style="display:flex;gap:24px"><div class="icon-wrap s-multi"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div><div class="icon-wrap s-multi"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div style="display:flex;gap:28px"><div class="icon-wrap s-multi"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div><div class="icon-wrap s-multi"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ TRACE ============ -->
+  <h3 id="sec-3">3. Trace (член трассы)</h3>
+  <div class="matrix">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Trace · in-path</div>
+        <div class="state-desc">Trace-режим: иконки в трассе сохраняют свою нативную окраску и состояния. Сигнал — обратная подсветка: всё ВНЕ трассы dim'ится до 30%. Контраст контекста, а не контур.</div>
+        <div class="token-line">trace-иконки: натив · context: opacity 30% (инверсия)</div>
+      </div>
+      <div class="canvas-cell">
+        <div class="canvas sld trace-scene" style="gap:20px;display:flex;align-items:center;justify-content:center">
+          <div class="icon-wrap neighbor"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div></div>
+          <div class="icon-wrap s-trace"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div>
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="canvas map trace-scene" style="gap:28px;display:flex;align-items:center;justify-content:center">
+          <div class="icon-wrap neighbor"><div class="pole neighbor"></div></div>
+          <div class="icon-wrap s-trace"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div>
+          <div class="icon-wrap neighbor"><div class="pole neighbor"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Trace + Selected</div>
+        <div class="state-desc">Иконка в трассе выбрана. Обычная selection-обводка снаружи + dim context — каналы не конфликтуют.</div>
+        <div class="token-line">outer: blue-600 · context: dim 30%</div>
+      </div>
+      <div class="canvas-cell">
+        <div class="canvas sld trace-scene" style="gap:20px;display:flex;align-items:center;justify-content:center">
+          <div class="icon-wrap neighbor"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div></div>
+          <div class="icon-wrap s-trace-sel"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div>
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="canvas map trace-scene" style="gap:28px;display:flex;align-items:center;justify-content:center">
+          <div class="icon-wrap neighbor"><div class="pole neighbor"></div></div>
+          <div class="icon-wrap s-trace-sel"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div>
+          <div class="icon-wrap neighbor"><div class="pole neighbor"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VALIDATION ============ -->
+  <h3 id="sec-4">4. Validation — стопка бейджей (до 4 одновременно)</h3>
+  <div class="note" style="margin-bottom:12px">
+    Вместо одного бейджа по приоритету — <strong>стопка до 4 одновременных бейджей</strong> справа от иконки, по горизонтали. Вокабуляр из 4 элементов: <code>?</code> HelpCircle (unspecified), Unlink (unbound), <code>!</code> AlertCircle (warning/error), и Counter (overflow). Info-бейдж в этой системе отсутствует.
+  </div>
+
+  <div class="matrix">
+    <div class="matrix-head">Бейдж</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name"><code>?</code> Unspecified</div>
+        <div class="state-desc">Тип компонента есть, спецификация отсутствует. Grey help-circle.</div>
+        <div class="token-line">badge: HelpCircle · neutral-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Unspecified attrs"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#737373" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></svg></div></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Unspecified attrs"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#737373" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></svg></div></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Unlink</div>
+        <div class="state-desc">Компонент существует, но не привязан к графу (нет соединения с противоположной плоскостью). Orange broken-chain.</div>
+        <div class="token-line">badge: Unlink · orange-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Unbound"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></g></svg></div></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Unbound"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></g></svg></div></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name"><code>!</code> Warning / Error</div>
+        <div class="state-desc">Жёсткая валидационная проблема — некорректная спецификация, конфликт с правилом, ошибка топологии. Orange alert-circle.</div>
+        <div class="token-line">badge: AlertCircle · orange-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Warning / Error"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g></svg></div></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Warning / Error"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g></svg></div></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Стэк до 4-х</div>
+        <div class="state-desc">Несколько проблем одновременно — все бейджи видны. Если проблем больше 3-х уникальных типов или больше нашего бюджета — последний слот занимает Counter (например <code>9+</code>), сигналящий «есть ещё, открой Info Panel».</div>
+        <div class="token-line">stack: 3 badges + counter pill</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Unspecified attrs"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#737373" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></svg></div><div class="b" title="Unbound"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></g></svg></div><div class="b" title="Warning / Error"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g></svg></div><div class="b-counter" title="More issues">9+</div></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge-stack"><div class="b" title="Unspecified attrs"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#737373" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></svg></div><div class="b" title="Unbound"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/></g></svg></div><div class="b" title="Warning / Error"><svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g></svg></div><div class="b-counter" title="More issues">9+</div></div></div></div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Правила стопки:</strong> бейджи стэкаются горизонтально от верхне-правого угла иконки. Overlap между бейджами: <code>-4px</code> по X. Z-index убывает слева направо (первый бейдж в верхнем z-слое). Максимум 4 слота: при переполнении последний слот — Counter с числом скрытых проблем. Hover на стопке → tooltip со списком всех проблем; click → Info Panel.
+  </div>
+
+  <!-- ============ LIFECYCLE & IDENTITY ============ -->
+  <h3 id="sec-5">5. DRAFT, Read-only, Out-of-scope</h3>
+  <div class="matrix">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">DRAFT / Pending Specify</div>
+        <div class="state-desc">Тип компонента известен (трансформер, опора), но спецификация отсутствует. <strong>Визуально = <code>?</code> HelpCircle бейдж</strong> (см. блок 4 — Unspecified). Тело иконки в нативном цвете. Различие с другими «?»-проблемами — в тексте в info-panel.</div>
+        <div class="token-line">badge: HelpCircle · neutral-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#737373" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></svg></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#737373" stroke-width="1.4"/><g transform="translate(3,3) scale(0.42)" fill="none" stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></g></svg></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Read-only</div>
+        <div class="state-desc">Approved / frozen / вне RBAC-редакторской области. <strong>Иконка сохраняет нативный вид</strong>. При hover курсор показывает <code>not-allowed</code>, клик игнорируется. Halo и бейджи на ней не появляются — это поведенческий сигнал.</div>
+        <div class="token-line">cursor: not-allowed · no halo · no selection</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-readonly"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-readonly"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Out-of-scope (RBAC)</div>
+        <div class="state-desc">Иконка вне текущего scope (проект/зона/фильтр). <strong>Ghost-правило</strong>: десатурирована до серого + opacity, без hover/click. Применяется единообразно на Map и SLD, к иконкам и линиям.</div>
+        <div class="token-line">opacity: 0.35 · grayscale: 1 · pointer-events: none</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-oos"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-oos"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Read-only</strong>: единственный сигнал — поведенческий, через изменение курсора. Графическая модификация иконки отсутствует.
+  </div>
+
+  <!-- ============ EDIT MODE INTERACTIONS ============ -->
+  <h3 id="sec-6">6. Edit-mode (Add / Connect)</h3>
+  <div class="matrix">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">In-flight</div>
+        <div class="state-desc">Иконка перетаскивается из палитры. Под иконкой — фоновая плита (<code>--general-background</code>: white в light-теме, black в dark). Весь композит (иконка + плита) на <code>opacity: 0.5</code>.</div>
+        <div class="token-line">opacity: 0.5 · bg plate: var(--general-background)</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-inflight"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-inflight"><div class="pole"></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Snap-target · valid</div>
+        <div class="state-desc">Кандидат для подключения при drag/connect. <strong>SLD: подсвечиваются конкретные connection points</strong> компонента (точки терминалов на символе). <strong>Map: halo вокруг bounding box иконки</strong>: на Map компонент рендерится как единый якорь без отдельных терминалов.</div>
+        <div class="token-line">SLD: conn-points green-500 · Map: outer halo green-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="conn-point top valid"></div><div class="conn-point bottom valid"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-snap-map"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Snap-target · warning</div>
+        <div class="state-desc">Цель допустима, но не идеальна — например, разные voltage-классы, mismatched полярность. Точки/halo в orange-500.</div>
+        <div class="token-line">SLD: conn-points orange-500 · Map: outer halo orange-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="conn-point top warning"></div><div class="conn-point bottom warning"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-snap-map-warning"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Snap-target · error</div>
+        <div class="state-desc">Цель недопустима — нельзя соединить (несовместимый тип, превышение лимита коннектов). Точки/halo в red-500.</div>
+        <div class="token-line">SLD: conn-points red-500 · Map: outer halo red-500</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="conn-point top error"></div><div class="conn-point bottom error"></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-snap-map-error"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div></div></div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Асимметрия SLD/Map для snap-target:</strong> SLD рендерит видимые connection points (терминалы по геометрии символа), Map рендерит компонент как точечный якорь. Поэтому SLD-подсветка локальная (по терминалам), Map-подсветка — на bounding box. Цветовая шкала единая: green / orange / red.
+  </div>
+
+  <!-- 6.1 — SNAP-TARGET BY COMPONENT CLASS -->
+  <h3 id="sec-6-1" style="margin-top:24px">6.1. Snap-target — варианты по классу компонента (SLD)</h3>
+  <div class="note" style="margin-bottom:12px">
+    Число и позиция терминалов <strong>берутся из definition компонента</strong> (CIM-модель), не хардкодятся в иконке. У большинства — 2 терминала. У 3-обмоточного трансформатора — 3. У шины — переменное, поэтому подсветка работает иначе.
+  </div>
+
+  <div class="matrix">
+    <div class="matrix-head">Компонент</div>
+    <div class="matrix-head" style="grid-column:span 2">Snap-target valid (зелёные точки / halo)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Двухобмоточный трансформатор</div>
+        <div class="state-desc">Самый частый кейс. 2 терминала: HV сверху, LV снизу. Иконка ⊕⊕ с терминал-линиями.</div>
+        <div class="token-line">2 terminals · top + bottom</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas sld" style="width:180px;height:120px;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 80 100" width="80" height="100">
+            <!-- Top terminal line -->
+            <line x1="40" y1="20" x2="40" y2="30" stroke="#262626" stroke-width="1.5"/>
+            <!-- Two windings (overlapping circles) -->
+            <circle cx="40" cy="40" r="9" fill="#fafafa" stroke="#262626" stroke-width="1.5"/>
+            <circle cx="40" cy="56" r="9" fill="#fafafa" stroke="#262626" stroke-width="1.5"/>
+            <!-- Bottom terminal line -->
+            <line x1="40" y1="66" x2="40" y2="78" stroke="#262626" stroke-width="1.5"/>
+            <!-- Connection points (snap-target valid) -->
+            <circle cx="40" cy="20" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="40" cy="20" r="3.5" fill="#22c55e"/>
+            <circle cx="40" cy="78" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="40" cy="78" r="3.5" fill="#22c55e"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Трёхобмоточный трансформатор</div>
+        <div class="state-desc">3 терминала: HV, MV, LV. Обмотки в треугольной композиции, терминалы выходят к трём сторонам символа.</div>
+        <div class="token-line">3 terminals · HV / MV / LV</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas sld" style="width:180px;height:120px;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 100 100" width="100" height="100">
+            <!-- 3 windings in triangle -->
+            <circle cx="38" cy="45" r="9" fill="#fafafa" stroke="#262626" stroke-width="1.5"/>
+            <circle cx="62" cy="45" r="9" fill="#fafafa" stroke="#262626" stroke-width="1.5"/>
+            <circle cx="50" cy="62" r="9" fill="#fafafa" stroke="#262626" stroke-width="1.5"/>
+            <!-- 3 terminal lines -->
+            <line x1="38" y1="36" x2="38" y2="20" stroke="#262626" stroke-width="1.5"/>
+            <line x1="62" y1="36" x2="62" y2="20" stroke="#262626" stroke-width="1.5"/>
+            <line x1="50" y1="71" x2="50" y2="86" stroke="#262626" stroke-width="1.5"/>
+            <!-- Connection points -->
+            <circle cx="38" cy="20" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="38" cy="20" r="3.5" fill="#22c55e"/>
+            <circle cx="62" cy="20" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="62" cy="20" r="3.5" fill="#22c55e"/>
+            <circle cx="50" cy="86" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="50" cy="86" r="3.5" fill="#22c55e"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Switch / Breaker / Recloser</div>
+        <div class="state-desc">2 терминала, на концах горизонтального сегмента. На IEC «открытый» switch — наклонный отрезок между двумя пивотами.</div>
+        <div class="token-line">2 terminals · left + right</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas sld" style="width:240px;height:80px;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 160 50" width="160" height="50">
+            <!-- Left wire -->
+            <line x1="20" y1="25" x2="60" y2="25" stroke="#262626" stroke-width="1.5"/>
+            <!-- Switch arm (open) -->
+            <line x1="60" y1="25" x2="92" y2="11" stroke="#262626" stroke-width="1.5"/>
+            <!-- Right wire -->
+            <line x1="92" y1="25" x2="140" y2="25" stroke="#262626" stroke-width="1.5"/>
+            <!-- Pivots -->
+            <circle cx="60" cy="25" r="2" fill="#262626"/>
+            <circle cx="92" cy="25" r="2" fill="#262626"/>
+            <!-- Connection points -->
+            <circle cx="20" cy="25" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="20" cy="25" r="3.5" fill="#22c55e"/>
+            <circle cx="140" cy="25" r="6" fill="#22c55e" fill-opacity="0.18"/>
+            <circle cx="140" cy="25" r="3.5" fill="#22c55e"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Busbar (шина)</div>
+        <div class="state-desc">Переменное число терминалов — появляются в точке, где что-то подключается. Snap-target = <strong>вся длина бара</strong> как один зелёный halo. Под курсором при drag может появляться «ghost circle» с актуальной X-координатой будущего терминала.</div>
+        <div class="token-line">N terminals · highlight: full bar length</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas sld" style="width:320px;height:80px;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 280 50" width="280" height="50">
+            <!-- Halo behind bar (snap region) -->
+            <line x1="20" y1="25" x2="260" y2="25" stroke="#22c55e" stroke-width="14" stroke-opacity="0.18" stroke-linecap="round"/>
+            <!-- The bar itself -->
+            <line x1="20" y1="25" x2="260" y2="25" stroke="#262626" stroke-width="3"/>
+            <!-- Existing terminals (where other things already connect) -->
+            <circle cx="65" cy="25" r="2.5" fill="#262626"/>
+            <circle cx="140" cy="25" r="2.5" fill="#262626"/>
+            <circle cx="215" cy="25" r="2.5" fill="#262626"/>
+            <!-- Ghost circle under cursor (showing where new terminal would land) -->
+            <circle cx="180" cy="25" r="6" fill="#22c55e" fill-opacity="0.4"/>
+            <circle cx="180" cy="25" r="3.5" fill="#22c55e"/>
+            <!-- Cursor hint -->
+            <text x="180" y="46" fill="#22c55e" font-size="8" font-family="Geist Mono" text-anchor="middle">↑ cursor</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Спецификация terminals:</strong> число и позиция терминалов на символе компонента — атрибут CIM-модели данных. Канонические размеры визуального компонента — см. блок 6.2 (Figma node 2857:43205): dot 12px, halo 20px. SVG-иллюстрации выше показывают терминалы в уменьшенном масштабе для in-context превью.
+  </div>
+
+  <!-- 6.2 — CONNECTION POINT STATES -->
+  <h3 id="sec-6-2" style="margin-top:24px">6.2. Connection point — состояния и визуальный язык</h3>
+  <div class="note" style="margin-bottom:12px">
+    <strong>Принцип:</strong> outline / fill различают <strong>connectivity-статус</strong>, halo различает <strong>интерактивный статус</strong>, цвет различает <strong>snap-validity</strong> во время drag-операции. Start-point и end-point визуально не различаются: оба — терминалы; направление связи хранится в данных (CIM), не визуализируется на терминалах.
+    <ul style="margin-top:8px;margin-left:18px;line-height:22px">
+      <li><strong>Outline (hollow)</strong> = терминал <strong>свободен</strong>. Совпадает с конвенцией IEC-схематик: открытая точка соединения.</li>
+      <li><strong>Filled (solid)</strong> = терминал <strong>занят</strong>. Совпадает с правилом junction-dot в EE-схемах: filled = connected.</li>
+      <li><strong>Halo</strong> = hover ИЛИ snap-target highlight во время активной drag/connect-операции.</li>
+      <li><strong>Цвет</strong>: grey/black — default; green — valid snap-target; orange — warning; red — error.</li>
+    </ul>
+  </div>
+
+  <div class="dot-states">
+    <div class="dsh"></div>
+    <div class="dsh">Default</div>
+    <div class="dsh">Success</div>
+    <div class="dsh">Warning</div>
+    <div class="dsh">Error</div>
+
+    <div class="dsr">Outline · unconnected · idle</div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#737373" stroke-width="1.5"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#22c55e" stroke-width="1.5"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#f97316" stroke-width="1.5"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/></svg></div>
+
+    <div class="dsr">Outline + halo · hover or snap-active</div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#e5e5e5"/><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#737373" stroke-width="1.5"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#dcfce7"/><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#22c55e" stroke-width="1.5"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffedd5"/><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#f97316" stroke-width="1.5"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fee2e2"/><circle cx="12" cy="12" r="6" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/></svg></div>
+
+    <div class="dsr">Filled · connected · idle</div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#171717"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#22c55e"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#f97316"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#ef4444"/></svg></div>
+
+    <div class="dsr">Filled + halo · hover on connected</div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#e5e5e5"/><circle cx="12" cy="12" r="6" fill="#171717"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#dcfce7"/><circle cx="12" cy="12" r="6" fill="#22c55e"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffedd5"/><circle cx="12" cy="12" r="6" fill="#f97316"/></svg></div>
+    <div class="dsc"><svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fee2e2"/><circle cx="12" cy="12" r="6" fill="#ef4444"/></svg></div>
+  </div>
+
+  <div class="note">
+    <strong>Геометрия (Figma node 2857:43205, на 4px-сетке):</strong>
+    <ul style="margin-top:6px;margin-left:18px;line-height:22px">
+      <li>Connection dot: <code>diameter 12px</code> (r=6), stroke <code>1.5px</code> для outline.</li>
+      <li>Halo: <code>diameter 20px</code> (r=10), расширение <code>+4px</code> наружу от dot'а.</li>
+      <li>Drop-shadow на dot'е (Figma <code>shadow-xs</code>): <code>0 1px 2px #0000000d</code> — мягкая 5% подложка для отлипания от канваса.</li>
+    </ul>
+    <strong style="display:block;margin-top:10px">Токены (из Figma variables, подтверждены через MCP):</strong>
+    <ul style="margin-top:6px;margin-left:18px;line-height:22px">
+      <li><strong>Default</strong>: stroke <code>general/border</code> · fill <code>general/primary</code> · halo <code>general/border</code></li>
+      <li><strong>Success</strong>: stroke/fill <code>GS-surface/status/success/success default</code> · halo <code>...success subtle</code></li>
+      <li><strong>Warning</strong>: stroke/fill <code>GS-surface/status/warning/warning default</code> · halo <code>...warning subtle</code></li>
+      <li><strong>Error</strong>: stroke/fill <code>GS-surface/status/destructive/destructive default</code> · halo <code>...destructive subtle</code></li>
+    </ul>
+    <strong style="display:block;margin-top:10px">Кейсы применения:</strong>
+    <ul style="margin-top:6px;margin-left:18px;line-height:22px">
+      <li>Idle на канвасе — outline default (свободный) или filled default (занятый).</li>
+      <li>Hover на терминале — outline/filled + default halo.</li>
+      <li>Старт drag-коннекта — все валидные target-терминалы переключаются в success-state (outline + halo).</li>
+      <li>Cursor над warning-target — переключение на warning. Над error-target — error. Drop на error блокируется.</li>
+      <li>Source-терминал во время drag (точка старта) — остаётся filled default (теперь у него in-flight коннект).</li>
+    </ul>
+  </div>
+
+  <!-- ============ COMBINATIONS ============ -->
+  <h3 id="sec-7">7. Комбинации</h3>
+  <div class="matrix">
+    <div class="matrix-head">Стэк</div>
+    <div class="matrix-head">SLD (Transformer)</div>
+    <div class="matrix-head">Map (Pole)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Selected + Warning</div>
+        <div class="state-desc">Самая частая комбинация. Halo + бейдж на разных каналах, не конфликтуют.</div>
+        <div class="token-line">outer: blue-600 · badge: warning</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-selected"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-selected"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Trace + Selected + Warning</div>
+        <div class="state-desc">Полный стэк. Три канала параллельно: dim context (trace), outer halo (selected), badge (warning) — все читаются.</div>
+        <div class="token-line">context: dim 30% · outer: blue-600 · badge: warning</div>
+      </div>
+      <div class="canvas-cell">
+        <div class="canvas sld trace-scene" style="gap:20px;display:flex;align-items:center;justify-content:center">
+          <div class="icon-wrap neighbor"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div></div>
+          <div class="icon-wrap s-trace-sel"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div>
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="canvas map trace-scene" style="gap:28px;display:flex;align-items:center;justify-content:center">
+          <div class="icon-wrap neighbor"><div class="pole neighbor"></div></div>
+          <div class="icon-wrap s-trace-sel"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div>
+          <div class="icon-wrap neighbor"><div class="pole neighbor"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Out-of-scope + Warning</div>
+        <div class="state-desc">Иконка в чужой RBAC-зоне, но видна и имеет валидационный варнинг. Бейдж читается даже на полупрозрачном теле — приоритеты каналов сохраняются.</div>
+        <div class="token-line">opacity: 0.35 · grayscale: 1 · badge stack</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-oos"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div></div></div>
+      <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-oos"><div class="pole"></div><div class="halo inner"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ CONNECTIONS (LINES) ============ -->
+  <h3 id="sec-8">8. Connections — состояния соединительных линий</h3>
+
+  <div class="note" style="margin-bottom:12px">
+    Для линий принцип упрощён: <strong>halo не рисуем</strong> — для Hover и Selected меняем сам цвет линии. Натив-цвет временно теряется, но это ОК — линия примитивна, её тип читается в info-panel. <strong>У линии есть невидимая hit-area</strong> — широкая прозрачная зона вокруг (≈12px), чтобы по линии было удобно кликать. Validation — бейджем посередине. DRAFT для линий не применим (тип линии есть в данных всегда), Read-only сохраняет нативный цвет.
+  </div>
+
+  <!-- 8.1 BASE STATES -->
+  <div class="matrix">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD (прямая, transmission · amber)</div>
+    <div class="matrix-head">Map (curved, distribution · sky)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Default · rest</div>
+        <div class="state-desc">Цвет линии = тип, толщина 2px. Hit-area: невидимая зона шириной 12px по обе стороны от stroke (показана в превью полупрозрачным серым; в продакшене полностью прозрачна).</div>
+        <div class="token-line">stroke: line-type · 2px · hit-area 12px</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><line x1="35" y1="40" x2="285" y2="40" stroke="#a3a3a3" stroke-width="12" stroke-opacity="0.06" stroke-linecap="round"/><line x1="35" y1="40" x2="285" y2="40" stroke="#f59e0b" stroke-width="2"/><g transform="translate(35,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(285,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><text x="160" y="58" fill="#a3a3a3" font-size="9" font-family="Geist Mono" text-anchor="middle">↑ hit-area</text></svg></div></div>
+      <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><polyline points="35,40 285,40" stroke="#a3a3a3" stroke-width="12" stroke-opacity="0.06" fill="none" stroke-linecap="round"/><polyline points="35,40 285,40" stroke="#0ea5e9" stroke-width="2" fill="none"/><circle cx="35" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><circle cx="285" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/></svg></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Hover</div>
+        <div class="state-desc">Цвет линии меняется на blue-500. Натив-тип временно теряется — это компромисс простоты для элементарного объекта.</div>
+        <div class="token-line">stroke: blue-500 · 2px</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><line x1="35" y1="40" x2="285" y2="40" stroke="#3b82f6" stroke-width="2"/><g transform="translate(35,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(285,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g></svg></div></div>
+      <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><polyline points="35,40 285,40" stroke="#3b82f6" stroke-width="2" fill="none"/><circle cx="35" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><circle cx="285" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/></svg></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Selected</div>
+        <div class="state-desc">Цвет линии меняется на blue-600, толщина та же — 2px. «Вес» selected держится цветом.</div>
+        <div class="token-line">stroke: blue-600 · 2px</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><line x1="35" y1="40" x2="285" y2="40" stroke="#2563eb" stroke-width="2"/><g transform="translate(35,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(285,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g></svg></div></div>
+      <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><polyline points="35,40 285,40" stroke="#2563eb" stroke-width="2" fill="none"/><circle cx="35" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><circle cx="285" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/></svg></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Read-only</div>
+        <div class="state-desc">Линия approved / frozen. <strong>Сохраняет натив-цвет</strong>. Hover и selection отключены, курсор показывает <code>not-allowed</code>. Поведенческий сигнал, как у иконок.</div>
+        <div class="token-line">cursor: not-allowed · no hover · no selection</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><line x1="35" y1="40" x2="285" y2="40" stroke="#f59e0b" stroke-width="2"/><g transform="translate(35,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(285,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g></svg></div></div>
+      <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><polyline points="35,40 285,40" stroke="#0ea5e9" stroke-width="2" fill="none"/><circle cx="35" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><circle cx="285" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/></svg></div></div>
+    </div>
+  </div>
+
+  <!-- 8.2 VALIDATION -->
+  <div class="matrix" style="margin-top:16px">
+    <div class="matrix-head">Состояние</div>
+    <div class="matrix-head">SLD</div>
+    <div class="matrix-head">Map</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Validation · Error</div>
+        <div class="state-desc">Бейдж в середине линии, red-500. Линия сохраняет натив-цвет — иначе теряем тип.</div>
+        <div class="token-line">badge midpoint · destructive-default</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><line x1="35" y1="40" x2="285" y2="40" stroke="#f59e0b" stroke-width="2"/><g transform="translate(35,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(285,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(160,40)"><circle r="9" fill="#fafafa"/><circle r="7" fill="#ef4444"/><line x1="0" y1="-3.5" x2="0" y2="1" stroke="white" stroke-width="1.5" stroke-linecap="round"/><circle cx="0" cy="3.5" r="0.9" fill="white"/></g></svg></div></div>
+      <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><polyline points="35,40 285,40" stroke="#0ea5e9" stroke-width="2" fill="none"/><circle cx="35" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><circle cx="285" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><g transform="translate(160,28)"><circle r="9" fill="#fafafa"/><circle r="7" fill="#ef4444"/><line x1="0" y1="-3.5" x2="0" y2="1" stroke="white" stroke-width="1.5" stroke-linecap="round"/><circle cx="0" cy="3.5" r="0.9" fill="white"/></g></svg></div></div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Validation · Warning</div>
+        <div class="state-desc">Бейдж orange-500. Та же логика что и Error.</div>
+        <div class="token-line">badge midpoint · warning-default</div>
+      </div>
+      <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><line x1="35" y1="40" x2="285" y2="40" stroke="#f59e0b" stroke-width="2"/><g transform="translate(35,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(285,40)"><circle cx="-4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/><circle cx="4" cy="0" r="7" fill="#fafafa" stroke="#fb923c" stroke-width="1.6"/></g><g transform="translate(160,40)"><circle r="9" fill="#fafafa"/><circle r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="0" y1="-3" x2="0" y2="1" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="0" cy="3.5" r="0.85" fill="#f97316"/></g></svg></div></div>
+      <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px;position:relative"><svg viewBox="0 0 320 80" width="320" height="80" style="display:block"><polyline points="35,40 285,40" stroke="#0ea5e9" stroke-width="2" fill="none"/><circle cx="35" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><circle cx="285" cy="40" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/><g transform="translate(160,28)"><circle r="9" fill="#fafafa"/><circle r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="0" y1="-3" x2="0" y2="1" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="0" cy="3.5" r="0.85" fill="#f97316"/></g></svg></div></div>
+    </div>
+  </div>
+
+  <!-- 9.3 TRACE SCENE -->
+  <h3 id="sec-9" style="margin-top:24px">9. Trace для линий — целая сцена</h3>
+  <div class="note" style="margin-bottom:12px">
+    Тот же принцип инверсии: линии в трассе сохраняют свой <strong>натив-цвет по типу</strong>, всё ВНЕ трассы dim'ится до 30%. И иконки, и линии — один канал dim для всего «не в трассе».
+  </div>
+  <div class="matrix">
+    <div class="matrix-head">Сцена</div>
+    <div class="matrix-head" style="grid-column:span 2">Network view (4 узла, 4 коннекта)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Trace from anchor</div>
+        <div class="state-desc">Anchor — левая опора. Trace идёт направо. Третья ветка вниз (Pole→Pole) — вне трассы, dim 30%.</div>
+        <div class="token-line">in-trace: native · out: opacity 30%</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas map" style="width:560px;height:160px;position:relative">
+          <svg viewBox="0 0 560 160" width="560" height="160" style="display:block">
+            <!-- Out-of-trace branch (dim) — straight line -->
+            <g opacity="0.3">
+              <line x1="280" y1="80" x2="360" y2="130" stroke="#0ea5e9" stroke-width="2"/>
+              <circle cx="360" cy="130" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            </g>
+            <!-- In-trace lines (native, прямые отрезки) -->
+            <line x1="60" y1="80" x2="280" y2="80" stroke="#0ea5e9" stroke-width="2"/>
+            <line x1="280" y1="80" x2="480" y2="70" stroke="#f59e0b" stroke-width="2"/>
+            <!-- Selected anchor (outer ring) — left pole -->
+            <rect x="46" y="66" width="28" height="28" rx="6" fill="none" stroke="#2563eb" stroke-width="2"/>
+            <circle cx="60" cy="80" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <!-- In-trace intermediate pole -->
+            <circle cx="280" cy="80" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <!-- In-trace destination (transformer/substation) — square icon -->
+            <g transform="translate(480,70)">
+              <rect x="-9" y="-9" width="18" height="18" fill="#fafafa" stroke="#f87171" stroke-width="1.5" rx="2"/>
+              <rect x="-5" y="-5" width="10" height="10" fill="#f87171" opacity="0.3"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. BUNDLE / MULTI-CONDUCTOR (Map-only) -->
+  <h3 id="sec-10" style="margin-top:24px">10. Bundle — несколько проводников на одной трассе (Map-only)</h3>
+  <div class="note" style="margin-bottom:12px">
+    На SLD «Single Line» по определению — один логический контур на линию, multi-conductor не применим. <strong>На Map</strong> 3 фазы на общих опорах (или параллельные фидеры в общей траншее) — реальная задача. Решение: <strong>LOD-зависимая отрисовка</strong>. На низком зуме — один объект + метка. На высоком — fan-out, каждый проводник кликабельный.
+  </div>
+  <div class="matrix">
+    <div class="matrix-head">Уровень зума</div>
+    <div class="matrix-head" style="grid-column:span 2">Сцена (Map · 3 опоры с 3-phase линией)</div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Low zoom · collapsed</div>
+        <div class="state-desc">Одна логическая линия + метка <code>3PH</code>. Толщина чуть больше (3px вместо 2). Клик → дропдаун «выбери проводник: L1 / L2 / L3».</div>
+        <div class="token-line">stroke: line-type · 3px · label "3PH"</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas map" style="width:560px;height:120px;position:relative">
+          <svg viewBox="0 0 560 120" width="560" height="120" style="display:block">
+            <polyline points="60,60 280,60 500,60" stroke="#0ea5e9" stroke-width="3" fill="none"/>
+            <g transform="translate(170,40)">
+              <rect x="-12" y="-9" width="24" height="16" rx="3" fill="#fafafa" stroke="#d4d4d4" stroke-width="1"/>
+              <text x="0" y="2" fill="#0ea5e9" font-size="9" font-family="Geist Mono" text-anchor="middle" dominant-baseline="middle">3PH</text>
+            </g>
+            <circle cx="60" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <circle cx="280" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <circle cx="500" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">High zoom · fan-out</div>
+        <div class="state-desc">На анкерных точках 3 проводника расходятся короткими наклонными сегментами, параллельны в середине пролёта. Каждая линия — самостоятельный элемент с собственным selectable-состоянием. Между фазами зазор ≈6px.</div>
+        <div class="token-line">spread at anchors · parallel mid-span · 6px gap</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas map" style="width:560px;height:120px;position:relative">
+          <svg viewBox="0 0 560 120" width="560" height="120" style="display:block">
+            <polyline points="60,60 80,54 270,54 290,54 280,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <polyline points="280,60 290,54 470,54 480,54 500,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <polyline points="60,60 280,60 500,60" stroke="#0ea5e9" stroke-width="2" fill="none"/>
+            <polyline points="60,60 80,66 270,66 290,66 280,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <polyline points="280,60 290,66 470,66 480,66 500,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <text x="170" y="46" fill="#0ea5e9" font-size="8" font-family="Geist Mono" text-anchor="middle">L1</text>
+            <text x="170" y="74" fill="#0ea5e9" font-size="8" font-family="Geist Mono" text-anchor="middle">L3</text>
+            <circle cx="60" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <circle cx="280" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <circle cx="500" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-row">
+      <div class="state-meta">
+        <div class="state-name">Fan-out с одной выбранной</div>
+        <div class="state-desc">L2 (средняя фаза) выбрана — её цвет blue-600, толщина 2px. Остальные две — натив. Клик по любой переключает выбор на неё.</div>
+        <div class="token-line">selected: blue-600 · 2px · others: native</div>
+      </div>
+      <div class="canvas-cell" style="grid-column:span 2">
+        <div class="canvas map" style="width:560px;height:120px;position:relative">
+          <svg viewBox="0 0 560 120" width="560" height="120" style="display:block">
+            <polyline points="60,60 80,54 270,54 290,54 280,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <polyline points="280,60 290,54 470,54 480,54 500,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <polyline points="60,60 280,60 500,60" stroke="#2563eb" stroke-width="2" fill="none"/>
+            <polyline points="60,60 80,66 270,66 290,66 280,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <polyline points="280,60 290,66 470,66 480,66 500,60" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <circle cx="60" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <circle cx="280" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+            <circle cx="500" cy="60" r="7" fill="#a78bfa" stroke="#8b5cf6" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Переход между LOD-уровнями:</strong> FE определяет режим рендеринга по текущему zoom-level. Спецификация фиксирует визуальный язык каждого уровня (collapsed / fan-out / промежуточный) и правила переходов; конкретные пороги zoom калибруются на production-данных и не входят в дизайн-спеку.
+  </div>
+
+  <!-- ============ TOKEN REFERENCE ============ -->
+  <div class="tokens-ref">
+    <h2 id="tokens">Использованные токены</h2>
+    <div class="tokens-grid">
+      <div class="tok-line"><div class="swatch" style="background:#2563eb"></div><span>--gs-surface-highlight-interaction-selection · blue-600 (light) / blue-400 (dark) · Selected</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#3b82f6;border:1px solid #e5e5e5"></div><span>--gs-surface-highlight-interaction-hover · blue-500 (light + dark одинаковый) · Hover</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#0ea5e9"></div><span>--gs-surface-highlight-lines-line-distribution · sky-500 · Distribution-линии</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#f59e0b"></div><span>--gs-surface-highlight-lines-line-transmission · amber-500 · Transmission-линии</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#8b5cf6"></div><span>--gs-surface-highlight-lines-line-secondaries · violet-500 · Secondaries-линии</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#fafafa;border:1px solid #d4d4d4"></div><span>Context dim · opacity 30% · Trace «inverse» сигнал</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#22c55e"></div><span>--success · green-500 · Snap-target valid</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#737373"></div><span>neutral-500 · <code>?</code> HelpCircle badge — Unspecified / DRAFT / Pending</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#f97316"></div><span>--warning · orange-500 · <code>!</code> AlertCircle &amp; Unlink badges · Snap-target warning</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#ef4444"></div><span>--destructive · red-500 · Snap-target error</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#fb923c"></div><span>comp-transformer · orange-400 · идентичность Transformer</span></div>
+      <div class="tok-line"><div class="swatch" style="background:#a78bfa"></div><span>comp-pole · violet-400 · идентичность Pole</span></div>
+    </div>
+  </div>
+
+</div>
+<script>
+(function() {
+  const playground = document.getElementById('playground-section');
+  if (!playground) return;
+
+  // Click on icon-wrap toggles selection (single-select across whole playground)
+  const interactives = playground.querySelectorAll('.iw-interactive, .pg-line');
+  interactives.forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const already = el.classList.contains('selected');
+      // clear all selections
+      interactives.forEach(x => x.classList.remove('selected'));
+      // toggle this one (clicking same again deselects)
+      if (!already) el.classList.add('selected');
+    });
+  });
+
+  // Toolbar toggles
+  playground.querySelectorAll('.pg-group').forEach(group => {
+    const attr = group.dataset.toggle;
+    group.querySelectorAll('.pg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('.pg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        playground.dataset[attr] = btn.dataset.value;
+      });
+    });
+  });
+
+  // Toggle Warning action
+  const toggleWarning = document.getElementById('toggleWarning');
+  toggleWarning.addEventListener('click', () => {
+    const selected = playground.querySelector('.iw-interactive.selected');
+    if (!selected) return;
+    const cur = selected.dataset.warning === 'true';
+    selected.dataset.warning = cur ? 'false' : 'true';
+  });
+
+  // Clear selection
+  document.getElementById('clearSel').addEventListener('click', () => {
+    interactives.forEach(x => x.classList.remove('selected'));
+  });
+})();
+
+// Sidebar active section highlight
+(function() {
+  const navLinks = document.querySelectorAll('.sidebar-nav a');
+  const targets = Array.from(navLinks).map(a => {
+    const href = a.getAttribute('href');
+    return { link: a, target: document.querySelector(href) };
+  }).filter(t => t.target);
+
+  if (!targets.length) return;
+
+  const setActive = (link) => {
+    navLinks.forEach(l => l.classList.toggle('active', l === link));
+  };
+
+  // IntersectionObserver — when section enters top viewport region, activate it
+  const observer = new IntersectionObserver((entries) => {
+    // Find the entry with the highest intersection ratio (or topmost visible)
+    const visible = entries.filter(e => e.isIntersecting);
+    if (visible.length) {
+      // Pick the one closest to top
+      const topmost = visible.reduce((a, b) =>
+        a.boundingClientRect.top < b.boundingClientRect.top ? a : b
+      );
+      const t = targets.find(x => x.target === topmost.target);
+      if (t) setActive(t.link);
+    }
+  }, {
+    rootMargin: '-10% 0px -70% 0px',
+    threshold: 0
+  });
+
+  targets.forEach(t => observer.observe(t.target));
+
+  // Smooth click handling
+  navLinks.forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActive(a);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
