@@ -200,7 +200,7 @@
       <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap"><div class="pole"></div><div class="halo outer"></div></div></div></div>
     </div>
     <div class="state-row">
-      <div class="state-meta"><div class="state-name">Default · hover</div><div class="state-desc">Курсор над иконкой. Тонкая обводка blue-500.</div><div class="token-line">outer: blue-500 · 1px</div></div>
+      <div class="state-meta"><div class="state-name">Default · hover</div><div class="state-desc">Курсор над иконкой. Тонкая обводка <code>--gs-surface-highlight-interaction-hover</code>.</div><div class="token-line">outer: <code>--gs-surface-highlight-interaction-hover</code> · 1px</div></div>
       <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-hover"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo outer"></div></div></div></div>
       <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-hover"><div class="pole"></div><div class="halo outer"></div></div></div></div>
     </div>
@@ -212,12 +212,12 @@
     <div class="matrix-head">SLD</div>
     <div class="matrix-head">Map</div>
     <div class="state-row">
-      <div class="state-meta"><div class="state-name">Selected · rest</div><div class="state-desc">Иконка выбрана. Обводка blue-600 · 2px.</div><div class="token-line">outer: blue-600 · 2px</div></div>
+      <div class="state-meta"><div class="state-name">Selected · rest</div><div class="state-desc">Иконка выбрана. Обводка <code>--gs-surface-highlight-interaction-selection</code>, 2px.</div><div class="token-line">outer: <code>--gs-surface-highlight-interaction-selection</code> · 2px</div></div>
       <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-selected"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo outer"></div></div></div></div>
       <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-selected"><div class="pole"></div><div class="halo outer"></div></div></div></div>
     </div>
     <div class="state-row">
-      <div class="state-meta"><div class="state-name">Multi-select</div><div class="state-desc">≥2 выбрано — обводка на каждой. Количество показываем в info-panel или status bar.</div><div class="token-line">outer: blue-600 · 2px (на каждой)</div></div>
+      <div class="state-meta"><div class="state-name">Multi-select</div><div class="state-desc">≥2 выбрано — обводка на каждой. Количество показываем в info-panel или status bar.</div><div class="token-line">outer: <code>--gs-surface-highlight-interaction-selection</code> · 2px (на каждой)</div></div>
       <div class="canvas-cell"><div class="canvas sld"><div style="display:flex;gap:24px"><div class="icon-wrap s-multi"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo outer"></div></div><div class="icon-wrap s-multi"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo outer"></div></div></div></div></div>
       <div class="canvas-cell"><div class="canvas map"><div style="display:flex;gap:28px"><div class="icon-wrap s-multi"><div class="pole"></div><div class="halo outer"></div></div><div class="icon-wrap s-multi"><div class="pole"></div><div class="halo outer"></div></div></div></div></div>
     </div>
@@ -394,7 +394,7 @@
     <div class="matrix-head">SLD</div>
     <div class="matrix-head">Map</div>
     <div class="state-row">
-      <div class="state-meta"><div class="state-name">Selected + Warning</div><div class="state-desc">Halo + бейдж на разных каналах.</div><div class="token-line">outer: blue-600 · badge: warning</div></div>
+      <div class="state-meta"><div class="state-name">Selected + Warning</div><div class="state-desc">Halo + бейдж на разных каналах.</div><div class="token-line">outer: <code>--gs-surface-highlight-interaction-selection</code> · badge: warning</div></div>
       <div class="canvas-cell"><div class="canvas sld"><div class="icon-wrap s-selected"><div class="transformer"><svg viewBox="0 0 36 36" fill="none"><circle cx="14" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/><circle cx="22" cy="18" r="7" stroke="#fb923c" stroke-width="1.6"/></svg></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div></div></div>
       <div class="canvas-cell"><div class="canvas map"><div class="icon-wrap s-selected"><div class="pole"></div><div class="halo outer"></div><div class="badge"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#fafafa" stroke="#f97316" stroke-width="1.4"/><line x1="8" y1="5" x2="8" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.85" fill="#f97316"/></svg></div></div></div></div>
     </div>
@@ -417,12 +417,12 @@
       <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px"><svg viewBox="0 0 320 80" width="320" height="80"><polyline points="35,40 285,40" stroke="#0ea5e9" stroke-width="2" fill="none"/></svg></div></div>
     </div>
     <div class="state-row">
-      <div class="state-meta"><div class="state-name">Hover</div><div class="token-line">stroke: blue-500 · 2px</div></div>
+      <div class="state-meta"><div class="state-name">Hover</div><div class="token-line">stroke: <code>--gs-surface-highlight-interaction-hover</code> · 2px</div></div>
       <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px"><svg viewBox="0 0 320 80" width="320" height="80"><line x1="35" y1="40" x2="285" y2="40" stroke="#3b82f6" stroke-width="2"/></svg></div></div>
       <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px"><svg viewBox="0 0 320 80" width="320" height="80"><polyline points="35,40 285,40" stroke="#3b82f6" stroke-width="2" fill="none"/></svg></div></div>
     </div>
     <div class="state-row">
-      <div class="state-meta"><div class="state-name">Selected</div><div class="token-line">stroke: blue-600 · 2px</div></div>
+      <div class="state-meta"><div class="state-name">Selected</div><div class="token-line">stroke: <code>--gs-surface-highlight-interaction-selection</code> · 2px</div></div>
       <div class="canvas-cell"><div class="canvas sld" style="width:320px;height:80px"><svg viewBox="0 0 320 80" width="320" height="80"><line x1="35" y1="40" x2="285" y2="40" stroke="#2563eb" stroke-width="2"/></svg></div></div>
       <div class="canvas-cell"><div class="canvas map" style="width:320px;height:80px"><svg viewBox="0 0 320 80" width="320" height="80"><polyline points="35,40 285,40" stroke="#2563eb" stroke-width="2" fill="none"/></svg></div></div>
     </div>
