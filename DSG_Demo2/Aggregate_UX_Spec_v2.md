@@ -40,21 +40,23 @@ There are four entry points; all share the same Info Panel and Aggregation mode.
 
 User multi-selects components on MAP or SLD → right-click → context menu shows `Add to Aggregate` (with submenu chevron) → submenu opens with a list of existing aggregates and a `+ Create new` action at the bottom → user picks `+ Create new`.
 
-Result: a new aggregating component is instantiated as draft, the selected components are pre-populated in its Components list, the Info Panel opens in Create mode, and the canvas enters Aggregation mode.
+Result: a new aggregating component is instantiated as draft, the selected components are pre-populated in its Components list, the Info Panel opens in Create mode, and the canvas enters Aggregation mode. If any of the selected components already had a `parentId`, the user is asked to confirm via an alert before the draft is created (see 9).
 
 ### 3.2 Create new aggregate — from empty area
 
 User right-clicks on an empty area of MAP or SLD → context menu shows `Add component` and `Add aggregate` → user picks `Add aggregate`.
 
-Result: same as 3.1, but with an empty Components list.
+Result: same as 3.1, but with an empty Components list. No alert (nothing to re-parent yet).
 
 ### 3.3 Add to existing aggregate — from selected components
 
 User multi-selects components → right-click → `Add to Aggregate` submenu → user picks an existing aggregate from the list (searchable via the submenu header input).
 
-Result: `parentId` of every selected component is set to the picked aggregate's id. If a component already had a different `parentId`, it is reparented (moved, not duplicated). A sonner confirms with the count and the target aggregate.
+Result:
+- If none of the selected components has a current `parentId` — the components are added instantly; sonner confirms.
+- If any of the selected components already has a `parentId` (different from the target) — a confirmation alert is shown first (see 9). On confirm, the affected components are re-parented; sonner confirms.
 
-This is an instant operation — no Info Panel opens, no Aggregation mode.
+No Info Panel opens and no Aggregation mode is entered for this entry point.
 
 ### 3.4 Re-enter aggregating mode — on existing aggregate
 
@@ -104,7 +106,7 @@ The Info Panel is a 300px right-anchored sidebar with the standard layout: 48px 
 - Enabled when Aggregation mode is OFF.
 - Disabled while Aggregation mode is ON (user must exit the mode first via `Done aggregating`).
 
-**Cancel.** Closing the panel via × discards the draft aggregate and any pending child assignments. If at least one component was added to the draft, a confirmation toast is shown ("Discard aggregate draft?" — `Discard` / `Keep`).
+**Cancel.** Closing the panel via × discards the draft aggregate and any pending child assignments. If at least one component was added to the draft, an alert `Discard aggregate draft?` is shown with `Cancel` / `Discard` actions.
 
 ### 5.2 View mode — existing aggregate
 
@@ -124,7 +126,7 @@ When a regular (non-aggregate) component is selected and its Info Panel opens, a
 
 - One row in the shared field stack (sits with other Library / Calculated / Physical binding rows).
 - Format: label `Aggregate` + type-color square + aggregate name + × at the end.
-- × clears `parentId` (instant, with undo sonner).
+- × clears `parentId` instantly; a sonner confirms the action. No alert (single-target action, fully visible in the Info Panel).
 - If the component has no parent (`parentId === null`), the row is omitted entirely — no empty placeholder.
 
 This replaces the v1 collapsible "Aggregates" card. Since v2 allows at most one parent, a full card with header, badge, and accordion is overkill for a single value.
@@ -162,39 +164,46 @@ Right-click on an aggregate (stroke or label hit) opens its context menu:
 4. ---
 5. `Aggregating mode` — re-enters Aggregation mode against this aggregate (see 3.4).
 6. ---
-7. `Remove all members` — see 9.2.
-8. `Dissolve aggregate` — see 9.1. Rendered with destructive (red) text.
+7. `Remove all members` — see 9.
+8. `Dissolve aggregate` — see 9. Rendered with destructive (red) text.
 
 ---
 
-## 9. Destructive operations
+## 9. Confirmation alerts and destructive operations
 
-Both destructive operations are **instant**, with no confirmation dialog. They are reversible via a sonner-attached `Undo` action for ~8 seconds.
+Operations that re-parent components from one aggregate to another, or destroy an aggregate, pre-confirm via an alert dialog. The alert previews the consequence; the sonner after the operation just confirms it completed. Sonners do not carry an Undo action.
 
-### 9.1 Dissolve aggregate
+### 9.1 When alerts are shown
 
-Removes the aggregate component itself. Children are re-parented to the aggregate's grandparent (or to `null` if the aggregate was at the top level).
+| Operation | Triggered when | Alert title | Alert body | Confirm button |
+|---|---|---|---|---|
+| Create new aggregate from selection | At least one selected component already has a `parentId` | `Create aggregate?` | `<N> components will be moved from <Aggregate A>, <Aggregate B>` | `Create` |
+| Add to existing aggregate from selection | At least one selected component already has a different `parentId` | `Move <N> components to <Aggregate name>?` | `Components will be moved from: <Aggregate A>, <Aggregate B>.` | `Move` |
+| Dissolve aggregate | Always | `Dissolve <Aggregate name>?` | `<N> components will move out. <Aggregate name> will be removed.` | `Dissolve` (destructive, red) |
+| Remove all members | Always | `Remove all members from <Aggregate name>?` | `Components will move out. <Aggregate name> will remain empty.` | `Remove all` |
 
-Sonner: `Aggregate dissolved` + `Undo`.
+`Cancel` in any alert returns to the prior state with no changes. Operations that don't re-parent or destroy (e.g. creating an aggregate from loose components only, adding loose components to an existing aggregate, clearing a single component's parent via ×) proceed instantly without an alert.
 
-### 9.2 Remove all members
+### 9.2 Dissolve aggregate (behavior)
 
-Clears `parentId` for every direct child of the aggregate. The aggregate component itself remains, now empty. The canvas immediately shows the empty-aggregate dashed-outline state (see 7).
+On confirm: the aggregate component is removed. Children are re-parented to the aggregate's grandparent (or to `null` if the aggregate was at the top level). Sonner: `Aggregate dissolved`.
 
-Sonner: `All members removed` / `<Aggregate name> is now empty` + `Undo`.
+### 9.3 Remove all members (behavior)
+
+On confirm: `parentId` is cleared for every direct child of the aggregate. The aggregate component itself remains and becomes empty (rendered as the dashed-outline empty state, see 7). Sonner: `All members removed` / `<Aggregate name> is now empty`.
 
 ---
 
 ## 10. Sonners
 
-All aggregation operations emit a sonner. Every sonner offers `Undo` for ~8s.
+Every committed aggregation operation emits a sonner confirming the result. Sonners do not carry an Undo action — re-parenting and destructive operations are pre-confirmed via alerts (see 9).
 
 | Operation | Sonner title | Sonner detail |
 |---|---|---|
-| Create new aggregate, no children reparented | `Aggregate created` | — |
-| Create new aggregate, some children reparented from other aggregates | `Aggregate created` | `<N> components moved from <Aggregate A>, <Aggregate B>` |
-| Add components to existing aggregate (no reparenting) | `<N> components added to <Aggregate name>` | — |
-| Add components to existing aggregate (with reparenting) | `<N> components moved to <Aggregate name>` | — |
+| Create new aggregate, no re-parenting | `Aggregate created` | — |
+| Create new aggregate, with re-parenting | `Aggregate created` | `<N> components moved from <Aggregate A>, <Aggregate B>` |
+| Add to existing aggregate, no re-parenting | `<N> components added to <Aggregate name>` | — |
+| Add to existing aggregate, with re-parenting | `<N> components moved to <Aggregate name>` | — |
 | Dissolve aggregate | `Aggregate dissolved` | — |
 | Remove all members | `All members removed` | `<Aggregate name> is now empty` |
 | Clear single component's parent (× on the component's Aggregate row) | `<Component name> removed from <Aggregate name>` | — |
@@ -219,8 +228,8 @@ Carried over from v1 / GRDM-299 and explicitly dropped:
 - Composition-rule templates (allowed child types, min/max counts).
 - Many-to-many membership.
 - Drag-and-drop a component onto an aggregate area (and the resulting Move / Add-to-both dialog).
-- Confirmation dialog for `Dissolve aggregate` and `Remove all members` (replaced by instant + undo).
 - Aggregate Info Panel "Composition rules" section.
+- Undo on sonners (replaced by pre-action alerts for re-parenting and destructive operations).
 - Map-view rendering rules for aggregates at hierarchy depth > 1 (visual rule deferred until the first real depth-2 case).
 
 ---
