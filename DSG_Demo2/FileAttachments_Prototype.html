@@ -45,8 +45,585 @@
     line-height: 20px;
     overflow: hidden;
   }
-  /* (full CSS and JS body — see file_attachments_prototype.html in /mnt/user-data/outputs) */
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; font-size: inherit; color: inherit; }
+
+  .demo-bar { height: 40px; flex-shrink: 0; border-bottom: 1px solid var(--border); background: #FAFAFA; display: flex; align-items: center; padding: 0 14px; gap: 14px; }
+  .demo-bar-title { font-size: 11px; font-weight: 600; color: var(--neutral-700); letter-spacing: 0.04em; text-transform: uppercase; }
+  .demo-bar-divider { width: 1px; height: 18px; background: var(--border); }
+  .demo-bar-label { font-size: 12px; color: var(--muted-foreground); }
+  .anchor-switcher { display: flex; gap: 2px; background: var(--neutral-100); padding: 2px; border-radius: var(--radius-md); }
+  .anchor-pill { border: none; background: transparent; padding: 0 10px; height: 22px; font-size: 11px; font-weight: 500; color: var(--muted-foreground); border-radius: var(--radius-sm); }
+  .anchor-pill.active { background: var(--background); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .demo-bar-spacer { flex: 1; }
+  .demo-btn { height: 24px; padding: 0 10px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 11px; display: flex; align-items: center; gap: 5px; }
+  .demo-btn:hover { background: var(--neutral-50); }
+
+  .app { display: flex; flex-direction: column; height: calc(100vh - 40px); }
+  .app-header { height: 48px; flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: var(--background); }
+  .header-left { display: flex; align-items: center; gap: 4px; }
+  .header-center { display: flex; align-items: center; gap: 8px; position: absolute; left: 50%; transform: translateX(-50%); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .h-logo { width: 22px; height: 22px; background: #FBA94B; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; margin-right: 8px; }
+  .h-tool { width: 28px; height: 28px; background: transparent; border: none; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-700); }
+  .h-tool:hover { background: var(--neutral-100); }
+  .h-tool.active { background: var(--neutral-100); }
+  .h-pill { height: 28px; padding: 0 10px; background: var(--neutral-50); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; align-items: center; gap: 4px; font-size: 12px; }
+  .h-text-pill { height: 26px; padding: 0 8px; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--neutral-700); }
+  .h-text-pill .h-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .h-dot.warning { background: #F59E0B; }
+  .h-dot.error { background: var(--destructive); }
+  .h-status { height: 22px; padding: 0 8px; background: var(--neutral-100); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--neutral-700); border: 1px solid var(--border); }
+  .h-avatar { width: 26px; height: 26px; border-radius: 50%; background: #E0F2FE; color: #0369A1; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; }
+
+  .app-body { flex: 1; overflow: hidden; display: flex; }
+  .canvas-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; background: #FAFAFA; position: relative; }
+  .canvas { flex: 1; display: flex; position: relative; }
+  .canvas-half { flex: 1; background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); background-size: 32px 32px; position: relative; }
+  .canvas-half.map { background: radial-gradient(circle at 30% 40%, rgba(248,113,113,0.25), transparent 25%), radial-gradient(circle at 35% 55%, rgba(96,165,250,0.25), transparent 22%), #F0EDE7; }
+  .canvas-half.sld { background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px); background-size: 32px 32px; }
+  .canvas-resize { width: 4px; background: var(--border); cursor: col-resize; flex-shrink: 0; }
+  .sld-node { position: absolute; width: 30px; height: 22px; border: 1px solid var(--neutral-700); background: var(--background); border-radius: 2px; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+  .sld-label { position: absolute; font-size: 11px; color: var(--neutral-700); }
+  .canvas-status { height: 26px; flex-shrink: 0; border-top: 1px solid var(--border); background: var(--background); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 11px; color: var(--muted-foreground); }
+  .canvas-status .dot-blue { width: 6px; height: 6px; border-radius: 50%; background: var(--info); display: inline-block; margin-right: 6px; }
+  .canvas-toolbar { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 4px; padding: 4px; z-index: 5; }
+  .canvas-toolbar button { width: 28px; height: 28px; background: transparent; border: none; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-700); }
+  .canvas-toolbar button:hover { background: var(--neutral-100); }
+  .canvas-toolbar .done-btn { width: auto; padding: 0 10px; height: 28px; background: var(--primary); color: white; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+  .canvas-vtool { position: absolute; bottom: 56px; left: 12px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 1px 2px rgba(0,0,0,0.04); display: flex; flex-direction: column; padding: 4px; z-index: 5; }
+  .canvas-vtool button { width: 28px; height: 28px; background: transparent; border: none; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-600); }
+  .canvas-vtool button:hover { background: var(--neutral-100); color: var(--neutral-900); }
+
+  .info-panel { width: 300px; flex-shrink: 0; border-left: 1px solid var(--border); background: var(--background); display: flex; flex-direction: column; overflow: hidden; }
+  .info-header { height: 48px; flex-shrink: 0; padding: 0 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .info-header .info-title { font-size: 15px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .info-header .h-actions { display: flex; gap: 2px; }
+  .info-header .icon-btn { width: 28px; height: 28px; background: transparent; border: none; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); }
+  .info-header .icon-btn:hover { background: var(--neutral-100); color: var(--foreground); }
+  .info-body { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .card { background: var(--card-bg); border-radius: var(--radius-md); padding: 4px 8px; }
+  .card.expanded { padding: 4px 8px 12px; }
+  .card-header { display: flex; align-items: center; height: 36px; cursor: pointer; user-select: none; gap: 8px; }
+  .card-chevron { color: var(--neutral-500); display: flex; align-items: center; transition: transform 0.15s ease; transform: rotate(-90deg); }
+  .card.expanded .card-chevron { transform: rotate(0deg); }
+  .card-title { font-size: 13px; font-weight: 600; flex: 1; }
+  .card-count { background: var(--background); border-radius: 999px; height: 18px; min-width: 22px; padding: 0 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--neutral-600); }
+  .card-body { display: none; }
+  .card.expanded .card-body { display: block; padding-top: 4px; }
+  .kv-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0; font-size: 12px; gap: 8px; }
+  .kv-row .k { color: var(--muted-foreground); flex-shrink: 0; }
+  .kv-row .v { color: var(--foreground); text-align: right; }
+  .kv-row.header { font-weight: 600; padding-bottom: 4px; color: var(--foreground); }
+  .files-card .card-body { padding-top: 4px; }
+  .files-empty { display: flex; align-items: center; justify-content: center; gap: 6px; height: 32px; color: var(--muted-foreground); font-size: 12px; }
+  .dropzone { border: 1.5px dashed var(--neutral-300); border-radius: var(--radius-md); padding: 12px; text-align: center; background: var(--neutral-50); cursor: pointer; margin-bottom: 6px; }
+  .dropzone:hover { background: #EEEEEE; }
+  .dropzone.dragover { background: #EFF6FF; border-color: var(--info); }
+  .dropzone-title { font-size: 13px; font-weight: 600; color: var(--foreground); margin-bottom: 1px; }
+  .dropzone-hint { font-size: 11px; color: var(--muted-foreground); }
+  .dropzone.dragover .dropzone-idle { display: none; }
+  .dropzone.dragover .dropzone-drag { display: flex; }
+  .dropzone-drag { display: none; align-items: center; justify-content: center; height: 32px; gap: 6px; }
+  .file-list { list-style: none; display: flex; flex-direction: column; }
+  .file-row { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: var(--radius-sm); position: relative; }
+  .file-row:hover { background: rgba(255,255,255,0.6); }
+  .file-icon { flex-shrink: 0; color: var(--neutral-500); display: flex; }
+  .file-row.uploading .file-icon, .file-row.failed .file-icon { color: var(--neutral-400); }
+  .file-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .file-name { font-size: 13px; font-weight: 500; color: var(--foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .file-name:hover { text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--neutral-400); }
+  .file-row.uploading .file-name, .file-row.failed .file-name { color: var(--neutral-500); font-weight: 400; cursor: default; }
+  .file-meta { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted-foreground); line-height: 14px; }
+  .file-meta .sep { color: var(--neutral-300); }
+  .file-meta .chip { background: transparent; border: none; padding: 0; font: inherit; color: var(--muted-foreground); cursor: pointer; }
+  .file-meta .chip:hover { color: var(--foreground); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+  .row-kebab { width: 24px; height: 24px; background: transparent; border: none; border-radius: var(--radius-sm); color: var(--neutral-500); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .row-kebab:hover { background: rgba(0,0,0,0.04); color: var(--foreground); }
+  .show-all-btn { background: transparent; border: none; width: 100%; padding: 6px 4px; font-size: 12px; font-weight: 500; color: var(--neutral-700); border-radius: var(--radius-sm); text-align: center; }
+  .show-all-btn:hover { background: rgba(0,0,0,0.04); }
+  .info-footer { flex-shrink: 0; padding: 12px 14px; border-top: 1px solid var(--border); background: var(--background); display: flex; gap: 8px; }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); border: none; height: 36px; padding: 0 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
+  .btn-primary:hover { background: #000; }
+  .btn-primary:disabled { background: var(--neutral-200); color: var(--neutral-400); cursor: not-allowed; }
+  .btn-secondary { background: var(--background); color: var(--foreground); border: 1px solid var(--border); height: 36px; padding: 0 16px; border-radius: var(--radius-md); font-size: 13px; flex: 1; }
+  .btn-secondary:hover { background: var(--neutral-50); }
+  .btn-destructive { background: var(--destructive-bg); color: white; border: none; height: 36px; padding: 0 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; }
+  .btn-destructive:hover { background: var(--destructive); }
+
+  .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 40; }
+  .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 600px; background: var(--background); border-left: 1px solid var(--border); box-shadow: -8px 0 32px rgba(0,0,0,0.12); transform: translateX(100%); transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 50; display: flex; flex-direction: column; }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header { flex-shrink: 0; padding: 20px 24px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .drawer-header h2 { font-size: 20px; font-weight: 600; }
+  .drawer-close { background: transparent; border: none; width: 28px; height: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--neutral-500); }
+  .drawer-close:hover { background: var(--neutral-100); color: var(--foreground); }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 0 24px 16px; }
+  .same-cat-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--card-bg); border-radius: var(--radius-md); margin-bottom: 16px; }
+  .same-cat-row.hidden { display: none; }
+  .toggle { position: relative; width: 32px; height: 18px; background: var(--neutral-300); border-radius: 999px; cursor: pointer; flex-shrink: 0; transition: background 0.15s ease; }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.15); transition: transform 0.15s ease; }
+  .toggle.on { background: var(--primary); }
+  .toggle.on::after { transform: translateX(14px); }
+  .same-cat-row label { font-size: 13px; font-weight: 500; cursor: pointer; user-select: none; flex-shrink: 0; }
+  .same-cat-row .batch-sel-wrap { flex: 1; }
+  .sel { width: 100%; height: 32px; padding: 0 28px 0 10px; border: 1px solid var(--border); background: var(--background); border-radius: var(--radius-md); font-size: 13px; color: var(--foreground); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .sel.placeholder { color: var(--muted-foreground); }
+  .sel:disabled { background-color: var(--neutral-50); color: var(--neutral-400); cursor: not-allowed; }
+  .drawer-file-list { display: flex; flex-direction: column; }
+  .drawer-file { display: flex; align-items: center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--border); }
+  .drawer-file:last-child { border-bottom: none; }
+  .drawer-file .dfile-icon { flex-shrink: 0; color: var(--neutral-500); display: flex; }
+  .drawer-file.uploading .dfile-icon, .drawer-file.failed .dfile-icon { color: var(--neutral-400); }
+  .drawer-file .dfile-name { font-size: 13px; font-weight: 500; color: var(--foreground); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drawer-file.uploading .dfile-name, .drawer-file.failed .dfile-name { color: var(--neutral-500); font-weight: 400; }
+  .drawer-file .dfile-status { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted-foreground); flex-shrink: 0; }
+  .drawer-file .dfile-status .ok { color: var(--success); }
+  .drawer-file .dfile-status.failed { color: var(--destructive); }
+  .drawer-file .row-x { background: transparent; border: none; width: 24px; height: 24px; border-radius: var(--radius-sm); color: var(--neutral-500); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .drawer-file .row-x:hover { background: var(--neutral-100); color: var(--foreground); }
+  .drawer-file .sel { width: 180px; flex-shrink: 0; background-color: var(--background); }
+  .drawer-file.uploading .sel, .drawer-file.failed .sel { background-color: var(--neutral-50); color: var(--neutral-400); cursor: not-allowed; }
+  .drawer-footer { flex-shrink: 0; padding: 16px 24px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 10px; background: var(--background); }
+  .drawer-footer .btn-primary, .drawer-footer .btn-secondary { flex: 0 0 auto; min-width: 88px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; }
+
+  .kebab-menu { position: fixed; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.1); padding: 4px; min-width: 160px; z-index: 200; }
+  .kebab-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; background: none; border: none; text-align: left; border-radius: var(--radius-sm); font-size: 13px; color: var(--foreground); }
+  .kebab-item:hover { background: var(--neutral-100); }
+  .kebab-item.danger { color: var(--destructive); }
+  .kebab-item .ic { color: var(--neutral-500); display: flex; flex-shrink: 0; }
+  .kebab-item.danger .ic { color: var(--destructive); }
+  .kebab-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  .chip-popover { position: fixed; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 6px; min-width: 200px; z-index: 200; }
+  .chip-popover-title { font-size: 11px; font-weight: 600; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 8px 6px; }
+  .chip-popover .opt { background: transparent; border: none; text-align: left; padding: 7px 10px; width: 100%; font-size: 13px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; color: var(--foreground); }
+  .chip-popover .opt:hover { background: var(--neutral-100); }
+  .chip-popover .opt.selected { font-weight: 500; }
+
+  .file-info-pop { position: fixed; width: 320px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 200; }
+  .fip-header { padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .fip-title { font-size: 15px; font-weight: 600; }
+  .fip-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .fip-category { margin-bottom: 4px; }
+  .fip-pairs { background: var(--card-bg); border-radius: var(--radius-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .fip-pair { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+  .fip-pair .k { color: var(--muted-foreground); width: 90px; flex-shrink: 0; }
+  .fip-pair .v { color: var(--foreground); flex: 1; word-break: break-word; }
+
+  .lightbox { position: fixed; inset: 0; background: #1a1a1a; z-index: 300; display: flex; align-items: center; justify-content: center; }
+  .lightbox-top { position: absolute; top: 16px; right: 16px; display: flex; gap: 4px; }
+  .lb-btn { width: 32px; height: 32px; background: transparent; border: none; border-radius: var(--radius-md); color: white; display: flex; align-items: center; justify-content: center; }
+  .lb-btn:hover { background: rgba(255,255,255,0.08); }
+  .lightbox-content { width: 70%; max-width: 1000px; height: 78vh; background: white; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .lightbox-content .placeholder { background: repeating-conic-gradient(#F5F5F5 0% 25%, #FAFAFA 0% 50%) 50% / 24px 24px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--neutral-400); font-size: 13px; }
+  .lightbox-bottom-left { position: absolute; bottom: 20px; left: 24px; color: white; }
+  .lightbox-bottom-left .lb-name { font-size: 14px; font-weight: 500; }
+  .lightbox-bottom-left .lb-size { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .lightbox-bottom-center { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; color: white; font-size: 12px; }
+  .lightbox-bottom-right { position: absolute; bottom: 20px; right: 24px; display: flex; flex-direction: column; gap: 4px; }
+
+  .dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 250; display: flex; align-items: center; justify-content: center; }
+  .dialog { background: var(--background); border-radius: var(--radius-md); width: 480px; max-width: 90vw; box-shadow: 0 24px 64px rgba(0,0,0,0.22); padding: 20px 24px; }
+  .dialog h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .dialog .body { font-size: 13px; color: var(--muted-foreground); margin-bottom: 20px; }
+  .dialog .footer { display: flex; justify-content: flex-end; gap: 10px; }
+  .dialog .btn-secondary, .dialog .btn-destructive { flex: 0 0 auto; min-width: 80px; }
+
+  .sonner-container { position: fixed; bottom: 24px; right: 24px; z-index: 400; display: flex; flex-direction: column-reverse; gap: 8px; pointer-events: none; }
+  .sonner { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--foreground); min-width: 280px; max-width: 360px; opacity: 0; transform: translateY(8px); transition: opacity 0.2s ease, transform 0.2s ease; pointer-events: auto; }
+  .sonner.show { opacity: 1; transform: translateY(0); }
+  .sonner .sn-icon { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--success); color: var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  .hidden { display: none !important; }
+
+  .notes { position: absolute; top: 16px; left: 16px; width: 280px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); font-size: 11px; line-height: 16px; color: var(--neutral-700); z-index: 4; }
+  .notes h4 { font-size: 11px; font-weight: 600; color: var(--foreground); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .notes ul { list-style: none; padding: 0; }
+  .notes li { margin-bottom: 3px; color: var(--muted-foreground); }
+  .notes b { color: var(--foreground); font-weight: 500; }
 </style>
 </head>
-<body><div>PLACEHOLDER — DO NOT USE</div></body>
+<body>
+<div class="demo-bar">
+  <span class="demo-bar-title">FileAttachments · v2</span>
+  <span class="demo-bar-divider"></span>
+  <span class="demo-bar-label">Anchor:</span>
+  <div class="anchor-switcher" id="anchor-switcher">
+    <button class="anchor-pill" data-anchor="PROJECT">Project</button>
+    <button class="anchor-pill active" data-anchor="COMPONENT">Component</button>
+    <button class="anchor-pill" data-anchor="ZONE">Zone</button>
+    <button class="anchor-pill" data-anchor="TASK">Task</button>
+    <button class="anchor-pill" data-anchor="COMMENT">Comment</button>
+  </div>
+  <div class="demo-bar-spacer"></div>
+  <button class="demo-btn" id="demo-drop-1">Drop 1 file</button>
+  <button class="demo-btn" id="demo-drop-3">Drop 3 files</button>
+  <button class="demo-btn" id="demo-drop-mixed">Drop 6 (mixed states)</button>
+  <button class="demo-btn" id="demo-reset">Reset</button>
+</div>
+<div class="app">
+  <header class="app-header">
+    <div class="header-left">
+      <div class="h-logo">G</div>
+      <button class="h-tool" title="Tree"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <button class="h-tool" title="Layers"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="3" y1="6" x2="9" y2="6"/><line x1="14" y1="3" x2="14" y2="21"/><line x1="11" y1="9" x2="17" y2="9"/></svg></button>
+      <button class="h-tool active" title="Map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
+      <button class="h-tool" title="SLD"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg></button>
+      <button class="h-tool" title="Search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    </div>
+    <div class="header-center">
+      <button class="h-pill">GridSim West Upgrade <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+      <button class="h-pill">Jan 17, 2027</button>
+      <button class="h-pill"><div class="h-avatar" style="width:18px;height:18px;font-size:9px;">PP</div>As P</button>
+    </div>
+    <div class="header-right">
+      <span class="h-text-pill"><span class="h-dot warning"></span>3</span>
+      <span class="h-status">Draft</span>
+      <span class="h-text-pill">99+ changes</span>
+      <span class="h-text-pill"><span class="h-dot error"></span>5 conflicts</span>
+      <div class="h-avatar">PP</div>
+    </div>
+  </header>
+  <div class="app-body">
+    <div class="canvas-wrap">
+      <div class="canvas">
+        <div class="canvas-half map" style="flex: 1.3;"></div>
+        <div class="canvas-resize"></div>
+        <div class="canvas-half sld" style="flex: 1;">
+          <div class="sld-node" style="top: 80px; left: 50%; margin-left: -15px;">M</div>
+          <div class="sld-label" style="top: 84px; left: 60%;">MT-100</div>
+          <div class="sld-node" style="top: 140px; left: 50%; margin-left: -15px;">M</div>
+          <div class="sld-label" style="top: 144px; left: 60%;">MT-101</div>
+          <div class="sld-node" style="top: 200px; left: 50%; margin-left: -15px; border-color: var(--info); border-width: 2px;">⊟</div>
+          <div class="sld-label" style="top: 204px; left: 60%;">TR-312</div>
+        </div>
+        <div class="notes">
+          <h4>Demo guide</h4>
+          <ul>
+            <li>Click <b>Edit</b> on the right panel to enter edit mode</li>
+            <li>In edit mode, click the <b>drop zone</b> or use the top bar buttons to drop files</li>
+            <li>The drawer opens — toggle <b>Same category</b> or pick per-file</li>
+            <li><b>Apply</b> = commit categories · <b>Cancel</b> = leave files uncategorized (uploaded files stay)</li>
+            <li>Click a file's <b>kebab</b>, <b>category chip</b>, or <b>filename</b> to explore actions</li>
+          </ul>
+        </div>
+        <div class="canvas-toolbar">
+          <button title="Cursor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7 19 2-8 8-2-17-9z"/></svg></button>
+          <button class="done-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Done</button>
+        </div>
+      </div>
+      <div class="canvas-status">
+        <div><span class="dot-blue"></span>Selected: PL-121 (Pole)<span style="color: var(--neutral-300); margin: 0 8px;">|</span>Trace upstream: 2 components</div>
+        <div><span class="dot-blue"></span>Selected: TR-312 (Transformer)</div>
+      </div>
+    </div>
+    <aside class="info-panel" id="info-panel">
+      <div class="info-header">
+        <span class="info-title" id="info-title">Pad-mount 500 kVA</span>
+        <div class="h-actions">
+          <button class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      </div>
+      <div class="info-body">
+        <div class="card expanded" data-section="defined">
+          <div class="card-header" data-toggle="defined">
+            <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            <span class="card-title">Defined</span>
+          </div>
+          <div class="card-body">
+            <div class="kv-row header"><span>Parameter group 1</span></div>
+            <div class="kv-row"><span class="k">Component ID</span><span class="v">TR-312</span></div>
+            <div class="kv-row"><span class="k">Name</span><span class="v">Pad-mount 500 kVA</span></div>
+          </div>
+        </div>
+        <div class="card" data-section="library">
+          <div class="card-header" data-toggle="library">
+            <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            <span class="card-title">Library info</span>
+          </div>
+          <div class="card-body"></div>
+        </div>
+        <div class="card expanded files-card" data-section="files">
+          <div class="card-header" data-toggle="files">
+            <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            <span class="card-title">Files</span>
+            <span class="card-count" id="files-count">0</span>
+          </div>
+          <div class="card-body">
+            <div class="dropzone hidden" id="dropzone">
+              <div class="dropzone-idle">
+                <div class="dropzone-title">Drop files here</div>
+                <div class="dropzone-hint">Max 100 MB per file, up to 20 files</div>
+              </div>
+              <div class="dropzone-drag">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+            </div>
+            <div class="files-empty hidden" id="files-empty">No files</div>
+            <ul class="file-list" id="file-list"></ul>
+            <button class="show-all-btn hidden" id="show-all">Show all</button>
+          </div>
+        </div>
+      </div>
+      <div class="info-footer" id="info-footer"></div>
+    </aside>
+  </div>
+</div>
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<aside class="drawer" id="drawer">
+  <header class="drawer-header">
+    <h2>Categorize files</h2>
+    <button class="drawer-close" id="drawer-close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </header>
+  <div class="drawer-body">
+    <div class="same-cat-row" id="same-cat-row">
+      <div class="toggle" id="same-cat-toggle"></div>
+      <label for="same-cat-toggle">Same category for all files</label>
+      <div class="batch-sel-wrap">
+        <select class="sel placeholder" id="batch-select" disabled><option value="">Select category</option></select>
+      </div>
+    </div>
+    <div class="drawer-file-list" id="drawer-file-list"></div>
+  </div>
+  <footer class="drawer-footer">
+    <button class="btn-secondary" id="drawer-cancel">Cancel</button>
+    <button class="btn-primary" id="drawer-apply">Apply</button>
+  </footer>
+</aside>
+<div class="kebab-menu hidden" id="kebab-menu">
+  <button class="kebab-item" data-action="preview"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>Open preview</button>
+  <button class="kebab-item" data-action="download"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Download</button>
+  <button class="kebab-item" data-action="copy-link"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>Copy link</button>
+  <button class="kebab-item" data-action="info"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>File info</button>
+  <div class="kebab-divider"></div>
+  <button class="kebab-item danger" data-action="delete"><span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span>Delete</button>
+</div>
+<div class="chip-popover hidden" id="chip-popover">
+  <div class="chip-popover-title">Change category</div>
+  <div id="chip-popover-list"></div>
+</div>
+<div class="file-info-pop hidden" id="file-info-pop">
+  <div class="fip-header">
+    <span class="fip-title">File info</span>
+    <button class="icon-btn" id="fip-close" style="background: transparent; border: none; width: 24px; height: 24px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="fip-body" id="fip-body"></div>
+</div>
+<div class="lightbox hidden" id="lightbox">
+  <div class="lightbox-top">
+    <button class="lb-btn" id="lb-download"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <button class="lb-btn" id="lb-close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="lightbox-content"><div class="placeholder">Document preview</div></div>
+  <div class="lightbox-bottom-left">
+    <div class="lb-name" id="lb-name">file.pdf</div>
+    <div class="lb-size" id="lb-size">2.4 MB</div>
+  </div>
+  <div class="lightbox-bottom-center"><button class="lb-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><span><span id="lb-page">2</span> / <span id="lb-pages">50</span></span><button class="lb-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
+</div>
+<div class="dialog-backdrop hidden" id="delete-dialog">
+  <div class="dialog">
+    <h2>Delete file?</h2>
+    <div class="body">This action cannot be undone</div>
+    <div class="footer">
+      <button class="btn-secondary" id="delete-cancel">Cancel</button>
+      <button class="btn-destructive" id="delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+<div class="sonner-container" id="sonner-container"></div>
+<script>
+const CATEGORIES = { PROJECT: ['Specification','Engineering Drawing','Approval Letter','Permit','Contract'], COMPONENT: ['Datasheet','Engineering Drawing','Spec Sheet','Test Report'], ZONE: ['Survey','Easement','Permit','Map'], TASK: ['Work Order','Field Notes','Completion Photo','Other'], COMMENT: [] };
+const ANCHOR_MODE = { PROJECT:'mandatory', COMPONENT:'mandatory', ZONE:'mandatory', TASK:'optional', COMMENT:'none' };
+const ANCHOR_TITLE = { PROJECT:'GridSim West Upgrade', COMPONENT:'Pad-mount 500 kVA', ZONE:'HFTD Tier-3 East', TASK:'Replace pole 48291', COMMENT:'Comment thread' };
+const DEMO_FILES = {
+  PROJECT: [{ id:'p1', name:'Site_Survey_R2.pdf', size:'5.1 MB', category:'Specification' },{ id:'p2', name:'Single_Line_v3.pdf', size:'2.4 MB', category:'Engineering Drawing' }],
+  COMPONENT: [{ id:'c1', name:'Design_Spec_v3.pdf', size:'2.4 MB', category:'Datasheet' },{ id:'c2', name:'Asset_List.xlsx', size:'1.2 MB', category:'Datasheet' },{ id:'c3', name:'Site_Map.pdf', size:'12 MB', category:'Datasheet' },{ id:'c4', name:'Project_Plan.docx', size:'120 KB', category:'Datasheet' },{ id:'c5', name:'Budget_Overview.xlsx', size:'99 MB', category:'Datasheet' }],
+  ZONE: [{ id:'z1', name:'ROW_Easement.pdf', size:'1.2 MB', category:'Easement' },{ id:'z2', name:'Zone_Map.pdf', size:'5.4 MB', category:'Map' }],
+  TASK: [{ id:'t1', name:'Field_Notes.txt', size:'12 KB', category:'Field Notes' },{ id:'t2', name:'Pole_Photo.jpg', size:'3.1 MB', category:'Completion Photo' }],
+  COMMENT: [{ id:'cm1', name:'screenshot.png', size:'1.4 MB', category:null }],
+};
+const $ = (s) => document.querySelector(s); const $$ = (s) => Array.from(document.querySelectorAll(s));
+const uid = () => 'f' + Math.random().toString(36).slice(2,9);
+let state = { anchor:'COMPONENT', mode:'view', files: structuredClone(DEMO_FILES.COMPONENT), drawer:{ open:false, files:[], sameCategory:true, batchCategory:null } };
+let openKebabFor = null, openChipFor = null, openInfoFor = null, pendingDelete = null;
+const SVG = {
+  file: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  kebab: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>',
+  pencil: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  spinner: '<svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+  x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  retry: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+  error: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+};
+function sonner(text, ms=2400) { const cont=$('#sonner-container'); const el=document.createElement('div'); el.className='sonner'; el.innerHTML=`<span class="sn-icon">${SVG.check}</span><span>${text}</span>`; cont.appendChild(el); requestAnimationFrame(()=>el.classList.add('show')); setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),300); }, ms); }
+function closeAllFloats() { $('#chip-popover').classList.add('hidden'); $('#kebab-menu').classList.add('hidden'); $('#file-info-pop').classList.add('hidden'); openKebabFor=null; openChipFor=null; openInfoFor=null; }
+function renderInfoTitle() { $('#info-title').textContent = ANCHOR_TITLE[state.anchor]; }
+function renderFooter() {
+  const f = $('#info-footer');
+  if (state.mode === 'view') { f.innerHTML = `<button class="btn-primary" id="btn-edit">${SVG.pencil} Edit</button>`; $('#btn-edit').addEventListener('click', () => enterEdit()); }
+  else { f.innerHTML = `<button class="btn-secondary" id="btn-cancel-edit">Cancel</button><button class="btn-primary" id="btn-done-edit">Done</button>`; $('#btn-cancel-edit').addEventListener('click', () => exitEdit()); $('#btn-done-edit').addEventListener('click', () => { sonner('Changes saved'); exitEdit(); }); }
+}
+function renderFiles() {
+  const count = state.files.length; $('#files-count').textContent = count;
+  const dz = $('#dropzone'), em = $('#files-empty'), list = $('#file-list'), sa = $('#show-all');
+  if (state.mode === 'edit') dz.classList.remove('hidden'); else dz.classList.add('hidden');
+  if (count === 0 && state.mode === 'view') em.classList.remove('hidden'); else em.classList.add('hidden');
+  const VISIBLE = 5; const visible = state.files.slice(0, VISIBLE);
+  list.innerHTML = visible.map(f => renderRow(f)).join('');
+  if (count > VISIBLE) { sa.classList.remove('hidden'); sa.textContent = 'Show all (' + count + ')'; } else sa.classList.add('hidden');
+}
+function renderRow(f) {
+  const u = f.status === 'uploading', x = f.status === 'failed', m = ANCHOR_MODE[state.anchor], showChip = m !== 'none' && f.category;
+  let meta;
+  if (u) meta = `<span style="display:flex;align-items:center;gap:4px;">${SVG.spinner}Uploading…</span>`;
+  else if (x) meta = `<span style="color:var(--destructive);display:flex;align-items:center;gap:4px;">${SVG.error}Upload failed</span>`;
+  else { const chip = showChip ? `<button class="chip" data-chip="${f.id}">${f.category}</button>` : ''; const sep = showChip ? '<span class="sep">·</span>' : ''; meta = `${chip}${sep}<span>${f.size}</span>`; }
+  const right = (u || x) ? `<button class="row-kebab" data-rowx="${f.id}">${u ? SVG.x : SVG.retry}</button>` : `<button class="row-kebab" data-kebab="${f.id}">${SVG.kebab}</button>`;
+  return `<li class="file-row ${u?'uploading':''} ${x?'failed':''}" data-row="${f.id}"><span class="file-icon">${SVG.file}</span><div class="file-main"><span class="file-name" data-name="${f.id}">${f.name}</span><div class="file-meta">${meta}</div></div>${right}</li>`;
+}
+function renderAll() { renderInfoTitle(); renderFooter(); renderFiles(); }
+function enterEdit() { state.mode = 'edit'; renderFooter(); renderFiles(); }
+function exitEdit() { state.mode = 'view'; renderFooter(); renderFiles(); }
+
+$$('#anchor-switcher .anchor-pill').forEach(btn => { btn.addEventListener('click', () => { closeDrawer(true); state.anchor = btn.dataset.anchor; state.files = structuredClone(DEMO_FILES[state.anchor] || []); state.mode='view'; $$('#anchor-switcher .anchor-pill').forEach(b => b.classList.toggle('active', b===btn)); closeAllFloats(); renderAll(); }); });
+$$('.card-header[data-toggle]').forEach(h => { h.addEventListener('click', () => h.closest('.card').classList.toggle('expanded')); });
+$('#demo-reset').addEventListener('click', () => { state.files = structuredClone(DEMO_FILES[state.anchor] || []); state.mode='view'; closeDrawer(true); closeAllFloats(); renderAll(); sonner('Reset to initial state'); });
+$('#demo-drop-1').addEventListener('click', () => { if (state.mode !== 'edit') enterEdit(); simulateDrop(1); });
+$('#demo-drop-3').addEventListener('click', () => { if (state.mode !== 'edit') enterEdit(); simulateDrop(3); });
+$('#demo-drop-mixed').addEventListener('click', () => { if (state.mode !== 'edit') enterEdit(); simulateDrop(6, true); });
+$('#dropzone').addEventListener('click', () => simulateDrop(3));
+['dragenter','dragover'].forEach(ev => $('#dropzone').addEventListener(ev, (e) => { e.preventDefault(); $('#dropzone').classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev => $('#dropzone').addEventListener(ev, (e) => { e.preventDefault(); $('#dropzone').classList.remove('dragover'); if (ev === 'drop') simulateDrop(3); }));
+
+const FAKE = ['Blueprint_Draft_7.pdf','Asset_List.xlsx','Layout_Summary_2.pdf','Project_Outline_9.pdf','Project_Plan.docx','Draft_Proposal_6.pdf'];
+function fakeSize() { const o=['210 KB','890 KB','1.4 MB','2.4 MB','5.1 MB','13 MB']; return o[Math.floor(Math.random()*o.length)]; }
+function simulateDrop(count, mixed=false) {
+  closeAllFloats();
+  const dropped = [];
+  for (let i=0; i<count; i++) {
+    let status='uploading';
+    if (mixed) { if (i === 3) status='failed'; else if (i < 3) status='done'; }
+    dropped.push({ id:uid(), name:FAKE[(i+Math.floor(Math.random()*4))%FAKE.length], size:fakeSize(), category: ANCHOR_MODE[state.anchor]==='optional'?'Other':null, progress: status==='done'?100:0, status });
+  }
+  dropped.forEach(d => state.files.unshift({...d})); renderFiles();
+  dropped.forEach((d, idx) => {
+    if (d.status !== 'uploading') return;
+    const dur = 1600 + Math.random()*1400 + idx*200; const start = performance.now();
+    const tick = () => {
+      const t = (performance.now()-start)/dur; const pct = Math.min(100, t*100); d.progress = pct;
+      const w = state.files.find(f => f.id === d.id), dr = state.drawer.files.find(f => f.id === d.id);
+      if (w) w.progress = pct; if (dr) dr.progress = pct;
+      updateDrawerFileRow(d.id);
+      if (pct < 100) requestAnimationFrame(tick);
+      else { d.status='done'; if (w) w.status='done'; if (dr) dr.status='done'; renderFiles(); updateDrawerFileRow(d.id); }
+    };
+    requestAnimationFrame(tick);
+  });
+  if (ANCHOR_MODE[state.anchor] === 'none') return;
+  state.drawer.files = dropped.map(d => ({...d})); state.drawer.sameCategory = dropped.length > 1; state.drawer.batchCategory = null;
+  openDrawer();
+}
+function openDrawer() { state.drawer.open = true; $('#drawer').classList.add('open'); $('#drawer-backdrop').classList.add('open'); renderDrawer(); }
+function closeDrawer() { if (!state.drawer.open) return; state.drawer.open=false; $('#drawer').classList.remove('open'); $('#drawer-backdrop').classList.remove('open'); state.drawer.files=[]; }
+function renderDrawer() {
+  const a = state.anchor, cats = CATEGORIES[a], files = state.drawer.files;
+  const sr = $('#same-cat-row'); if (files.length > 1 && cats.length > 0) sr.classList.remove('hidden'); else sr.classList.add('hidden');
+  $('#same-cat-toggle').classList.toggle('on', state.drawer.sameCategory);
+  const bs = $('#batch-select'); bs.innerHTML = '<option value="">Select category</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join(''); bs.value = state.drawer.batchCategory || ''; bs.disabled = !state.drawer.sameCategory; bs.classList.toggle('placeholder', !state.drawer.batchCategory);
+  $('#drawer-file-list').innerHTML = files.map(f => renderDrawerFile(f, cats)).join('');
+  updateApplyEnabled();
+}
+function renderDrawerFile(f, cats) {
+  let s; if (f.status==='done') s=`<span class="dfile-status"><span class="ok">${SVG.check}</span>${f.size}</span>`;
+  else if (f.status==='failed') s=`<span class="dfile-status failed">${SVG.error}Upload failed. File is to big</span>`;
+  else s=`<span class="dfile-status">${SVG.spinner}Uploading…</span>`;
+  const r = f.status==='failed' ? `<button class="row-x" data-drawer-retry="${f.id}">${SVG.retry}</button>` : `<button class="row-x" data-drawer-x="${f.id}">${SVG.x}</button>`;
+  let sel = '';
+  if (cats.length > 0) {
+    const d1 = state.drawer.sameCategory ? 'disabled' : '';
+    const d2 = (f.status==='uploading' || f.status==='failed') ? 'disabled' : '';
+    const dis = d1 || d2;
+    const v = state.drawer.sameCategory ? (state.drawer.batchCategory || '') : (f.stagedCategory || '');
+    sel = `<select class="sel ${v?'':'placeholder'}" data-staged="${f.id}" ${dis}><option value="">Select category</option>${cats.map(c => `<option value="${c}" ${c===v?'selected':''}>${c}</option>`).join('')}</select>`;
+  }
+  return `<div class="drawer-file ${f.status}" data-drawer-file="${f.id}"><span class="dfile-icon">${SVG.file}</span><span class="dfile-name">${f.name}</span>${s}${r}${sel}</div>`;
+}
+function updateDrawerFileRow(id) {
+  if (!state.drawer.open) return;
+  const row = document.querySelector(`[data-drawer-file="${id}"]`); if (!row) return;
+  const f = state.drawer.files.find(x => x.id === id); if (!f) return;
+  const tpl = document.createElement('template'); tpl.innerHTML = renderDrawerFile(f, CATEGORIES[state.anchor]).trim();
+  row.replaceWith(tpl.content.firstElementChild); updateApplyEnabled();
+}
+function updateApplyEnabled() {
+  const m = ANCHOR_MODE[state.anchor], cats = CATEGORIES[state.anchor], btn = $('#drawer-apply');
+  if (cats.length === 0) { btn.disabled = false; return; }
+  if (state.drawer.sameCategory) { btn.disabled = (m==='mandatory') ? !state.drawer.batchCategory : false; }
+  else {
+    if (m === 'mandatory') { const all = state.drawer.files.filter(f => f.status !== 'failed').every(f => f.stagedCategory); btn.disabled = !all; }
+    else btn.disabled = false;
+  }
+}
+$('#same-cat-toggle').addEventListener('click', () => { state.drawer.sameCategory = !state.drawer.sameCategory; renderDrawer(); });
+$('#batch-select').addEventListener('change', (e) => { state.drawer.batchCategory = e.target.value || null; state.drawer.files.forEach(f => { f.stagedCategory = state.drawer.batchCategory; }); renderDrawer(); });
+$('#drawer-file-list').addEventListener('change', (e) => { if (e.target.tagName === 'SELECT' && e.target.dataset.staged) { const id = e.target.dataset.staged; const f = state.drawer.files.find(x => x.id===id); if (f) f.stagedCategory = e.target.value || null; updateApplyEnabled(); } });
+$('#drawer-file-list').addEventListener('click', (e) => {
+  const x = e.target.closest('[data-drawer-x]'); const r = e.target.closest('[data-drawer-retry]');
+  if (x) { const id = x.dataset.drawerX; state.drawer.files = state.drawer.files.filter(f => f.id !== id); state.files = state.files.filter(f => f.id !== id); renderDrawer(); renderFiles(); }
+  if (r) { const id = r.dataset.drawerRetry; const f = state.drawer.files.find(x=>x.id===id), w = state.files.find(x=>x.id===id); if (f) { f.status='uploading'; f.progress=0; } if (w) { w.status='uploading'; w.progress=0; } const dur = 1600+Math.random()*1400; const start = performance.now(); const tick = () => { const t=(performance.now()-start)/dur; const pct=Math.min(100,t*100); if (f) f.progress=pct; if (w) w.progress=pct; updateDrawerFileRow(id); if (pct<100) requestAnimationFrame(tick); else { if (f) f.status='done'; if (w) w.status='done'; renderFiles(); updateDrawerFileRow(id); } }; requestAnimationFrame(tick); }
+});
+$('#drawer-close').addEventListener('click', () => closeDrawer());
+$('#drawer-backdrop').addEventListener('click', () => closeDrawer());
+$('#drawer-cancel').addEventListener('click', () => closeDrawer());
+$('#drawer-apply').addEventListener('click', () => { let n=0; state.drawer.files.forEach(f => { const cat = state.drawer.sameCategory ? state.drawer.batchCategory : f.stagedCategory; if (cat) { const w = state.files.find(x => x.id === f.id); if (w) { w.category = cat; n++; } } }); closeDrawer(); renderFiles(); sonner(n>1 ? `Category applied to ${n} files` : 'Category applied'); });
+
+document.addEventListener('click', (e) => {
+  const c = e.target.closest('[data-chip]'); if (c) { e.stopPropagation(); closeAllFloats(); openChipPopover(c.dataset.chip, c); return; }
+  const k = e.target.closest('[data-kebab]'); if (k) { e.stopPropagation(); closeAllFloats(); openKebabMenu(k.dataset.kebab, k); return; }
+  const n = e.target.closest('[data-name]'); if (n) { e.stopPropagation(); closeAllFloats(); openPreview(n.dataset.name); return; }
+  const x = e.target.closest('[data-rowx]'); if (x) { e.stopPropagation(); const id=x.dataset.rowx; const f=state.files.find(x=>x.id===id); if (!f) return; if (f.status==='uploading') { state.files = state.files.filter(y => y.id !== id); renderFiles(); } else if (f.status==='failed') { f.status='uploading'; f.progress=0; const dur=1800+Math.random()*1200; const start=performance.now(); const tick=()=>{ const t=(performance.now()-start)/dur; f.progress=Math.min(100,t*100); if (f.progress<100) requestAnimationFrame(tick); else { f.status='done'; renderFiles(); } }; requestAnimationFrame(tick); } return; }
+  if (!e.target.closest('.chip-popover') && !e.target.closest('.kebab-menu') && !e.target.closest('.file-info-pop')) closeAllFloats();
+});
+
+function openChipPopover(fileId, anchorEl) {
+  const f = state.files.find(x => x.id === fileId); if (!f) return;
+  const cats = CATEGORIES[state.anchor]; if (cats.length === 0) return;
+  const pop = $('#chip-popover'), list = $('#chip-popover-list');
+  list.innerHTML = cats.map(c => `<button class="opt ${c===f.category?'selected':''}" data-set-cat="${c}"><span>${c}</span>${c===f.category?`<span style="color:var(--foreground);">${SVG.check}</span>`:''}</button>`).join('');
+  const r = anchorEl.getBoundingClientRect(); pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 228)) + 'px'; pop.style.top = (r.bottom + 4) + 'px'; pop.classList.remove('hidden'); openChipFor = fileId;
+  list.querySelectorAll('[data-set-cat]').forEach(btn => btn.addEventListener('click', (ev) => { ev.stopPropagation(); f.category = btn.dataset.setCat; closeAllFloats(); renderFiles(); sonner('Category changed to ' + f.category); }));
+}
+function openKebabMenu(fileId, anchorEl) { const m = $('#kebab-menu'), r = anchorEl.getBoundingClientRect(); m.style.left = Math.max(8, r.right - 180) + 'px'; m.style.top = (r.bottom + 4) + 'px'; m.classList.remove('hidden'); openKebabFor = fileId; }
+$('#kebab-menu').addEventListener('click', (e) => { const i = e.target.closest('.kebab-item'); if (!i) return; e.stopPropagation(); const f = state.files.find(x => x.id === openKebabFor); if (!f) return; closeAllFloats(); switch (i.dataset.action) { case 'preview': openPreview(f.id); break; case 'download': sonner('Download started'); break; case 'copy-link': sonner('Link copied to clipboard'); break; case 'info': openFileInfo(f.id); break; case 'delete': askDelete(f.id); break; } });
+
+function openFileInfo(fileId) {
+  const f = state.files.find(x => x.id === fileId); if (!f) return;
+  const m = ANCHOR_MODE[state.anchor], cats = CATEGORIES[state.anchor], pop = $('#file-info-pop'), body = $('#fip-body');
+  const nm = f.name.replace(/\.[^.]+$/, ''), ext = (f.name.match(/\.([^.]+)$/) || [])[1] || '';
+  const catRow = cats.length === 0 ? '' : `<div class="fip-category"><select class="sel ${f.category?'':'placeholder'}" data-info-cat="${f.id}">${m==='mandatory'?'':'<option value="">— none —</option>'}${cats.map(c=>`<option value="${c}" ${c===f.category?'selected':''}>${c}</option>`).join('')}</select></div>`;
+  body.innerHTML = `${catRow}<div class="fip-pairs"><div class="fip-pair"><span class="k">Filename</span><span class="v">${nm}</span></div><div class="fip-pair"><span class="k">Size</span><span class="v">${f.size}</span></div><div class="fip-pair"><span class="k">Uploaded by</span><span class="v">Sarah B.</span></div><div class="fip-pair"><span class="k">Uploaded at</span><span class="v">Feb 28 2026, 5:30 PM</span></div><div class="fip-pair"><span class="k">Type</span><span class="v">${ext.toUpperCase()}</span></div></div>`;
+  const pr = $('#info-panel').getBoundingClientRect(); pop.style.right = (window.innerWidth - pr.left + 12) + 'px'; pop.style.left = 'auto'; pop.style.top = '140px'; pop.classList.remove('hidden'); openInfoFor = f.id;
+  const sel = body.querySelector('[data-info-cat]'); if (sel) sel.addEventListener('change', (e) => { f.category = e.target.value || null; renderFiles(); sonner(f.category ? `Category set to ${f.category}` : 'Category cleared'); });
+}
+$('#fip-close').addEventListener('click', () => { $('#file-info-pop').classList.add('hidden'); openInfoFor = null; });
+
+function openPreview(fileId) { const f = state.files.find(x => x.id === fileId); if (!f) return; if (f.status === 'uploading' || f.status === 'failed') { sonner('Wait until upload completes'); return; } $('#lb-name').textContent = f.name; $('#lb-size').textContent = f.size; $('#lightbox').classList.remove('hidden'); }
+$('#lb-close').addEventListener('click', () => $('#lightbox').classList.add('hidden'));
+$('#lb-download').addEventListener('click', () => sonner('Download started'));
+
+function askDelete(fileId) { pendingDelete = fileId; $('#delete-dialog').classList.remove('hidden'); }
+$('#delete-cancel').addEventListener('click', () => { pendingDelete = null; $('#delete-dialog').classList.add('hidden'); });
+$('#delete-confirm').addEventListener('click', () => { if (pendingDelete) { const f = state.files.find(x => x.id === pendingDelete); state.files = state.files.filter(x => x.id !== pendingDelete); pendingDelete = null; $('#delete-dialog').classList.add('hidden'); renderFiles(); if (f) sonner(`File ${f.name} deleted`); } });
+$('#show-all').addEventListener('click', () => sonner('Would open the full file list (Document Library — future)'));
+
+renderAll();
+</script>
+</body>
 </html>
