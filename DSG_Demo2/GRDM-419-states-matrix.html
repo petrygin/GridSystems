@@ -136,6 +136,63 @@
   .container { margin-left: 240px; padding-left: 32px; padding-right: 32px; max-width: 1100px; box-sizing: border-box; padding-top: 32px; padding-bottom: 32px; }
   @media (max-width: 960px) { .sidebar { display: none; } .container { margin-left: 0; padding: 32px; } }
   [id^="sec-"], #principle, #playground-section, #top, #tokens { scroll-margin-top: 16px; }
+
+  /* =============== Connection point lifecycle (sec 6.3) =============== */
+  .cpl-section { margin-top: 8px; }
+  .cpl-step-nav { display: flex; gap: 6px; padding: 8px; background: var(--bg); border: 1px solid var(--neutral-200); border-radius: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .cpl-step-btn { background: transparent; border: 1px solid var(--neutral-200); padding: 6px 12px; font: inherit; font-size: 12px; color: var(--neutral-700); cursor: pointer; border-radius: 5px; transition: all 120ms; font-family: inherit; }
+  .cpl-step-btn:hover { border-color: var(--neutral-400); color: var(--neutral-900); }
+  .cpl-step-btn.active { background: var(--neutral-900); color: var(--bg); border-color: var(--neutral-900); }
+  .cpl-step-num { font-family: 'Geist Mono', monospace; font-size: 10px; opacity: 0.6; margin-right: 4px; }
+  .cpl-step-btn.active .cpl-step-num { opacity: 0.8; }
+  .cpl-divider { width: 1px; height: 18px; background: var(--neutral-200); margin: 0 4px; }
+  .cpl-step-btn.reset { color: var(--neutral-500); }
+  .cpl-step-btn.nav-btn { padding: 6px 8px; font-family: 'Geist Mono', monospace; }
+  .cpl-step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cpl-step-info { padding: 16px 20px; background: var(--bg); border: 1px solid var(--neutral-200); border-radius: 8px; margin-bottom: 12px; }
+  .cpl-step-title { font-size: 13px; font-weight: 600; color: var(--neutral-900); display: flex; align-items: baseline; gap: 8px; }
+  .cpl-step-title-num { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--neutral-500); font-weight: 500; }
+  .cpl-step-desc { font-size: 13px; color: var(--neutral-600); line-height: 20px; margin-top: 6px; }
+  .cpl-step-meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--neutral-100); font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--neutral-500); display: flex; gap: 16px; flex-wrap: wrap; }
+  .cpl-step-meta strong { color: var(--neutral-900); font-weight: 500; }
+  .cpl-scene-wrap { background: var(--bg); border: 1px solid var(--neutral-200); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+  .cpl-scene { width: 100%; background: var(--neutral-50); background-image: radial-gradient(var(--neutral-200) 1px, transparent 1px); background-size: 10px 10px; }
+  .cpl-scene svg { display: block; width: 100%; height: auto; }
+  .cpl-terminal .cpl-halo { fill: var(--neutral-300); opacity: 0; transition: opacity 200ms, fill 200ms; }
+  .cpl-terminal.has-halo .cpl-halo { opacity: 0.6; }
+  .cpl-terminal .cpl-dot { fill: #ffffff; stroke: var(--neutral-500); stroke-width: 1.5; transition: fill 200ms, stroke 200ms; }
+  .cpl-terminal.connected .cpl-dot { fill: var(--neutral-900); stroke: var(--neutral-900); }
+  .cpl-terminal.success .cpl-dot { stroke: var(--green-500); }
+  .cpl-terminal.success.connected .cpl-dot { fill: var(--green-500); stroke: var(--green-500); }
+  .cpl-terminal.success .cpl-halo { fill: var(--green-500); }
+  .cpl-terminal.success.has-halo .cpl-halo { opacity: 0.25; }
+  .cpl-terminal.warning .cpl-dot { stroke: var(--orange-500); }
+  .cpl-terminal.warning.connected .cpl-dot { fill: var(--orange-500); stroke: var(--orange-500); }
+  .cpl-terminal.warning .cpl-halo { fill: var(--orange-500); }
+  .cpl-terminal.warning.has-halo .cpl-halo { opacity: 0.25; }
+  .cpl-terminal.error .cpl-dot { stroke: var(--red-500); }
+  .cpl-terminal.error.connected .cpl-dot { fill: var(--red-500); stroke: var(--red-500); }
+  .cpl-terminal.error .cpl-halo { fill: var(--red-500); }
+  .cpl-terminal.error.has-halo .cpl-halo { opacity: 0.25; }
+  .cpl-terminal.active .cpl-dot { stroke-width: 2; }
+  .cpl-winding { fill: #ffffff; stroke: var(--neutral-900); stroke-width: 1.5; }
+  .cpl-lead { stroke: var(--neutral-900); stroke-width: 1.5; }
+  .cpl-comp-label { font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 500; fill: var(--neutral-900); }
+  .cpl-comp-sub { font-family: 'Geist Mono', monospace; font-size: 9px; fill: var(--neutral-500); }
+  .cpl-phantom-line { stroke: var(--neutral-400); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; opacity: 0; transition: opacity 200ms; pointer-events: none; }
+  .cpl-phantom-line.visible { opacity: 1; }
+  .cpl-commit-line { stroke: #f59e0b; stroke-width: 2; fill: none; opacity: 0; transition: opacity 300ms; stroke-linejoin: miter; }
+  .cpl-commit-line.visible { opacity: 1; }
+  .cpl-cursor-indicator { opacity: 0; transition: opacity 200ms, transform 300ms cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+  .cpl-cursor-indicator.visible { opacity: 1; }
+  .cpl-cursor-arrow { fill: var(--neutral-900); stroke: var(--bg); stroke-width: 1.5; stroke-linejoin: round; }
+  .cpl-cursor-arrow.dragging { fill: var(--blue-600); }
+  .cpl-legend { padding: 14px 20px; background: var(--bg); border: 1px solid var(--neutral-200); border-radius: 8px; font-size: 12px; color: var(--neutral-600); display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; margin-bottom: 12px; }
+  .cpl-legend h3 { grid-column: span 2; font-size: 10px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 4px 0; }
+  .cpl-legend-item { display: flex; align-items: center; gap: 10px; }
+  .cpl-legend-item svg { flex-shrink: 0; }
+  .cpl-legend-item .cpl-label { line-height: 16px; }
+  .cpl-legend-item .cpl-label strong { color: var(--neutral-900); font-weight: 500; }
 </style>
 </head>
 <body>
@@ -155,6 +212,7 @@
     <li><a href="#sec-6">6. Add / Connect</a></li>
     <li class="nav-sub"><a href="#sec-6-1">6.1 Snap-target по классам</a></li>
     <li class="nav-sub"><a href="#sec-6-2">6.2 Connection points</a></li>
+    <li class="nav-sub"><a href="#sec-6-3">6.3 Lifecycle</a></li>
     <li><a href="#sec-7">7. Комбинации</a></li>
     <li><a href="#sec-8">8. Connections (lines)</a></li>
     <li><a href="#sec-9">9. Trace для линий</a></li>
@@ -388,6 +446,146 @@
     </ul>
   </div>
 
+  <h3 id="sec-6-3" style="margin-top:24px">6.3. Connection point — lifecycle во время connect</h3>
+  <div class="note" style="margin-bottom:12px">Walk through по 5 шагам: как переходят состояния терминала от <code>idle</code> к <code>committed</code>. Кликай шаги или используй <code>← →</code>. На SLD конечная линия рендерится ортогональной (Manhattan-роутинг), без кривых — это видно на шаге 5.</div>
+
+  <div class="cpl-section">
+    <div class="cpl-step-nav">
+      <button class="cpl-step-btn nav-btn" id="cplPrev">◂</button>
+      <button class="cpl-step-btn active" data-cpl-step="1"><span class="cpl-step-num">01</span>Idle</button>
+      <button class="cpl-step-btn" data-cpl-step="2"><span class="cpl-step-num">02</span>Hover (no drag)</button>
+      <button class="cpl-step-btn" data-cpl-step="3"><span class="cpl-step-num">03</span>Drag started</button>
+      <button class="cpl-step-btn" data-cpl-step="4"><span class="cpl-step-num">04</span>Snap-target</button>
+      <button class="cpl-step-btn" data-cpl-step="5"><span class="cpl-step-num">05</span>Commit</button>
+      <button class="cpl-step-btn nav-btn" id="cplNext">▸</button>
+      <div class="cpl-divider"></div>
+      <button class="cpl-step-btn reset" id="cplReset">↶ Reset</button>
+    </div>
+
+    <div class="cpl-step-info">
+      <div class="cpl-step-title">
+        <span class="cpl-step-title-num" id="cplStepTitleNum">01</span>
+        <span id="cplStepTitle">Idle</span>
+      </div>
+      <div class="cpl-step-desc" id="cplStepDesc"></div>
+      <div class="cpl-step-meta" id="cplStepMeta"></div>
+    </div>
+
+    <div class="cpl-scene-wrap">
+      <div class="cpl-scene">
+        <svg viewBox="0 0 900 440" id="cplScene">
+          <path class="cpl-phantom-line" id="cplPhantomLine" d=""></path>
+          <path class="cpl-commit-line" id="cplCommitLine" d="M 150 196 L 150 90 L 580 90"></path>
+
+          <g id="cpl-t1">
+            <line class="cpl-lead" x1="150" y1="196" x2="150" y2="225"/>
+            <circle class="cpl-winding" cx="150" cy="240" r="14"/>
+            <circle class="cpl-winding" cx="150" cy="260" r="14"/>
+            <line class="cpl-lead" x1="150" y1="275" x2="150" y2="305"/>
+            <line class="cpl-lead" x1="138" y1="305" x2="162" y2="305"/>
+            <line class="cpl-lead" x1="142" y1="310" x2="158" y2="310"/>
+            <line class="cpl-lead" x1="146" y1="315" x2="154" y2="315"/>
+            <g class="cpl-terminal" id="cpl-t1-free" transform="translate(150, 196)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <text class="cpl-comp-label" x="190" y="246">T1</text>
+            <text class="cpl-comp-sub" x="190" y="262">источник · 11kV</text>
+          </g>
+
+          <g id="cpl-t2">
+            <line class="cpl-lead" x1="580" y1="90" x2="580" y2="119"/>
+            <circle class="cpl-winding" cx="580" cy="134" r="14"/>
+            <circle class="cpl-winding" cx="580" cy="154" r="14"/>
+            <line class="cpl-lead" x1="580" y1="169" x2="580" y2="198"/>
+            <g class="cpl-terminal" id="cpl-t2-top" transform="translate(580, 90)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <g class="cpl-terminal" id="cpl-t2-bottom" transform="translate(580, 198)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <text class="cpl-comp-label" x="620" y="140">T2</text>
+            <text class="cpl-comp-sub" x="620" y="156">совместим · 11kV</text>
+          </g>
+
+          <g id="cpl-t3">
+            <line class="cpl-lead" x1="580" y1="232" x2="580" y2="261"/>
+            <circle class="cpl-winding" cx="580" cy="276" r="14"/>
+            <circle class="cpl-winding" cx="580" cy="296" r="14"/>
+            <line class="cpl-lead" x1="580" y1="311" x2="580" y2="340"/>
+            <g class="cpl-terminal" id="cpl-t3-top" transform="translate(580, 232)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <g class="cpl-terminal" id="cpl-t3-bottom" transform="translate(580, 340)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <text class="cpl-comp-label" x="620" y="282">T3</text>
+            <text class="cpl-comp-sub" x="620" y="298">voltage mismatch · 33kV</text>
+          </g>
+
+          <g id="cpl-t4">
+            <line class="cpl-lead" x1="380" y1="370" x2="409" y2="370"/>
+            <circle class="cpl-winding" cx="424" cy="370" r="14"/>
+            <circle class="cpl-winding" cx="444" cy="370" r="14"/>
+            <line class="cpl-lead" x1="459" y1="370" x2="488" y2="370"/>
+            <line class="cpl-lead" x1="380" y1="370" x2="370" y2="370" stroke-dasharray="2 2" stroke="#a3a3a3"/>
+            <line class="cpl-lead" x1="488" y1="370" x2="498" y2="370" stroke-dasharray="2 2" stroke="#a3a3a3"/>
+            <g class="cpl-terminal connected" id="cpl-t4-left" transform="translate(380, 370)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <g class="cpl-terminal connected" id="cpl-t4-right" transform="translate(488, 370)">
+              <circle class="cpl-halo" r="10"/>
+              <circle class="cpl-dot" r="6"/>
+            </g>
+            <text class="cpl-comp-label" x="380" y="408">T4</text>
+            <text class="cpl-comp-sub" x="380" y="423">занят · оба терминала подключены</text>
+          </g>
+
+          <g class="cpl-cursor-indicator" id="cplCursor" transform="translate(0,0)">
+            <path class="cpl-cursor-arrow" id="cplCursorArrow" d="M0 0 L0 16 L4 12 L7 18 L9 17 L6 11 L11 11 Z"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="cpl-legend">
+      <h3>Чтение визуала</h3>
+      <div class="cpl-legend-item">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" fill="#ffffff" stroke="#737373" stroke-width="1.5"/></svg>
+        <span class="cpl-label"><strong>Outline</strong> — терминал свободен</span>
+      </div>
+      <div class="cpl-legend-item">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" fill="#171717"/></svg>
+        <span class="cpl-label"><strong>Filled</strong> — терминал занят (подключено)</span>
+      </div>
+      <div class="cpl-legend-item">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#e5e5e5"/><circle cx="10" cy="10" r="6" fill="#ffffff" stroke="#737373" stroke-width="1.5"/></svg>
+        <span class="cpl-label"><strong>+ Halo</strong> — hover ИЛИ snap-target активен</span>
+      </div>
+      <div class="cpl-legend-item">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" fill="#ffffff" stroke="#22c55e" stroke-width="1.5"/></svg>
+        <span class="cpl-label"><strong>Зелёный</strong> — valid snap-target</span>
+      </div>
+      <div class="cpl-legend-item">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" fill="#ffffff" stroke="#f97316" stroke-width="1.5"/></svg>
+        <span class="cpl-label"><strong>Оранжевый</strong> — warning (suboptimal)</span>
+      </div>
+      <div class="cpl-legend-item">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/></svg>
+        <span class="cpl-label"><strong>Красный</strong> — invalid (нельзя)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Правило перехода.</strong> Цвет на терминале живёт <strong>только в окне drag-операции</strong>. В idle (нет drag) все терминалы в default-цвете. На старте drag загораются snap-validity цвета на компонентах-кандидатах. После <code>commit</code> или <code>cancel</code> все цвета и halo гаснут одновременно — сцена возвращается в default. Тот терминал, к которому подключились, переходит <code>outline → filled</code>. <strong>Конечная линия рендерится ортогональной</strong> (Manhattan-роутинг для SLD) — она появляется только в момент commit и фиксируется в проекте. Все persistent-проблемы доносятся <strong>бейджами</strong> на иконке или линии, не цветом терминала.
+  </div>
+
   <h3 id="sec-7">7. Комбинации</h3>
   <div class="matrix">
     <div class="matrix-head">Стэк</div>
@@ -497,6 +695,81 @@
     const target = document.querySelector(a.getAttribute('href'));
     if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); setActive(a); }
   }));
+})();
+
+// =============== Connection point lifecycle (sec 6.3) ===============
+(function() {
+  const STEPS = {
+    1: {
+      title: 'Idle',
+      desc: 'Сцена в покое. Свободные терминалы — outline (пустые кружки), занятые — filled (залитые). Цветов и halo нет. Это базовое состояние, в котором канвас находится 99% времени работы.',
+      meta: [['Cursor','idle'],['Drag','false'],['Color channels','none']],
+      terminals: { 'cpl-t1-free':'','cpl-t2-top':'','cpl-t2-bottom':'','cpl-t3-top':'','cpl-t3-bottom':'','cpl-t4-left':'connected','cpl-t4-right':'connected' },
+      cursor: null, phantom: null, commit: false
+    },
+    2: {
+      title: 'Hover (no drag)',
+      desc: 'Курсор просто наведён на свободный терминал T1. Halo появляется — это сигнал «здесь можно начать drag, точка интерактивна». Цвета пока нет: ничего не оцениваем, ничего не сравниваем — просто фокус.',
+      meta: [['Cursor','над cpl-t1-free'],['Drag','false'],['Color channels','none (только halo)']],
+      terminals: { 'cpl-t1-free':'has-halo','cpl-t2-top':'','cpl-t2-bottom':'','cpl-t3-top':'','cpl-t3-bottom':'','cpl-t4-left':'connected','cpl-t4-right':'connected' },
+      cursor: { x: 158, y: 196, dragging: false }, phantom: null, commit: false
+    },
+    3: {
+      title: 'Drag started',
+      desc: 'Юзер захватил t1-free и потянул. На всех других компонентах сразу загораются snap-validity цвета: T2 — зелёный (совместимый класс, есть свободное место). T3 — оранжевый (suboptimal: voltage mismatch, можно но не стоит). T4 — красный (нельзя: оба терминала уже заняты, новый подключить некуда). T1-free сам остаётся в outline — он источник, а не target.',
+      meta: [['Cursor','тянет линию'],['Drag','true · from cpl-t1-free'],['Color channels','success / warning / error']],
+      terminals: { 'cpl-t1-free':'active','cpl-t2-top':'success','cpl-t2-bottom':'success','cpl-t3-top':'warning','cpl-t3-bottom':'warning','cpl-t4-left':'connected error','cpl-t4-right':'connected error' },
+      cursor: { x: 360, y: 250, dragging: true }, phantom: { x: 360, y: 250 }, commit: false
+    },
+    4: {
+      title: 'Hover over valid target',
+      desc: 'Курсор переходит на зелёный t2-top. На этом конкретном терминале добавляется halo — он становится «активным snap-target». Сам цвет (зелёный) остаётся — мы по-прежнему оцениваем валидность. Если сейчас отпустить — соединение пойдёт сюда. Остальные таргеты сохраняют свои validity-цвета, но без halo.',
+      meta: [['Cursor','над cpl-t2-top'],['Drag','true · from cpl-t1-free'],['Snap-target','cpl-t2-top (active)']],
+      terminals: { 'cpl-t1-free':'active','cpl-t2-top':'success has-halo','cpl-t2-bottom':'success','cpl-t3-top':'warning','cpl-t3-bottom':'warning','cpl-t4-left':'connected error','cpl-t4-right':'connected error' },
+      cursor: { x: 588, y: 90, dragging: true }, phantom: { x: 580, y: 90 }, commit: false
+    },
+    5: {
+      title: 'Commit',
+      desc: 'Юзер отпустил кнопку над t2-top. Соединение фиксируется и рисуется линия — ортогональным маршрутом (Manhattan), без кривых, как этого требует SLD-конвенция. Одновременно гаснут все snap-validity цвета и halo на сцене — T3 и T4 возвращаются в default. T1-free и t2-top переходят из outline в filled-default (теперь оба занятые). Сцена снова чистая, но с новым ребром. Если бы у нового соединения была валидационная проблема — она появилась бы бейджем на линии или на иконке, не цветом терминала.',
+      meta: [['Cursor','idle'],['Drag','false · committed'],['Новое соединение','cpl-t1-free ↔ cpl-t2-top'],['Routing','ortho (Manhattan)']],
+      terminals: { 'cpl-t1-free':'connected','cpl-t2-top':'connected','cpl-t2-bottom':'','cpl-t3-top':'','cpl-t3-bottom':'','cpl-t4-left':'connected','cpl-t4-right':'connected' },
+      cursor: null, phantom: null, commit: true
+    }
+  };
+  const IDS = ['cpl-t1-free','cpl-t2-top','cpl-t2-bottom','cpl-t3-top','cpl-t3-bottom','cpl-t4-left','cpl-t4-right'];
+  let currentStep = 1;
+  function apply(n) {
+    const s = STEPS[n]; if (!s) return;
+    currentStep = n;
+    document.getElementById('cplStepTitleNum').textContent = String(n).padStart(2,'0');
+    document.getElementById('cplStepTitle').textContent = s.title;
+    document.getElementById('cplStepDesc').textContent = s.desc;
+    document.getElementById('cplStepMeta').innerHTML = s.meta.map(([k,v])=>`<div>${k}: <strong>${v}</strong></div>`).join('');
+    document.querySelectorAll('.cpl-step-btn[data-cpl-step]').forEach(b => { b.classList.toggle('active', Number(b.dataset.cplStep) === n); });
+    document.getElementById('cplPrev').disabled = (n === 1);
+    document.getElementById('cplNext').disabled = (n === 5);
+    IDS.forEach(id => { const el = document.getElementById(id); if (!el) return; el.setAttribute('class', `cpl-terminal ${s.terminals[id]||''}`.trim()); });
+    const ph = document.getElementById('cplPhantomLine');
+    if (s.phantom) { ph.setAttribute('d', `M 150 196 L ${s.phantom.x} ${s.phantom.y}`); ph.classList.add('visible'); } else { ph.classList.remove('visible'); }
+    const cur = document.getElementById('cplCursor');
+    const arr = document.getElementById('cplCursorArrow');
+    if (s.cursor) { cur.setAttribute('transform', `translate(${s.cursor.x}, ${s.cursor.y})`); cur.classList.add('visible'); arr.classList.toggle('dragging', s.cursor.dragging); } else { cur.classList.remove('visible'); }
+    const com = document.getElementById('cplCommitLine');
+    if (s.commit) com.classList.add('visible'); else com.classList.remove('visible');
+  }
+  document.querySelectorAll('.cpl-step-btn[data-cpl-step]').forEach(b => { b.addEventListener('click', () => apply(Number(b.dataset.cplStep))); });
+  document.getElementById('cplPrev').addEventListener('click', () => currentStep > 1 && apply(currentStep - 1));
+  document.getElementById('cplNext').addEventListener('click', () => currentStep < 5 && apply(currentStep + 1));
+  document.getElementById('cplReset').addEventListener('click', () => apply(1));
+  document.addEventListener('keydown', (e) => {
+    const cpl = document.getElementById('sec-6-3'); if (!cpl) return;
+    const r = cpl.getBoundingClientRect();
+    const vis = r.top < window.innerHeight && r.bottom > 0;
+    if (!vis) return;
+    if (e.key === 'ArrowRight' && currentStep < 5) { e.preventDefault(); apply(currentStep + 1); }
+    if (e.key === 'ArrowLeft'  && currentStep > 1) { e.preventDefault(); apply(currentStep - 1); }
+  });
+  apply(1);
 })();
 </script>
 </body>
