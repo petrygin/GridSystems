@@ -1,1 +1,1240 @@
-PLACEHOLDER_SHAPES
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>GRDM-419 — Component shapes (vocabulary)</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-400: #60a5fa;
+    --blue-500: #3b82f6;
+    --blue-600: #2563eb;
+    --sky-300: #c4b5fd;
+    --fuchsia-300: #93c5fd;
+    --emerald-300: #5eead4;
+    --pink-300: #f0abfc;
+    --violet-300: #c4b5fd;
+    --orange-400: #fb923c;
+    --orange-500: #f97316;
+    --neutral-50: #fafafa;
+    --neutral-100: #f5f5f5;
+    --neutral-200: #e5e5e5;
+    --neutral-300: #d4d4d4;
+    --neutral-400: #a3a3a3;
+    --neutral-500: #737373;
+    --neutral-600: #525252;
+    --neutral-700: #404040;
+    --neutral-800: #262626;
+    --neutral-900: #171717;
+    --bg: #ffffff;
+    --selection: #2563eb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Geist', system-ui, -apple-system, sans-serif; background: var(--neutral-50); color: var(--neutral-900); font-size: 14px; line-height: 20px; }
+
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-500); margin: 32px 0 12px; }
+  .key-meta { display: flex; gap: 12px; align-items: center; margin-top: 4px; font-size: 12px; color: var(--neutral-500); }
+  .pill { background: var(--neutral-100); color: var(--neutral-700); padding: 2px 8px; border-radius: 4px; font-family: 'Geist Mono', monospace; font-size: 11px; font-weight: 500; }
+  .back-link { font-size: 12px; color: var(--neutral-500); text-decoration: none; transition: color 120ms; }
+  .back-link:hover { color: var(--neutral-900); }
+
+  /* === Sidebar (same as main spec) === */
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--bg); border-right: 1px solid var(--neutral-200); overflow-y: auto; padding: 24px 0; z-index: 100; font-size: 12px; }
+  .sidebar-header { padding: 0 20px 16px; border-bottom: 1px solid var(--neutral-100); margin-bottom: 12px; }
+  .sidebar-brand { font-size: 11px; font-weight: 600; color: var(--neutral-500); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .sidebar-title { font-size: 13px; font-weight: 600; color: var(--neutral-900); line-height: 1.4; }
+  .sidebar-nav { list-style: none; padding: 0 12px; margin: 0; }
+  .sidebar-nav li { margin-bottom: 1px; }
+  .sidebar-nav a { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 5px; color: var(--neutral-600); text-decoration: none; transition: background 80ms, color 80ms; line-height: 1.4; }
+  .sidebar-nav a:hover { background: var(--neutral-50); color: var(--neutral-900); }
+  .sidebar-nav a.active { background: var(--neutral-100); color: var(--neutral-900); font-weight: 500; }
+  .sidebar-nav a.active::before { content: ''; width: 3px; height: 14px; background: var(--selection); border-radius: 2px; margin-left: -7px; margin-right: 4px; }
+  .sidebar-nav a:not(.active)::before { content: ''; width: 3px; height: 14px; margin-left: -7px; margin-right: 4px; }
+  .sidebar-nav .nav-sub a { padding-left: 28px; font-size: 11.5px; }
+  .sidebar-nav-label { padding: 12px 18px 4px; font-size: 10px; font-weight: 600; color: var(--neutral-400); text-transform: uppercase; letter-spacing: 0.5px; }
+  .sidebar-nav-divider { height: 1px; background: var(--neutral-100); margin: 8px 12px; }
+  .sidebar-back { padding: 6px 12px 14px; }
+  .sidebar-back a { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--neutral-500); text-decoration: none; }
+  .sidebar-back a:hover { color: var(--neutral-900); }
+
+  .container { margin-left: 240px; padding: 0 32px 32px; max-width: 1200px; box-sizing: border-box; }
+  @media (max-width: 960px) { .sidebar { display: none; } .container { margin-left: 0; padding: 0 32px 32px; } }
+
+  /* Top page tabs (cross-link between Component icon ↔ Component shapes) */
+  .page-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--neutral-200);
+    margin: -8px 0 28px;
+  }
+  .page-tabs a {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--neutral-500);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 80ms, border-color 80ms;
+  }
+  .page-tabs a:hover:not(.active) {
+    color: var(--neutral-800);
+  }
+  .page-tabs a.active {
+    color: var(--neutral-900);
+    border-bottom-color: var(--neutral-900);
+  }
+
+  /* === Section header card === */
+  .principle {
+    margin-top: 20px;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .principle h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-500); margin-bottom: 12px; }
+  .principle p { font-size: 13px; line-height: 20px; color: var(--neutral-700); }
+  .principle p + p { margin-top: 8px; }
+  .principle code { font-family: 'Geist Mono', monospace; font-size: 11px; background: var(--neutral-100); padding: 1px 5px; border-radius: 3px; color: var(--neutral-900); }
+  .principle .ext-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--blue-600); text-decoration: none; font-weight: 500;
+  }
+  .principle .ext-link:hover { text-decoration: underline; }
+
+  /* === Shape grid === */
+  .shape-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--neutral-200);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .shape-card {
+    background: var(--bg);
+    padding: 16px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 140px;
+  }
+  .shape-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .shape-icon svg { display: block; width: 100%; height: 100%; }
+  .shape-name {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--neutral-700);
+    text-align: center;
+    line-height: 14px;
+  }
+  .shape-desc {
+    font-size: 11px;
+    color: var(--neutral-500);
+    text-align: center;
+    line-height: 14px;
+    margin-top: -2px;
+  }
+
+  /* SLD library — slightly tighter grid since 32 items */
+  .shape-grid.sld {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  /* === Category label === */
+  .category-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--neutral-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .category-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--neutral-200);
+  }
+  .category-label .count {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--neutral-400);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* === Zoom demo (interactive toggle for TMSP fill) === */
+  .zoom-demo {
+    margin-top: 16px;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .zoom-demo-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--neutral-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .zoom-demo-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--neutral-900);
+  }
+  .zoom-toggle-group {
+    display: flex;
+    gap: 4px;
+    background: var(--neutral-100);
+    padding: 3px;
+    border-radius: 6px;
+  }
+  .zoom-toggle {
+    background: transparent;
+    border: 0;
+    padding: 4px 10px;
+    font: inherit;
+    font-size: 11px;
+    color: var(--neutral-600);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 120ms;
+    font-family: inherit;
+  }
+  .zoom-toggle:hover { color: var(--neutral-900); }
+  .zoom-toggle.active { background: var(--bg); color: var(--neutral-900); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .zoom-stage {
+    background: var(--neutral-50);
+    background-image: radial-gradient(var(--neutral-200) 1px, transparent 1px);
+    background-size: 12px 12px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 64px;
+    min-height: 200px;
+  }
+  .zoom-stage-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .zoom-stage-item-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--neutral-500);
+  }
+  .zoom-stage svg {
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .zoom-stage[data-zoom="xs"] svg { transform: scale(0.4); }
+  .zoom-stage[data-zoom="s"]  svg { transform: scale(0.55); }
+  .zoom-stage[data-zoom="m"]  svg { transform: scale(0.8); }
+  .zoom-stage[data-zoom="l"]  svg { transform: scale(1); }
+
+  .zoom-stage[data-zoom="xs"] .zoom-letter,
+  .zoom-stage[data-zoom="s"]  .zoom-letter { opacity: 0; }
+  .zoom-stage[data-zoom="m"]  .zoom-letter,
+  .zoom-stage[data-zoom="l"]  .zoom-letter { opacity: 1; }
+  .zoom-letter { transition: opacity 240ms; }
+
+  .zoom-toggle .zoom-toggle-tag {
+    display: inline-block; margin-left: 4px;
+    font-size: 9px; font-weight: 500;
+    color: var(--neutral-500);
+    font-family: 'Geist Mono', monospace;
+  }
+  .zoom-toggle.active .zoom-toggle-tag { color: var(--neutral-700); }
+
+  /* === Notes & legend === */
+  .note {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: var(--bg);
+    border: 1px solid var(--neutral-200);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--neutral-700);
+  }
+  .note strong { color: var(--neutral-900); font-weight: 600; }
+  .note code { font-family: 'Geist Mono', monospace; font-size: 11px; background: var(--neutral-100); padding: 1px 5px; border-radius: 3px; color: var(--neutral-900); }
+  .note ul { margin: 8px 0 0 18px; line-height: 22px; }
+
+  /* TMSP color legend inline */
+  .tmsp-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .tmsp-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    color: var(--neutral-700);
+  }
+  .tmsp-swatch {
+    width: 16px; height: 16px; border-radius: 3px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: var(--neutral-900);
+  }
+
+  [id^="sec-"], #top { scroll-margin-top: 16px; }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">GRDM-419 · vocabulary</div>
+    <div class="sidebar-title">Component shapes — visual vocabulary</div>
+  </div>
+  <ul class="sidebar-nav">
+    <li><a href="#top">Обзор</a></li>
+    <li class="sidebar-nav-label">SLD</li>
+    <li><a href="#sec-sld-base">Базовые формы</a></li>
+    <li><a href="#sec-sld-lib">Полная библиотека</a></li>
+    <li class="nav-sub"><a href="#sec-sld-transformers">Transformers</a></li>
+    <li class="nav-sub"><a href="#sec-sld-switching">Switching</a></li>
+    <li class="nav-sub"><a href="#sec-sld-protection">Protection</a></li>
+    <li class="nav-sub"><a href="#sec-sld-generation">Generation/Storage</a></li>
+    <li class="nav-sub"><a href="#sec-sld-measurement">Measurement</a></li>
+    <li class="nav-sub"><a href="#sec-sld-loads">Loads</a></li>
+    <li class="nav-sub"><a href="#sec-sld-infra">Infrastructure</a></li>
+    <li class="sidebar-nav-label">MAP</li>
+    <li><a href="#sec-map">Формы (7)</a></li>
+    <li><a href="#sec-map-fill">Fill convention (TMSP)</a></li>
+    <li><a href="#sec-map-partial">Примеры частичной заливки</a></li>
+    <li><a href="#sec-map-zoom">Zoom behavior</a></li>
+  </ul>
+</aside>
+
+<div class="container">
+
+  <div class="page-tabs">
+    <a href="GRDM-419-states-matrix.html">Component icon</a>
+    <a href="GRDM-419-component-shapes.html" class="active">Component shapes</a>
+  </div>
+
+  <h1 id="top">Component shapes — visual vocabulary</h1>
+  <div class="key-meta">
+    <span class="pill">GRDM-419</span>
+    <span>SLD + MAP · базовая графическая лексика, на которой работает state-система</span>
+  </div>
+
+  <div class="principle">
+    <h2>Зачем эта страничка</h2>
+    <p>States-матрица (<a class="ext-link" href="GRDM-419-states-matrix.html">основная спека ↗</a>) описывает <strong>как</strong> выглядит иконка в каждом состоянии (hover, selected, snap-target, validation). Этот файл описывает <strong>что именно</strong> рисуется как иконка — словарь форм для SLD и MAP, общая для всей системы графическая лексика.</p>
+    <p>Authoritative source — Figma. SLD-библиотека: <a class="ext-link" href="https://www.figma.com/design/FalQKGg5Lr0zNq89dSDcsP/UI-kit---GridModel?node-id=3416-13782" target="_blank">UI kit · electrical icons ↗</a>. Здесь — копия с подписями для быстрой навигации и handoff'а.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!--                      SLD                                     -->
+  <!-- ============================================================ -->
+  <h3 id="sec-sld-base">SLD · базовые формы</h3>
+  <div class="note" style="margin-top:0;margin-bottom:12px">
+    4 примитива, из которых строятся все SLD-символы: <strong>circle</strong> (round body — двигатели, генераторы, измерения), <strong>square</strong> (boxed body — выключатели, реклоузеры, измерители), <strong>взаимопроникающие окружности</strong> (трансформаторы), <strong>busbar</strong> (шина — толстая горизонтальная линия). Полная библиотека ниже использует эти примитивы как основу.
+  </div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="20" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="40" r="14" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="45" text-anchor="middle" font-size="13" font-weight="600" fill="#171717" font-family="Geist Mono">M</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">circle / round body</div>
+      <div class="shape-desc">двигатели, генераторы</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="20" stroke="#171717" stroke-width="2"/>
+          <rect x="18" y="26" width="28" height="28" rx="3" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="45" text-anchor="middle" font-size="13" font-weight="600" fill="#171717" font-family="Geist Mono">M</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">square / boxed body</div>
+      <div class="shape-desc">switches, measures</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="46" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="56" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">overlapping circles</div>
+      <div class="shape-desc">трансформаторы</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <rect x="6" y="36" width="52" height="8" fill="#171717"/>
+        </svg>
+      </div>
+      <div class="shape-name">busbar</div>
+      <div class="shape-desc">шина (variable length)</div>
+    </div>
+  </div>
+
+  <h3 id="sec-sld-lib">SLD · полная библиотека (32)</h3>
+  <div class="note" style="margin-top:0;margin-bottom:8px">
+    Все 32 IEC-варианта из Figma. Сгруппированы по электрической роли. Имена совпадают с <code>variant=</code> в Figma-компоненте.
+  </div>
+
+  <!-- ============ Transformers ============ -->
+  <div class="category-label">Transformers <span class="count">5</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="20" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="30" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="46" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="56" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">transformer-2w</div>
+      <div class="shape-desc">2-winding</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="22" y1="0" x2="22" y2="22" stroke="#171717" stroke-width="2"/>
+          <line x1="42" y1="0" x2="42" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="22" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="42" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="46" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="56" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">transformer-3w</div>
+      <div class="shape-desc">3-winding (Y-pattern)</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="46" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="42" y1="39" x2="55" y2="39" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="56" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">transformer-auto</div>
+      <div class="shape-desc">2-winding autotransformer</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="22" y1="0" x2="22" y2="22" stroke="#171717" stroke-width="2"/>
+          <line x1="42" y1="0" x2="42" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="22" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="42" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="46" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="52" y1="39" x2="62" y2="39" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="56" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">transformer-3w-auto</div>
+      <div class="shape-desc">3-winding autotransformer</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="20" y="22" width="24" height="32" fill="none" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="2" fill="#171717"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">voltage-regulator</div>
+      <div class="shape-desc">VR (boxed)</div>
+    </div>
+  </div>
+
+  <!-- ============ Switching ============ -->
+  <div class="category-label">Switching <span class="count">8</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="26" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="28" r="2.5" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="30" x2="46" y2="50" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">switch-open</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="26" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="30" r="2.5" fill="#171717"/>
+          <circle cx="32" cy="50" r="2.5" fill="#171717"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">switch-closed</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="24" r="2.5" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="26" x2="48" y2="48" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="56" r="2.5" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="58" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">disconnector-open</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="24" r="2.5" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="26" x2="32" y2="54" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="56" r="2.5" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="58" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">disconnector-closed</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="26" stroke="#171717" stroke-width="2"/>
+          <rect x="24" y="26" width="16" height="28" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">breaker-open</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="26" stroke="#171717" stroke-width="2"/>
+          <rect x="24" y="26" width="16" height="28" fill="#171717"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">breaker-closed</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="20" y="22" width="24" height="32" rx="3" fill="none" stroke="#171717" stroke-width="2" stroke-dasharray="3 3"/>
+          <text x="32" y="42" text-anchor="middle" font-size="10" font-weight="600" fill="#171717" font-family="Geist Mono">79</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">recloser-open</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="20" y="22" width="24" height="32" rx="3" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="42" text-anchor="middle" font-size="10" font-weight="600" fill="#171717" font-family="Geist Mono">79</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">recloser-closed</div>
+    </div>
+  </div>
+
+  <!-- ============ Protection ============ -->
+  <div class="category-label">Protection <span class="count">5</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="26" y="22" width="12" height="32" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">fuse-normal</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="26" y="22" width="12" height="32" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="24" y1="50" x2="40" y2="26" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">fuse-blown</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="20" stroke="#171717" stroke-width="2"/>
+          <polyline points="26,22 38,28 26,34 38,40 26,46 38,52" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="22" y1="58" x2="42" y2="58" stroke="#171717" stroke-width="2"/>
+          <line x1="26" y1="62" x2="38" y2="62" stroke="#171717" stroke-width="2"/>
+          <line x1="30" y1="66" x2="34" y2="66" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">lightning-arrester</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="18" y="22" width="28" height="32" rx="2" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="44" text-anchor="middle" font-size="11" font-weight="600" fill="#171717" font-family="Geist Mono">FI</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">fault-interrupter</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="18" y="22" width="28" height="32" rx="2" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#171717" font-family="Geist Mono">S</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">sectionalizer</div>
+    </div>
+  </div>
+
+  <!-- ============ Generation/Storage ============ -->
+  <div class="category-label">Generation / Storage <span class="count">4</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="14" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="43" text-anchor="middle" font-size="13" font-weight="600" fill="#171717" font-family="Geist Mono">G</text>
+          <line x1="32" y1="52" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">generator</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="14" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="42" text-anchor="middle" font-size="10" font-weight="600" fill="#171717" font-family="Geist Mono">PV</text>
+          <line x1="32" y1="52" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">solar-pv</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="26" stroke="#171717" stroke-width="2"/>
+          <line x1="22" y1="30" x2="42" y2="30" stroke="#171717" stroke-width="2.5"/>
+          <line x1="26" y1="38" x2="38" y2="38" stroke="#171717" stroke-width="2"/>
+          <line x1="22" y1="46" x2="42" y2="46" stroke="#171717" stroke-width="2.5"/>
+          <line x1="26" y1="54" x2="38" y2="54" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="58" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">battery</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="14" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="43" text-anchor="middle" font-size="13" font-weight="600" fill="#171717" font-family="Geist Mono">W</text>
+          <line x1="32" y1="52" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">wind</div>
+    </div>
+  </div>
+
+  <!-- ============ Measurement ============ -->
+  <div class="category-label">Measurement <span class="count">3</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="26" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="42" text-anchor="middle" font-size="9" font-weight="600" fill="#171717" font-family="Geist Mono">VT</text>
+          <line x1="32" y1="48" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">vt</div>
+      <div class="shape-desc">voltage transformer</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="32" r="10" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="36" text-anchor="middle" font-size="10" font-weight="600" fill="#171717" font-family="Geist Mono">CT</text>
+          <line x1="32" y1="42" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">ct</div>
+      <div class="shape-desc">current transformer</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="14" y="22" width="36" height="32" rx="2" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="44" text-anchor="middle" font-size="11" font-weight="600" fill="#171717" font-family="Geist Mono">kWh</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">meter</div>
+    </div>
+  </div>
+
+  <!-- ============ Loads ============ -->
+  <div class="category-label">Loads <span class="count">2</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <polygon points="32,52 18,22 46,22" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="52" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">load</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="14" fill="none" stroke="#171717" stroke-width="2"/>
+          <text x="32" y="43" text-anchor="middle" font-size="13" font-weight="600" fill="#171717" font-family="Geist Mono">M</text>
+          <line x1="32" y1="52" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">motor</div>
+    </div>
+  </div>
+
+  <!-- ============ Infrastructure / Other ============ -->
+  <div class="category-label">Infrastructure / Other <span class="count">5</span></div>
+  <div class="shape-grid sld">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <circle cx="32" cy="38" r="14" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="28" y1="28" x2="28" y2="48" stroke="#171717" stroke-width="2"/>
+          <polygon points="28,38 40,28 40,48" fill="none" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="52" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">substation</div>
+      <div class="shape-desc">K-glyph</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <polygon points="22,22 42,22 32,42" fill="#171717"/>
+          <line x1="32" y1="44" x2="32" y2="58" stroke="#171717" stroke-width="2" stroke-dasharray="3 3"/>
+          <line x1="32" y1="58" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+          <text x="46" y="32" font-size="8" fill="#737373" font-family="Geist Mono">OH</text>
+          <text x="46" y="58" font-size="8" fill="#737373" font-family="Geist Mono">UG</text>
+        </svg>
+      </div>
+      <div class="shape-name">pothead-riser</div>
+      <div class="shape-desc">OH→UG transition</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="38" stroke="#171717" stroke-width="2"/>
+          <line x1="20" y1="40" x2="44" y2="40" stroke="#171717" stroke-width="2"/>
+          <line x1="24" y1="46" x2="40" y2="46" stroke="#171717" stroke-width="2"/>
+          <line x1="28" y1="52" x2="36" y2="52" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">ground</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="22" stroke="#171717" stroke-width="2"/>
+          <rect x="20" y="22" width="24" height="32" rx="2" fill="none" stroke="#171717" stroke-width="2" stroke-dasharray="3 3"/>
+          <text x="32" y="44" text-anchor="middle" font-size="14" font-weight="600" fill="#171717" font-family="Geist Mono">?</text>
+          <line x1="32" y1="54" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">generic-device</div>
+    </div>
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 64 80">
+          <line x1="32" y1="0" x2="32" y2="30" stroke="#171717" stroke-width="2"/>
+          <line x1="18" y1="32" x2="46" y2="32" stroke="#171717" stroke-width="2"/>
+          <line x1="18" y1="42" x2="46" y2="42" stroke="#171717" stroke-width="2"/>
+          <line x1="32" y1="44" x2="32" y2="80" stroke="#171717" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="shape-name">capacitor</div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!--                      MAP                                     -->
+  <!-- ============================================================ -->
+  <h3 id="sec-map">MAP · формы (7)</h3>
+  <div class="note" style="margin-top:0;margin-bottom:12px">
+    Точные названия слева направо: <code>substation</code>, <code>pad</code>, <code>junction</code>, <code>pole-empty</code>, <code>pole-fill</code>, <code>variant-empty</code>, <code>vault-fill</code>. Пары <code>-empty</code> / <code>-fill</code> различаются наличием привязанного equipment'а — fill-вариант показывает какие именно <strong>категории</strong> equipment'а сидят на структуре (T/M/S/P в квадрантах — см. блок Fill convention ниже).
+  </div>
+
+  <div class="shape-grid">
+    <!-- 1. substation -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="30" y1="24" x2="30" y2="56" stroke="#171717" stroke-width="3"/>
+          <polygon points="30,40 50,24 50,56" fill="none" stroke="#171717" stroke-width="3" stroke-linejoin="miter"/>
+        </svg>
+      </div>
+      <div class="shape-name">substation</div>
+    </div>
+
+    <!-- 2. pad -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <rect x="12" y="12" width="56" height="56" rx="6" fill="none" stroke="#171717" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="shape-name">pad</div>
+    </div>
+
+    <!-- 3. junction (octagon) -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <polygon points="32,12 48,12 68,32 68,48 48,68 32,68 12,48 12,32"
+                   fill="none" stroke="#171717" stroke-width="3" stroke-linejoin="miter"/>
+        </svg>
+      </div>
+      <div class="shape-name">junction</div>
+    </div>
+
+    <!-- 4. pole-empty -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <div class="shape-name">pole-empty</div>
+    </div>
+
+    <!-- 5. pole-fill (with TMSP) -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs>
+            <clipPath id="cp-pole-fill"><circle cx="40" cy="40" r="28"/></clipPath>
+          </defs>
+          <g clip-path="url(#cp-pole-fill)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">pole-fill</div>
+    </div>
+
+    <!-- 6. variant-empty -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <div class="shape-name">variant-empty</div>
+    </div>
+
+    <!-- 7. vault-fill (with TMSP) -->
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs>
+            <clipPath id="cp-vault-fill"><rect x="12" y="12" width="56" height="56" rx="3"/></clipPath>
+          </defs>
+          <g clip-path="url(#cp-vault-fill)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">vault-fill</div>
+    </div>
+  </div>
+
+  <h3 id="sec-map-fill">Fill convention (TMSP)</h3>
+  <div class="note" style="margin-top:0;margin-bottom:16px">
+    Fill-варианты (<code>pole-fill</code>, <code>vault-fill</code>) показывают <strong>наличие привязанных категорий equipment'а</strong> на структуре — 4 квадранта по 4 ключевым категориям. Цвет квадранта = категория, буква поверх = первый символ названия. <strong>Если категории нет на структуре — квадрант полностью прозрачный</strong> (не серый, не подсвеченный). По смыслу UX странноватая индикация, но так попросили — оставляем как есть, без переосмысления.
+    <div class="tmsp-legend">
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#c4b5fd">T</span> Transformation <code style="font-size:10px;color:var(--neutral-500)">violet/300</code></span>
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#f0abfc">P</span> Protection <code style="font-size:10px;color:var(--neutral-500)">fuchsia/300</code></span>
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#5eead4">S</span> Switching <code style="font-size:10px;color:var(--neutral-500)">teal/300</code></span>
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#93c5fd">M</span> Measurements <code style="font-size:10px;color:var(--neutral-500)">blue/300</code></span>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--neutral-500)">
+      Категории совпадают с группировкой в SLD-библиотеке: T — секция <strong>Transformers</strong>; S — <strong>Switching</strong>; P — <strong>Protection</strong>; M — <strong>Measurement</strong>. Категории <em>Generation/Storage</em>, <em>Loads</em>, <em>Infrastructure</em> из SLD не входят в quadrant-индикацию. <strong>Жёсткое ограничение — 4 категории, без счётчиков</strong> (наличие нескольких трансформаторов = один T-квадрант). Знаем что не масштабируется, но фиксируем как product decision.
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--neutral-100);font-size:11px;color:var(--neutral-600);font-family:'Geist Mono',monospace">
+      <strong style="font-family:'Geist',sans-serif;color:var(--neutral-900);font-weight:600">Dark theme:</strong>
+      <span class="tmsp-item" style="margin-left:8px"><span class="tmsp-swatch" style="background:#6d28d9;color:#ffffff">T</span> violet/700</span>
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#a21caf;color:#ffffff">P</span> fuchsia/700</span>
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#0f766e;color:#ffffff">S</span> teal/700</span>
+      <span class="tmsp-item"><span class="tmsp-swatch" style="background:#1d4ed8;color:#ffffff">M</span> blue/700</span>
+    </div>
+  </div>
+
+  <h3 id="sec-map-partial">Примеры частичной заливки</h3>
+  <div class="note" style="margin-top:0;margin-bottom:12px">
+    Когда не все 4 категории присутствуют на структуре — отсутствующие квадранты <strong>полностью прозрачные</strong>. Сквозь них видна подложка карты, что само по себе работает как сигнал «здесь этой категории нет». Несколько типичных кейсов:
+  </div>
+
+  <div class="shape-grid">
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-1"><circle cx="40" cy="40" r="28"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-1)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+          </g>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+        </svg>
+      </div>
+      <div class="shape-name">pole · только T</div>
+      <div class="shape-desc">transformer-only</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-2"><circle cx="40" cy="40" r="28"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-2)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+          </g>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+        </svg>
+      </div>
+      <div class="shape-name">pole · T + M</div>
+      <div class="shape-desc">transformer + meter</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-3"><circle cx="40" cy="40" r="28"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-3)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">pole · T + S + P</div>
+      <div class="shape-desc">без M</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-4"><circle cx="40" cy="40" r="28"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-4)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">pole · все 4</div>
+      <div class="shape-desc">full fill</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-5"><rect x="12" y="12" width="56" height="56" rx="3"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-5)">
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+          </g>
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+        </svg>
+      </div>
+      <div class="shape-name">vault · только S</div>
+      <div class="shape-desc">switch-only</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-6"><rect x="12" y="12" width="56" height="56" rx="3"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-6)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">vault · T + P</div>
+      <div class="shape-desc">диагональная пара</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-7"><rect x="12" y="12" width="56" height="56" rx="3"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-7)">
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">vault · M + S + P</div>
+      <div class="shape-desc">без transformer'а</div>
+    </div>
+
+    <div class="shape-card">
+      <div class="shape-icon">
+        <svg viewBox="0 0 80 80">
+          <defs><clipPath id="cp-partial-8"><rect x="12" y="12" width="56" height="56" rx="3"/></clipPath></defs>
+          <g clip-path="url(#cp-partial-8)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+          <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+          <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+          <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+        </svg>
+      </div>
+      <div class="shape-name">vault · все 4</div>
+      <div class="shape-desc">full fill</div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:12px">
+    <strong>Принципы которые видны из примеров:</strong>
+    <ul style="margin-top:6px;margin-left:18px;line-height:22px">
+      <li>Сетка разделителей <strong>остаётся всегда</strong> — даже когда не все квадранты заполнены. Это сохраняет узнаваемость структуры как иконки с 4 потенциальными слотами.</li>
+      <li>Прозрачные квадранты <strong>не подсвечиваются никаким цветом</strong> (ни grey, ни border). Сквозь них видна подложка карты.</li>
+      <li>Буква в квадранте показывается только если категория представлена.</li>
+      <li>Когда категорий <code>0</code> — это <code>pole-empty</code> или <code>variant-empty</code> (отдельные варианты без заливки вообще).</li>
+    </ul>
+  </div>
+
+  <h3 id="sec-map-zoom">Zoom behavior</h3>
+  <div class="note" style="margin-top:0;margin-bottom:12px">
+    Шкала отображения иконки на карте — 4 размера <code>xs</code>/<code>s</code>/<code>m</code>/<code>l</code>. Буквы <code>T/M/S/P</code> поверх квадрантов появляются <strong>начиная с <code>m</code></strong> и сохраняются на <code>l</code>. На <code>xs</code> и <code>s</code> букв нет — agency идёт от цвета: структура читается как цветовая клякса по 4 категориям equipment'а. Конкретный mapping <code>xs/s/m/l → Leaflet zoom levels</code> задаст разработка.
+  </div>
+
+  <div class="zoom-demo">
+    <div class="zoom-demo-header">
+      <div class="zoom-demo-title">Demo: переключи зум чтобы посмотреть behavior</div>
+      <div class="zoom-toggle-group" id="zoomToggleGroup">
+        <button class="zoom-toggle" data-zoom="xs">xs<span class="zoom-toggle-tag">без букв</span></button>
+        <button class="zoom-toggle" data-zoom="s">s<span class="zoom-toggle-tag">без букв</span></button>
+        <button class="zoom-toggle" data-zoom="m">m<span class="zoom-toggle-tag">★ буквы</span></button>
+        <button class="zoom-toggle active" data-zoom="l">l<span class="zoom-toggle-tag">буквы</span></button>
+      </div>
+    </div>
+    <div class="zoom-stage" id="zoomStage" data-zoom="l">
+      <div class="zoom-stage-item">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <defs>
+            <clipPath id="cp-zoom-pole"><circle cx="40" cy="40" r="28"/></clipPath>
+          </defs>
+          <g clip-path="url(#cp-zoom-pole)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <g class="zoom-letter">
+            <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+            <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+            <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+            <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+          </g>
+        </svg>
+        <div class="zoom-stage-item-label">pole-fill</div>
+      </div>
+      <div class="zoom-stage-item">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <defs>
+            <clipPath id="cp-zoom-vault"><rect x="12" y="12" width="56" height="56" rx="3"/></clipPath>
+          </defs>
+          <g clip-path="url(#cp-zoom-vault)">
+            <rect x="12" y="12" width="28" height="28" fill="#c4b5fd"/>
+            <rect x="40" y="12" width="28" height="28" fill="#93c5fd"/>
+            <rect x="12" y="40" width="28" height="28" fill="#5eead4"/>
+            <rect x="40" y="40" width="28" height="28" fill="#f0abfc"/>
+          </g>
+          <rect x="12" y="12" width="56" height="56" rx="3" fill="none" stroke="#171717" stroke-width="3"/>
+          <line x1="40" y1="12" x2="40" y2="68" stroke="#171717" stroke-width="2.5"/>
+          <line x1="12" y1="40" x2="68" y2="40" stroke="#171717" stroke-width="2.5"/>
+          <g class="zoom-letter">
+            <text x="26" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">T</text>
+            <text x="54" y="32" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">M</text>
+            <text x="26" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">S</text>
+            <text x="54" y="56" text-anchor="middle" font-weight="600" font-size="12" fill="#171717">P</text>
+          </g>
+        </svg>
+        <div class="zoom-stage-item-label">vault-fill</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Что остаётся на разработку:</strong> конкретный mapping <code>xs/s/m/l → Leaflet zoom levels</code>. Дизайн фиксирует правило «буквы появляются на <code>m</code> и сохраняются на <code>l</code>, исчезают на <code>xs</code>/<code>s</code>» — конкретные numeric значения за инженерным выбором.
+  </div>
+
+</div>
+
+<script>
+(function() {
+  // Sidebar nav active highlighting
+  const navLinks = document.querySelectorAll('.sidebar-nav a');
+  const targets = Array.from(navLinks).map(a => ({ link: a, target: document.querySelector(a.getAttribute('href')) })).filter(t => t.target);
+  if (targets.length) {
+    const setActive = (link) => navLinks.forEach(l => l.classList.toggle('active', l === link));
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting);
+      if (visible.length) {
+        const topmost = visible.reduce((a, b) => a.boundingClientRect.top < b.boundingClientRect.top ? a : b);
+        const t = targets.find(x => x.target === topmost.target);
+        if (t) setActive(t.link);
+      }
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+    targets.forEach(t => observer.observe(t.target));
+    navLinks.forEach(a => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); setActive(a); }
+    }));
+  }
+
+  // Zoom toggle
+  const stage = document.getElementById('zoomStage');
+  document.querySelectorAll('#zoomToggleGroup .zoom-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#zoomToggleGroup .zoom-toggle').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      stage.setAttribute('data-zoom', btn.dataset.zoom);
+    });
+  });
+})();
+</script>
+</body>
+</html>
