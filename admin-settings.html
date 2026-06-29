@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GridModel Admin — System Settings</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#fff;--fg:#0a0a0a;--sb:#fafafa;
+  --border:#e5e5e5;
+  --n100:#f5f5f5;--n200:#e5e5e5;--n300:#d4d4d4;
+  --n400:#a3a3a3;--n500:#737373;--n600:#525252;--n700:#404040;
+  --n800:#262626;--n900:#171717;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --orange:#f97316;
+  --rsm:4px;--rmd:6px;--rlg:8px;
+}
+html,body{height:100%;font-family:'Geist',system-ui,sans-serif;font-size:14px;background:var(--bg);color:var(--fg);}
+button{font-family:inherit;cursor:pointer;outline:none;border:none;}
+input,select,textarea{font-family:inherit;outline:none;}
+label{font-size:12px;color:var(--n600);font-weight:500;display:block;margin-bottom:4px;}
+
+/* Layout */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.header{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;}
+.body{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:220px;background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* Tabs */
+.tab-bar{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--border);padding:0 24px;background:var(--bg);flex-shrink:0;}
+.tab{height:40px;padding:0 14px;font-size:13px;font-weight:500;color:var(--n500);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;}
+.tab:hover{color:var(--fg);}
+.tab.active{color:var(--fg);border-bottom-color:var(--fg);}
+
+/* Content */
+.content{flex:1;overflow:hidden;display:flex;}
+.section{flex:1;overflow-y:auto;padding:24px;}
+.section-hidden{display:none!important;}
+
+/* Form */
+.form-group{margin-bottom:20px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.input-field{width:100%;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--rmd);font-size:13px;color:var(--fg);background:var(--bg);}
+.input-field:focus{border-color:var(--n400);}
+select.input-field{cursor:pointer;}
+.textarea-field{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--rmd);font-size:13px;color:var(--fg);background:var(--bg);resize:vertical;min-height:72px;}
+
+/* Card */
+.card{border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;margin-bottom:16px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--sb);}
+.card-title{font-size:13px;font-weight:600;color:var(--fg);}
+.card-desc{font-size:12px;color:var(--n500);margin-top:1px;}
+.card-body{padding:16px;}
+.card-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--sb);display:flex;justify-content:flex-end;gap:8px;}
+
+/* Divider label */
+.section-label{font-size:11px;font-weight:600;color:var(--n400);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;margin-top:4px;}
+
+/* Buttons */
+.btn{height:32px;padding:0 12px;border-radius:var(--rmd);font-size:13px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-sm{height:28px;padding:0 10px;border-radius:var(--rsm);font-size:12px;}
+.btn-primary{background:var(--n900);color:#fff;border:none;}
+.btn-primary:hover{background:var(--n800);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--n700);}
+.btn-ghost:hover{background:var(--n100);}
+.btn-danger{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);}
+.btn-danger:hover{background:#fee2e2;}
+
+/* Toggle */
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{width:36px;height:20px;background:var(--n300);border-radius:10px;transition:background 0.2s;}
+.toggle input:checked + .toggle-track{background:var(--n900);}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left 0.2s;pointer-events:none;}
+.toggle input:checked ~ .toggle-thumb{left:19px;}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:var(--rsm);font-size:11px;font-weight:500;}
+.badge-sys{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.badge-default{background:var(--n100);color:var(--n700);border:1px solid var(--n200);}
+
+/* RBAC layout */
+.rbac-wrap{display:flex;height:100%;overflow:hidden;}
+.rbac-left{width:280px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.rbac-center{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.rbac-right{width:260px;border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+
+.panel-hd{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.panel-hd-title{font-size:13px;font-weight:600;}
+.panel-body{flex:1;overflow-y:auto;}
+
+/* Role list item */
+.role-item{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:36px;cursor:pointer;border-radius:var(--rsm);font-size:13px;color:var(--n700);gap:6px;}
+.role-item:hover{background:var(--n100);}
+.role-item.active{background:var(--n200);color:var(--n900);}
+.role-item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Permission table */
+.perm-table{width:100%;border-collapse:collapse;font-size:12px;}
+.perm-table th{font-size:11px;font-weight:600;color:var(--n500);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--n100);white-space:nowrap;}
+.perm-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+.perm-table tr:last-child td{border-bottom:none;}
+.perm-table tr:hover td{background:var(--sb);}
+.perm-obj{font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap;}
+.perm-checks{display:flex;gap:10px;flex-wrap:wrap;}
+.perm-check{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--n600);white-space:nowrap;}
+.perm-check input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--n900);}
+.status-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.status-tag{padding:2px 6px;border-radius:var(--rsm);font-size:11px;background:var(--n100);color:var(--n600);border:1px solid var(--n200);}
+
+/* Zone tree */
+.zone-item{display:flex;align-items:center;justify-content:space-between;padding:4px 10px;font-size:13px;color:var(--n700);border-radius:var(--rsm);}
+.zone-item:hover{background:var(--n100);}
+.zone-child{padding-left:20px;}
+
+/* User row */
+.user-row{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid var(--border);font-size:13px;}
+.avatar{width:24px;height:24px;border-radius:50%;background:var(--n800);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0;}
+
+/* Infra sections */
+.infra-section{margin-bottom:24px;}
+.infra-divider{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.infra-divider-line{flex:1;height:1px;background:var(--border);}
+.infra-divider-label{font-size:11px;font-weight:600;color:var(--n400);text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap;}
+.critical-badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:var(--rsm);background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+
+/* Logo upload */
+.logo-upload{width:80px;height:80px;border:2px dashed var(--n300);border-radius:var(--rlg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--n400);font-size:11px;text-align:center;background:var(--n100);}
+.logo-upload:hover{border-color:var(--n500);color:var(--n600);}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100;}
+.modal{background:var(--bg);border-radius:var(--rlg);width:480px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:14px;font-weight:600;}
+.modal-body{padding:16px;}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* Status group */
+.status-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.status-check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--n700);}
+.status-check input{width:14px;height:14px;accent-color:var(--n900);}
+
+/* Sidebar nav */
+.nav-section-hd{padding:8px 12px 4px;font-size:10px;font-weight:600;color:var(--n400);text-transform:uppercase;letter-spacing:0.6px;}
+.nav-item{display:flex;align-items:center;gap:6px;padding:0 12px;height:32px;font-size:13px;color:var(--n600);cursor:pointer;border-radius:var(--rsm);border:none;background:transparent;width:100%;text-align:left;}
+.nav-item:hover{background:var(--n100);color:var(--n900);}
+.nav-item.active{background:var(--n200);color:var(--n900);}
+
+/* Info row */
+.info-row{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);gap:16px;}
+.info-row:last-child{border-bottom:none;}
+.info-label{font-size:12px;color:var(--n500);flex-shrink:0;min-width:140px;}
+.info-val{font-size:13px;color:var(--fg);text-align:right;}
+
+/* Tooltip hint */
+.hint{font-size:11px;color:var(--n400);margin-top:4px;}
+
+.sso-tab{height:28px;padding:0 12px;font-size:12px;font-weight:500;color:var(--n500);background:transparent;border:none;border-radius:var(--rsm);cursor:pointer;white-space:nowrap;}
+.sso-tab:hover{color:var(--n800);}
+.sso-tab.active{background:#fff;color:var(--n900);border:1px solid var(--border);}
+.map-row{display:grid;grid-template-columns:1fr 20px 1fr 28px;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);}
+.map-row:last-child{border-bottom:none;}
+.map-head{background:var(--n100);font-size:11px;font-weight:600;color:var(--n500);}
+.map-head span{padding:0;}
+.map-arrow{text-align:center;color:var(--n400);font-size:13px;}
+.map-del{width:24px;height:24px;border:none;background:transparent;color:var(--n400);border-radius:var(--rsm);cursor:pointer;font-size:12px;}
+.map-del:hover{background:var(--n100);color:var(--red);}
+.map-head .map-del{visibility:hidden;}
+
+.fa-row{cursor:pointer;}
+.fa-row:hover td{background:var(--sb);}
+.fa-go{text-align:right;color:var(--n400);font-size:16px;width:20px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:200;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--rlg);width:440px;max-width:92vw;box-shadow:0 12px 48px rgba(0,0,0,0.18);overflow:hidden;}
+.modal-lg{width:580px;}
+.sev{display:inline-block;padding:2px 7px;border-radius:var(--rsm);font-size:11px;font-weight:500;white-space:nowrap;}
+.sev-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.sev-warn{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:15px;font-weight:600;color:var(--fg);}
+.modal-step{font-size:11px;color:var(--n400);margin-top:2px;}
+.modal-body{padding:20px;}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);display:none;z-index:200;}
+.drawer-overlay.open{display:block;}
+.drawer{position:absolute;top:0;right:0;height:100%;width:360px;background:#fff;border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:-6px 0 24px rgba(0,0,0,0.1);}
+.drawer-hd{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;}
+.drawer-ft{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:var(--n100);border:1px solid var(--n200);border-radius:var(--rsm);font-size:12px;color:var(--n700);}
+.chip button{border:none;background:none;cursor:pointer;color:var(--n400);font-size:11px;line-height:1;padding:0;}
+.chip button:hover{color:var(--red);}
+.secret-box{font-family:'Geist Mono',ui-monospace,monospace;font-size:13px;background:var(--n100);border:1px solid var(--border);border-radius:var(--rmd);padding:10px 12px;word-break:break-all;color:var(--n900);}
+.warn-banner{display:flex;gap:8px;align-items:flex-start;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;border-radius:var(--rmd);padding:10px 12px;font-size:12px;line-height:16px;margin-bottom:16px;}
+.seed-result{border:1px solid var(--border);border-radius:var(--rmd);margin-top:16px;overflow:hidden;}
+.seed-stat{display:flex;border-bottom:1px solid var(--border);}
+.seed-stat>div{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--border);}
+.seed-stat>div:last-child{border-right:none;}
+.seed-num{font-size:18px;font-weight:600;line-height:1;}
+.seed-lbl{font-size:11px;color:var(--n500);margin-top:4px;}
+.seed-result .perm-table{border-top:none;}
+
+.matrix2{width:100%;border-collapse:collapse;}
+.matrix2 th,.matrix2 td{padding:9px 6px;font-size:12px;border-bottom:1px solid var(--border);text-align:center;}
+.matrix2 thead .grp-row th{padding-top:12px;font-size:11px;color:var(--n500);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;border-bottom:none;}
+.matrix2 thead tr:nth-child(2) th{font-size:11px;color:var(--n500);font-weight:600;padding-bottom:10px;}
+.matrix2 th.objcol,.matrix2 td:first-child{text-align:left;padding-left:16px;white-space:nowrap;}
+.matrix2 td:first-child{color:var(--n700);font-size:13px;}
+.matrix2 .grp{border-left:1px solid var(--border);}
+.matrix2 input{accent-color:var(--n900);cursor:pointer;width:15px;height:15px;}
+.matrix2 tbody tr:hover td{background:var(--sb);}
+.rule-hint{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:var(--n600);line-height:16px;}
+.rule-hint span:first-child{color:var(--n400);}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--n200);color:var(--n700);font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sub-hd{font-size:11px;font-weight:600;color:var(--n500);text-transform:uppercase;letter-spacing:0.4px;padding:13px 16px 7px;}
+
+.wf{display:inline-flex;align-items:center;font-size:12px;font-weight:500;padding:3px 9px;border-radius:var(--rmd);border:1px solid var(--n300);color:var(--n600);background:#fff;}
+.wf-rev{border-color:#fcd34d;color:#b45309;}
+.wf-app{border-color:#86efac;color:#047857;}
+.wf-mrg{border-color:#7dd3fc;color:#0369a1;}
+.wf-rej{border-color:#fca5a5;color:#b91c1c;}
+.wf-mut{border-color:var(--n200);color:var(--n400);background:var(--n100);}
+.wf-a{color:var(--n400);font-size:13px;}
+.save-bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,0.06);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;transform:translateY(130%);transition:transform .22s ease;z-index:60;}
+.save-bar.show{transform:translateY(0);}
+
+.test-row{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:9px 12px;border-radius:var(--rmd);font-size:12px;line-height:16px;}
+.test-loading{background:var(--n100);color:var(--n600);border:1px solid var(--border);}
+.test-ok{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0;}
+.test-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.ipstat{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:16px;}
+.ipstat .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:5px;}
+.ipstat.ok{color:var(--green);}
+.ipstat.ok .dot{background:var(--green);}
+.ipstat.bad{color:#c2410c;}
+.ipstat.bad .dot{background:#f59e0b;}
+
+.ntf-group{border-bottom:1px solid var(--border);}
+.ntf-group:last-child{border-bottom:none;}
+.ntf-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;}
+.ntf-head:hover{background:var(--sb);}
+.ntf-chev{color:var(--n400);transition:transform .15s ease;flex-shrink:0;}
+.ntf-group.open .ntf-chev{transform:rotate(90deg);}
+.ntf-title{font-size:13px;font-weight:500;color:var(--n800);}
+.ntf-sum{font-size:12px;color:var(--n500);margin-left:auto;margin-right:4px;}
+.ntf-body{padding:0 16px 14px;}
+.ntf-table{border-top:1px solid var(--border);}
+.ntf-table th{font-size:11px;color:var(--n500);}
+.modal-role{width:800px;max-width:94vw;max-height:88vh;display:flex;flex-direction:column;}
+.modal-role .modal-body{flex:1;overflow-y:auto;padding:20px;}
+.modal-role .card{margin-bottom:16px;}
+.modal-role .card:last-child{margin-bottom:0;}
+
+.optree td.opname{white-space:nowrap;}
+.optree .opgrp td.opname{color:var(--n600);}
+.optree .opleaf td.opname{color:var(--n700);font-size:12px;}
+.optree tbody tr:hover td{background:var(--sb);}
+.optw{display:inline-block;width:14px;color:var(--n400);cursor:pointer;font-size:9px;user-select:none;}
+.optw-spacer{display:inline-block;width:14px;}
+.pk{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--n300);font-size:12px;line-height:1;cursor:pointer;}
+.pk-on,.pk-ind{background:var(--n900);border-color:var(--n900);color:#fff;}
+.pk-off{background:#fff;color:transparent;}
+.perm-table.ntf2 th.cc,.perm-table.ntf2 td.cc{text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:13px;font-weight:600;">GridModel</span>
+      <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;">Admin</span>
+      <span style="color:var(--n300);margin:0 4px;">›</span>
+      <span style="font-size:13px;color:var(--n600);">System Settings</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--n800);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;">AL</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div style="padding:12px 0 4px;">
+        <div class="nav-section-hd">System Settings</div>
+        <button class="nav-item active" onclick="switchTab('company')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+          Company
+        </button>
+        <button class="nav-item" onclick="switchTab('infra')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="1"/><rect x="2" y="14" width="20" height="8" rx="1"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          Infrastructure
+        </button>
+        <button class="nav-item" onclick="switchTab('rbac')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          RBAC
+        </button>
+      </div>
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding:12px 0 4px;">
+        <div class="nav-section-hd">Model Settings</div>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">Zones</button>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">Tags</button>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">Workflow</button>
+      </div>
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding:12px 0 4px;">
+        <div class="nav-section-hd">Libraries</div>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">EU List</button>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">Custom Attributes</button>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">Icons List</button>
+        <button class="nav-item" style="color:var(--n400);cursor:default;">Components List</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab active" id="tab-company" onclick="switchTab('company')">Company</button>
+        <button class="tab" id="tab-infra" onclick="switchTab('infra')">Infrastructure</button>
+        <button class="tab" id="tab-rbac" onclick="switchTab('rbac')">RBAC</button>
+      </div>
+
+      <div class="content">
+
+        <!-- =================== COMPANY =================== -->
+        <div id="view-company" class="section" style="max-width:720px;">
+
+          <!-- Company identity and branding -->
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Company Identity</div><div class="card-desc">Basic information and branding</div></div></div>
+            <div class="card-body">
+              <div style="display:flex;gap:24px;align-items:flex-start;">
+                <div style="flex:1;">
+                  <div class="form-group"><label>Company name *</label><input class="input-field" value="NorthWind Power Co." type="text"/></div>
+                  <div class="form-group"><label>Email</label><input class="input-field" value="admin@northwindpower.com" type="text"/></div>
+                  <div class="form-group"><label>Website URL</label><input class="input-field" value="https://northwindpower.com" type="text"/></div>
+                  <div class="form-row" style="margin-bottom:0;">
+                    <div><label>Location</label><select class="input-field"><option>United States</option><option>Canada</option><option>United Kingdom</option></select></div>
+                    <div><label>Timezone</label><select class="input-field"><option>UTC-8 (Pacific Time)</option><option>UTC-5 (Eastern Time)</option><option>UTC+0 (GMT)</option></select></div>
+                  </div>
+                </div>
+                <div style="width:170px;">
+                  <label>Logo</label>
+                  <div class="logo-upload" onclick="handleLogoUpload()" id="logo-area" style="margin:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>Upload logo</span>
+                  </div>
+                  <div class="hint">PNG, SVG &middot; max 2MB</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Display units -->
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Display units</div><div class="card-desc">Measurement system shown to users &mdash; data is stored in SI</div></div></div>
+            <div class="card-body">
+              <div class="form-group" style="max-width:320px;">
+                <label>Display system</label>
+                <select class="input-field"><option>Metric</option><option>Imperial</option></select>
+              </div>
+              <div class="toggle-wrap" style="margin-bottom:0;">
+                <label class="toggle"><input type="checkbox" checked onchange="toggleExceptions(this)"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                <div>
+                  <div style="font-size:13px;color:var(--n700);">Per-attribute exceptions</div>
+                  <div class="hint" style="margin-top:1px;">Override the display system for specific attributes</div>
+                </div>
+              </div>
+              <div id="exceptions-list" style="margin-top:12px;">
+                <div style="border:1px solid var(--border);border-radius:var(--rmd);overflow:hidden;">
+                  <div class="map-row map-head"><span>Attribute</span><span></span><span>Display unit</span><span></span></div>
+                  <div class="map-row">
+                    <select class="input-field"><option selected>Conductor length</option><option>Cable diameter</option><option>Span length</option><option>Transformer rating</option></select>
+                    <span class="map-arrow">&rarr;</span>
+                    <select class="input-field"><option selected>Feet (ft)</option><option>Meters (m)</option><option>Inches (in)</option></select>
+                    <button class="map-del" title="Remove">&#10005;</button>
+                  </div>
+                  <div class="map-row">
+                    <select class="input-field"><option>Conductor length</option><option selected>Cable diameter</option><option>Span length</option><option>Transformer rating</option></select>
+                    <span class="map-arrow">&rarr;</span>
+                    <select class="input-field"><option>Feet (ft)</option><option>Meters (m)</option><option selected>Inches (in)</option></select>
+                    <button class="map-del" title="Remove">&#10005;</button>
+                  </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="addExceptionRow(this)">+ Add exception</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow (DocFlow) read-only -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Workflow</div><div class="card-desc">Object lifecycle &mdash; statuses and allowed transitions</div></div>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--n500);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Read only</span>
+            </div>
+            <div class="card-body">
+              <div style="display:inline-flex;gap:2px;background:var(--n100);border:1px solid var(--border);border-radius:var(--rmd);padding:3px;margin-bottom:16px;">
+                <button class="sso-tab active">Project</button><button class="sso-tab">Task</button><button class="sso-tab">Component</button>
+              </div>
+              <div class="hint" style="margin-top:0;margin-bottom:8px;">Default lifecycle</div>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
+                <span class="wf">Draft</span><span class="wf-a">&rarr;</span>
+                <span class="wf wf-rev">In review</span><span class="wf-a">&rarr;</span>
+                <span class="wf wf-app">Approved</span><span class="wf-a">&rarr;</span>
+                <span class="wf wf-mrg">Merged</span><span class="wf-a">&rarr;</span>
+                <span class="wf wf-mut">Archived</span>
+              </div>
+              <div class="hint" style="margin-top:0;margin-bottom:8px;border-top:1px solid var(--border);padding-top:14px;">Transitions</div>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+                <div style="display:flex;align-items:center;gap:8px;"><span class="wf" style="min-width:78px;">Draft</span><span class="wf-a">&rarr;</span><span class="wf wf-rev">In review</span><span class="wf wf-mut">Archived</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span class="wf wf-rev" style="min-width:78px;">In review</span><span class="wf-a">&rarr;</span><span class="wf wf-app">Approved</span><span class="wf wf-rej">Rejected</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span class="wf wf-app" style="min-width:78px;">Approved</span><span class="wf-a">&rarr;</span><span class="wf wf-mrg">Merged</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span class="wf wf-mrg" style="min-width:78px;">Merged</span><span class="wf-a">&rarr;</span><span class="wf wf-mut">Archived</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span class="wf wf-mut" style="min-width:78px;">Archived</span><span class="wf-a">&rarr;</span><span class="wf">Draft</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================== INFRASTRUCTURE =================== -->
+        <div id="view-infra" class="section section-hidden" style="max-width:760px;">
+
+          <!-- ============ CRITICAL SYSTEM SETTINGS ============ -->
+          <div class="infra-divider">
+            <span class="infra-divider-label">Critical System Settings</span>
+            <span class="critical-badge">⚠ System-level</span>
+            <div class="infra-divider-line"></div>
+          </div>
+
+          <!-- Platform Domain -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Platform Domain</div>
+                <div class="card-desc">Base URL for the GridModel deployment</div>
+              </div>
+              <span class="badge badge-sys">System</span>
+            </div>
+            <div class="card-body">
+              <div class="form-row">
+                <div>
+                  <label>Platform Domain *</label>
+                  <input class="input-field" value="gridmodel.northwindpower.com" type="text"/>
+                  <div class="hint">Used for redirect URLs, email links, and API callbacks</div>
+                </div>
+                <div>
+                  <label>API Base URL</label>
+                  <input class="input-field" value="https://api.gridmodel.northwindpower.com" type="text"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Authentication / SSO -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Authentication / SSO</div>
+                <div class="card-desc">Single Sign-On is the only authentication method — no password login</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="toggle-wrap">
+                  <span style="font-size:12px;color:var(--n500);">Enabled</span>
+                  <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                </div>
+                <span class="badge badge-sys">System</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Provider tabs -->
+              <div class="form-group">
+                <label>Provider</label>
+                <div style="display:inline-flex;gap:2px;background:var(--n100);border:1px solid var(--border);border-radius:var(--rmd);padding:3px;">
+                  <button class="sso-tab active" onclick="selectSSOProvider(this,'Okta')">Okta</button>
+                  <button class="sso-tab" onclick="selectSSOProvider(this,'Google Workspace')">Google Workspace</button>
+                  <button class="sso-tab" onclick="selectSSOProvider(this,'Microsoft Entra ID')">Microsoft Entra ID</button>
+                  <button class="sso-tab" onclick="selectSSOProvider(this,'Custom SAML')">Custom SAML</button>
+                </div>
+                <div class="hint">One identity provider per installation. OIDC and LDAP are also supported under Custom.</div>
+              </div>
+
+              <div style="background:var(--n100);border-radius:var(--rmd);padding:14px;margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:600;color:var(--n700);margin-bottom:10px;"><span id="sso-provider-name">Okta</span> configuration</div>
+                <div class="form-row">
+                  <div>
+                    <label>Client ID *</label>
+                    <input class="input-field" value="0oa8k3m2qwerty1234" type="text"/>
+                  </div>
+                  <div>
+                    <label>Client Secret *</label>
+                    <input class="input-field" value="••••••••••••••••••" type="password"/>
+                    <div class="hint">Masked after entry — value is never displayed again</div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div>
+                    <label>Provider Domain</label>
+                    <input class="input-field" value="northwindpower.okta.com" type="text"/>
+                  </div>
+                  <div>
+                    <label>Authorization Server</label>
+                    <input class="input-field" value="default" type="text"/>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Redirect URI (auto-generated)</label>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <input class="input-field" style="flex:1;color:var(--n500);" value="https://gridmodel.northwindpower.com/auth/callback" type="text" readonly/>
+                    <button class="btn btn-ghost btn-sm" onclick="copyToClipboard()">Copy</button>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label>Allowed Logout URL</label>
+                  <input class="input-field" value="https://gridmodel.northwindpower.com/logout" type="text"/>
+                </div>
+              </div>
+
+              <!-- NEW: Role and attribute mapping (Structure) -->
+              <div class="form-group">
+                <label>Role &amp; Attribute Mapping</label>
+                <div class="hint" style="margin-top:0;margin-bottom:8px;">Maps provider claims to GridModel roles and fields</div>
+                <div style="border:1px solid var(--border);border-radius:var(--rmd);overflow:hidden;">
+                  <div class="map-row map-head">
+                    <span>Provider claim</span><span></span><span>GridModel target</span><span></span>
+                  </div>
+                  <div class="map-row">
+                    <input class="input-field" value="groups" type="text"/>
+                    <span class="map-arrow">→</span>
+                    <select class="input-field"><option selected>Role</option><option>Display name</option><option>Email</option><option>Region</option></select>
+                    <button class="map-del" title="Remove">✕</button>
+                  </div>
+                  <div class="map-row">
+                    <input class="input-field" value="email" type="text"/>
+                    <span class="map-arrow">→</span>
+                    <select class="input-field"><option>Role</option><option>Display name</option><option selected>Email</option><option>Region</option></select>
+                    <button class="map-del" title="Remove">✕</button>
+                  </div>
+                  <div class="map-row">
+                    <input class="input-field" value="name" type="text"/>
+                    <span class="map-arrow">→</span>
+                    <select class="input-field"><option>Role</option><option selected>Display name</option><option>Email</option><option>Region</option></select>
+                    <button class="map-del" title="Remove">✕</button>
+                  </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="addMappingRow(this)">+ Add mapping</button>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
+                <span class="hint" style="margin-top:0;">One identity provider is active per installation</span>
+                <button class="btn btn-ghost btn-sm" onclick="testConnection()">Test connection</button>
+              </div>
+              <div id="ssotest-result"></div>
+            </div>
+          </div>
+
+          <!-- VPN / Network Access -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">VPN / Network Access</div>
+                <div class="card-desc">Restrict access to trusted networks only</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:12px;color:var(--n500);" id="vpn-label">Disabled</span>
+                <label class="toggle">
+                  <input type="checkbox" id="vpn-toggle" onchange="toggleVPN(this)"/>
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+              </div>
+            </div>
+            <div class="card-body" id="vpn-body" style="display:none;">
+              <div class="form-group">
+                <label>Allowed IP Ranges (CIDR)</label>
+                <textarea class="textarea-field" id="vpn-cidr" oninput="checkVpnIp()" placeholder="10.0.0.0/8&#10;172.16.0.0/12">10.0.0.0/8
+172.16.0.0/12
+203.0.113.0/24</textarea>
+                <div class="hint">One CIDR block per line. Requests from outside these ranges will be blocked.</div>
+                <div id="vpn-ip-status" style="margin-top:8px;"></div>
+              </div>
+              <div class="toggle-wrap">
+                <label class="toggle">
+                  <input type="checkbox"/>
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+                <span style="font-size:13px;color:var(--n700);">Allow admin bypass from any IP</span>
+              </div>
+            </div>
+            <div class="card-footer" id="vpn-footer" style="display:none;"></div>
+          </div>
+
+          <!-- ============ PLATFORM CONFIGURATION ============ -->
+          <div class="infra-divider" style="margin-top:8px;">
+            <span class="infra-divider-label">Platform Configuration</span>
+            <div class="infra-divider-line"></div>
+          </div>
+
+          <!-- Map Tiles Source -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Map Tiles Source</div>
+                <div class="card-desc">Background map provider for geographic views</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Map provider</label>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--n700);font-weight:400;cursor:pointer;">
+                    <input type="radio" name="maptile" value="osm" checked style="accent-color:var(--n900);" onchange="toggleCustomTile(false)"/> OpenStreetMap (default)
+                  </label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--n700);font-weight:400;cursor:pointer;">
+                    <input type="radio" name="maptile" value="mapbox" style="accent-color:var(--n900);" onchange="toggleCustomTile(false)"/> Mapbox
+                  </label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--n700);font-weight:400;cursor:pointer;">
+                    <input type="radio" name="maptile" value="custom" style="accent-color:var(--n900);" onchange="toggleCustomTile(true)"/> Custom URL
+                  </label>
+                </div>
+                <div id="custom-tile-fields" style="display:none;background:var(--n100);border-radius:var(--rmd);padding:12px;margin-bottom:12px;">
+                  <label>Tile URL Template</label>
+                  <input class="input-field" placeholder="https://tiles.example.com/{z}/{x}/{y}.png" type="text"/>
+                  <div class="hint">Use {z}, {x}, {y} placeholders. Must support HTTPS.</div>
+                  <div style="margin-top:10px;">
+                    <label>API Key</label>
+                    <input class="input-field" type="password" placeholder="Required by some providers"/>
+                    <div class="hint">Masked after entry</div>
+                  </div>
+                </div>
+                <!-- NEW: Coordinate scheme + zoom range -->
+                <div class="form-row" style="margin-bottom:0;">
+                  <div>
+                    <label>Coordinate scheme</label>
+                    <select class="input-field"><option selected>XYZ</option><option>TMS</option></select>
+                  </div>
+                  <div style="display:flex;gap:12px;">
+                    <div style="flex:1;">
+                      <label>Min zoom</label>
+                      <input class="input-field" type="number" value="3" min="0" max="22"/>
+                    </div>
+                    <div style="flex:1;">
+                      <label>Max zoom</label>
+                      <input class="input-field" type="number" value="19" min="0" max="22"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer" style="justify-content:flex-start;">
+              <button class="btn btn-ghost btn-sm">Preview map</button>
+            </div>
+          </div>
+
+          <!-- Global Platform Settings (aligned to spec) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Global Platform Settings</div>
+                <div class="card-desc">Session and platform-wide flags</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-group" style="max-width:50%;">
+                <label>Session Timeout (minutes)</label>
+                <input class="input-field" value="60" type="number" min="5" max="480"/>
+                <div class="hint">User will be logged out after this period of inactivity</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+                <div class="toggle-wrap">
+                  <label class="toggle">
+                    <input type="checkbox" checked/>
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                  </label>
+                  <div>
+                    <div style="font-size:13px;color:var(--n700);">Audit Logging</div>
+                    <div class="hint" style="margin-top:1px;">Record user actions and permission changes</div>
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <label class="toggle">
+                    <input type="checkbox"/>
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                  </label>
+                  <div>
+                    <div style="font-size:13px;color:var(--n700);">Maintenance Mode</div>
+                    <div class="hint" style="margin-top:1px;">Block all non-admin users from accessing the platform</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NEW: AI / LLM Provider -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">AI / LLM Provider</div>
+                <div class="card-desc">Inference provider for the AI panel</div>
+              </div>
+              <div class="toggle-wrap">
+                <span style="font-size:12px;color:var(--n500);">Active</span>
+                <label class="toggle">
+                  <input type="checkbox" checked/>
+                  <div class="toggle-track"></div>
+                  <div class="toggle-thumb"></div>
+                </label>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-row">
+                <div>
+                  <label>Provider</label>
+                  <select class="input-field"><option selected>Anthropic</option><option>OpenAI</option><option>Gemini</option><option>vLLM</option><option>GLM</option></select>
+                </div>
+                <div>
+                  <label>Default model</label>
+                  <input class="input-field" value="claude-opus-4-8" type="text"/>
+                </div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label>API Key</label>
+                  <input class="input-field" value="••••••••••••••••" type="password"/>
+                  <div class="hint">Masked after entry</div>
+                </div>
+                <div>
+                  <label>Base URL</label>
+                  <input class="input-field" placeholder="https://" type="text"/>
+                  <div class="hint">Required for self-hosted providers (vLLM, GLM)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NEW: AI / MCP Host Secrets -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">AI / MCP Host Secrets</div>
+                <div class="card-desc">Credentials that MCP hosts present to the system</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openSecretModal()">+ Issue secret</button>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="perm-table">
+                <thead>
+                  <tr><th>Label</th><th>Binding</th><th>Status</th><th>Expiry</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="perm-obj">grid-sync-bot</td>
+                    <td>Role · Integration</td>
+                    <td><span class="status-tag" style="background:var(--green-bg);color:var(--green);border-color:#bbf7d0;">Active</span></td>
+                    <td>2026-12-31</td>
+                    <td style="text-align:right;"><button class="btn btn-ghost btn-sm">Revoke</button></td>
+                  </tr>
+                  <tr>
+                    <td class="perm-obj">analytics-reader</td>
+                    <td>User · m.ivlev</td>
+                    <td><span class="status-tag" style="background:var(--green-bg);color:var(--green);border-color:#bbf7d0;">Active</span></td>
+                    <td>2026-09-01</td>
+                    <td style="text-align:right;"><button class="btn btn-ghost btn-sm">Revoke</button></td>
+                  </tr>
+                  <tr>
+                    <td class="perm-obj">legacy-import</td>
+                    <td>Role · Admin</td>
+                    <td><span class="status-tag" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border);">Revoked</span></td>
+                    <td>—</td>
+                    <td style="text-align:right;"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-footer" style="justify-content:flex-start;">
+              <span class="hint" style="margin-top:0;">Secret value is shown once at issue time and never stored or displayed in clear text.</span>
+            </div>
+          </div>
+
+          <!-- File Attachments -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">File Attachments</div>
+                <div class="card-desc">Rules for files attached to objects, per entity type</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="perm-table">
+                <thead>
+                  <tr><th>Entity type</th><th>File cap</th><th>Document categories</th><th>Category required</th><th>Max size</th><th>Allowed types</th><th></th></tr>
+                </thead>
+                <tbody>
+                  <tr class="fa-row" onclick="openFilePanel('Project')">
+                    <td class="perm-obj">Project</td><td>50</td><td>Plan, Budget, Report</td><td>No</td><td>50 MB</td><td>PDF, DWG, XLSX</td><td class="fa-go">&rsaquo;</td>
+                  </tr>
+                  <tr class="fa-row" onclick="openFilePanel('Task')">
+                    <td class="perm-obj">Task</td><td>20</td><td>Drawing, Photo</td><td>No</td><td>25 MB</td><td>PDF, PNG, JPG</td><td class="fa-go">&rsaquo;</td>
+                  </tr>
+                  <tr class="fa-row" onclick="openFilePanel('Component')">
+                    <td class="perm-obj">Component</td><td>10</td><td>Specification, Photo</td><td>Yes</td><td>15 MB</td><td>PDF, PNG</td><td class="fa-go">&rsaquo;</td>
+                  </tr>
+                  <tr class="fa-row" onclick="openFilePanel('Zone')">
+                    <td class="perm-obj">Zone</td><td>5</td><td>Plan, Report</td><td>No</td><td>50 MB</td><td>PDF, SHP</td><td class="fa-go">&rsaquo;</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-footer" style="justify-content:flex-start;">
+              <span class="hint" style="margin-top:0;">Select a row to edit its attachment rules</span>
+            </div>
+          </div>
+
+          <!-- ============ DATA PROVISIONING ============ -->
+          <div class="infra-divider" style="margin-top:8px;">
+            <span class="infra-divider-label">Data Provisioning</span>
+            <div class="infra-divider-line"></div>
+          </div>
+
+          <!-- Seed Data Import -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Seed Data Import</div>
+                <div class="card-desc">Bootstrap reference data and libraries from prepared files</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div style="border:1.5px dashed var(--n300);border-radius:var(--rmd);padding:20px;text-align:center;background:var(--sb);margin-bottom:16px;">
+                <div style="font-size:13px;color:var(--n600);margin-bottom:8px;">grid_units_export.csv · 1,240 rows</div>
+                <button class="btn btn-ghost btn-sm">Replace file</button>
+                <div id="seed-detected" class="hint" style="margin-top:8px;color:var(--green);">Detected format: XLS-CSV — pre-selected below, override if wrong</div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label>Data type</label>
+                  <select class="input-field"><option selected>Library</option><option>Reference data</option><option>Starter objects</option></select>
+                  <div class="hint">What the file becomes — cannot be inferred, set it explicitly</div>
+                </div>
+                <div>
+                  <label>Source format</label>
+                  <select class="input-field"><option selected>XLS-CSV</option><option>SAP</option><option>MS Project</option><option>AutoCAD</option><option>CIM</option></select>
+                  <div class="hint">Auto-detected from the file; override if wrong</div>
+                </div>
+              </div>
+              <div class="hint">Files only — there is no live integration with external systems.</div>
+            </div>
+            <div class="card-footer" style="justify-content:space-between;">
+              <span class="hint" style="margin-top:0;">Preview shows what will change before anything is written</span>
+              <button class="btn btn-primary" onclick="runSeed()">Preview import</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================== RBAC =================== -->
+        <div id="view-rbac" class="section section-hidden" style="display:none;max-width:960px;">
+
+          <!-- ================= LIST ================= -->
+          <div id="rbac-list">
+            <div class="infra-divider"><span class="infra-divider-label">Access Control</span><div class="infra-divider-line"></div></div>
+
+            <!-- Roles and permissions -->
+            <div class="card" style="max-width:780px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Roles and permissions</div>
+                  <div class="card-desc">Each role carries a permission matrix and a scope of allowed zones and tags</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openRoleEditor('New role', false, true)">+ Add role</button>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <table class="perm-table">
+                  <thead><tr><th>Role</th><th>Description</th><th>Zones</th><th>Tags</th><th></th></tr></thead>
+                  <tbody>
+                    <tr class="fa-row" onclick="openRoleEditor('System Administrator', true, false)">
+                      <td class="perm-obj">System Administrator</td><td>Full installation access</td><td>All</td><td>All</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                    <tr class="fa-row" onclick="openRoleEditor('Planning Engineer', false, false)">
+                      <td class="perm-obj">Planning Engineer</td><td>Builds and edits within assigned zones</td><td>Northern, Coastal</td><td>&mdash;</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                    <tr class="fa-row" onclick="openRoleEditor('Planning Manager', false, false)">
+                      <td class="perm-obj">Planning Manager</td><td>Reviews and approves regional work</td><td>3 regions</td><td>#HV</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                    <tr class="fa-row" onclick="openRoleEditor('Model Manager', false, false)">
+                      <td class="perm-obj">Model Manager</td><td>Merges approved projects into the model</td><td>All</td><td>&mdash;</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="card-footer" style="justify-content:flex-start;">
+                <span class="hint" style="margin-top:0;">Select a role to edit its matrix and scope &middot; system roles cannot be deleted</span>
+              </div>
+            </div>
+
+            <!-- User assignment -->
+            <div class="card" style="max-width:780px;">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">User assignment</div>
+                  <div class="card-desc">Assign roles to users provisioned through SSO &mdash; effective access is the union of the assigned roles, each within its own scope</div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openAddAssignment()">+ Assign user</button>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <table class="perm-table">
+                  <thead><tr><th>User</th><th>Roles</th><th></th></tr></thead>
+                  <tbody>
+                    <tr class="fa-row" onclick="openAssignPanel('a.petrov@northwindpower.com','Anton Petrov','AP')">
+                      <td><div style="display:flex;align-items:center;gap:10px;"><span class="avatar">AP</span><div><div style="font-weight:500;color:var(--n800);">Anton Petrov</div><div class="hint" style="margin-top:0;">a.petrov@northwindpower.com</div></div></div></td><td>Planning Engineer</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                    <tr class="fa-row" onclick="openAssignPanel('m.ivlev@northwindpower.com','Maksim Ivlev','MI')">
+                      <td><div style="display:flex;align-items:center;gap:10px;"><span class="avatar">MI</span><div><div style="font-weight:500;color:var(--n800);">Maksim Ivlev</div><div class="hint" style="margin-top:0;">m.ivlev@northwindpower.com</div></div></div></td><td>Planning Manager, Model Manager</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                    <tr class="fa-row" onclick="openAssignPanel('s.orlova@northwindpower.com','Svetlana Orlova','SO')">
+                      <td><div style="display:flex;align-items:center;gap:10px;"><span class="avatar">SO</span><div><div style="font-weight:500;color:var(--n800);">Svetlana Orlova</div><div class="hint" style="margin-top:0;">s.orlova@northwindpower.com</div></div></div></td><td>System Administrator</td><td class="fa-go">&rsaquo;</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= ROLE EDITOR (modal) ================= -->
+          <div class="overlay" id="rbac-role-editor" onclick="if(event.target===this)showRoleList()">
+            <div class="modal modal-role">
+              <div class="modal-hd" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <input class="input-field" id="role-name-input" value="Planning Engineer" style="font-size:16px;font-weight:600;height:36px;width:300px;"/>
+                  <span id="role-sys-badge" class="badge badge-sys" style="display:none;">System</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button id="role-delete-btn" class="btn btn-ghost btn-sm" style="color:var(--red);">Delete role</button>
+                  <button onclick="showRoleList()" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--n500);">&#10005;</button>
+                </div>
+              </div>
+              <div class="modal-body" id="role-modal-body">
+
+            <div class="card">
+              <div class="card-body">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label>Description</label>
+                  <textarea class="textarea-field" style="min-height:48px;">Builds and edits within assigned zones</textarea>
+                  <div id="role-sys-note" class="hint">Custom role &mdash; can be edited and deleted</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div><div class="card-title">Permission matrix</div><div class="card-desc">Allowed actions per object type, within the role&rsquo;s scope</div></div></div>
+              <div class="card-body" style="padding:0;">
+                <div class="sub-hd">Object permissions</div>
+                <div class="hint" style="padding:0 16px 8px;">Permissions apply across the role&rsquo;s allowed zones and tags. Expand a data object to scope it per zone or tag.</div>
+                <div id="objperm"></div>
+                <div class="sub-hd" style="border-top:1px solid var(--border);">Workflow actions</div>
+                <table class="matrix2">
+                  <thead><tr><th class="objcol">Object type</th><th>Approve</th><th>Merge</th><th>Force&nbsp;Approve</th></tr></thead>
+                  <tbody>
+                    <tr><td>Project</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+                    <tr><td>Task</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="card-footer" style="flex-direction:column;align-items:flex-start;gap:6px;">
+                <div class="rule-hint"><span>&#9432;</span><span>Workflow actions apply only to Project and Task &mdash; objects that have a review lifecycle.</span></div>
+                <div class="rule-hint"><span>&#9432;</span><span>Approve applies only where the role&rsquo;s holder is named on the project&rsquo;s review; Merge applies only to an APPROVED project.</span></div>
+                <div class="rule-hint"><span>&#9432;</span><span>Force Approve is an admin override &mdash; approve bypassing the normal review gates; grant sparingly.</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div><div class="card-title">Scope</div><div class="card-desc">Limits the role&rsquo;s actions to the listed zones and tags</div></div></div>
+              <div class="card-body">
+                <div class="form-row" style="margin-bottom:0;">
+                  <div>
+                    <label>Allowed zones</label>
+                    <div class="chips"><span class="chip">Northern District<button>&#10005;</button></span><span class="chip">Coastal Feeder<button>&#10005;</button></span></div>
+                    <div style="display:flex;gap:8px;"><select class="input-field"><option value="">Add zone…</option><option>Southern District</option><option>Bay Area</option><option>Central District</option><option>Highland Feeder</option></select><button class="btn btn-ghost btn-sm">Add</button></div>
+                    <div class="hint">The zones this role can work in. Object permissions are granted across these zones by default; expand an object to grant different rights per zone.</div>
+                  </div>
+                  <div>
+                    <label>Allowed tags</label>
+                    <div class="chips"><span class="chip">#HV<button>&#10005;</button></span></div>
+                    <div style="display:flex;gap:8px;"><select class="input-field"><option value="">Add tag…</option><option>#Construction</option><option>#Active</option><option>#Vendor</option><option>#LV</option></select><button class="btn btn-ghost btn-sm">Add</button></div>
+                    <div class="hint">The tagged data this role can touch. Object permissions apply across these tags by default; expand an object to override per tag.</div>
+                  </div>
+                </div>
+                <div class="hint">An empty list carries the meaning defined for this role in the seed configuration</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div><div class="card-title">Notifications</div><div class="card-desc">What this role&rsquo;s holders are notified about, by domain &mdash; installation defaults; users can fine-tune in their own preferences</div></div></div>
+              <div class="card-body">
+                <div class="form-group" style="max-width:420px;margin-bottom:14px;">
+                  <label>Scope</label>
+                  <select class="input-field"><option>All</option><option>Own region</option><option selected>Own project</option><option>Own task</option><option>Own data</option><option>Own account</option><option>None</option></select>
+                </div>
+                <table class="perm-table ntf2">
+                  <thead><tr><th>Event</th><th class="cc">Active</th><th class="cc">Mandatory</th><th class="cc">In-app</th><th class="cc">Email</th><th class="cc">Push</th></tr></thead>
+                  <tbody>
+                    <tr class="ntf2-row"><td class="perm-obj">Project flow</td><td class="cc"><label class="toggle ntf2-active" style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><label class="toggle " style="display:inline-flex;"><input type="checkbox" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-on" onclick="ntfPk(this)">✓</span></td><td class="cc"><span class="pk pk-on" onclick="ntfPk(this)">✓</span></td></tr>
+                    <tr class="ntf2-row"><td class="perm-obj">Validations</td><td class="cc"><label class="toggle ntf2-active" style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><label class="toggle " style="display:inline-flex;"><input type="checkbox" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-on" onclick="ntfPk(this)">✓</span></td></tr>
+                    <tr class="ntf2-row"><td class="perm-obj">Comments</td><td class="cc"><label class="toggle ntf2-active" style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><label class="toggle " style="display:inline-flex;"><input type="checkbox" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-on" onclick="ntfPk(this)">✓</span></td></tr>
+                    <tr class="ntf2-row"><td class="perm-obj">Access &amp; roles</td><td class="cc"><label class="toggle ntf2-active" style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><label class="toggle " style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td><td class="cc"><span class="pk pk-ind" onclick="ntfPk(this)">–</span></td></tr>
+                    <tr class="ntf2-row"><td class="perm-obj">Permissions</td><td class="cc"><label class="toggle ntf2-active" style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><label class="toggle " style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><span class="pk pk-off" onclick="ntfPk(this)"></span></td><td class="cc"><span class="pk pk-off" onclick="ntfPk(this)"></span></td><td class="cc"><span class="pk pk-off" onclick="ntfPk(this)"></span></td></tr>
+                    <tr class="ntf2-row"><td class="perm-obj">System</td><td class="cc"><label class="toggle ntf2-active" style="display:inline-flex;"><input type="checkbox" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><label class="toggle " style="display:inline-flex;"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label></td><td class="cc"><span class="pk pk-on" onclick="ntfPk(this)">✓</span></td><td class="cc"><span class="pk pk-on" onclick="ntfPk(this)">✓</span></td><td class="cc"><span class="pk pk-off" onclick="ntfPk(this)"></span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+              </div>
+              <div class="modal-ft">
+                <button class="btn btn-ghost" onclick="showRoleList()">Cancel</button>
+                <button class="btn btn-primary" onclick="showRoleList()">Save</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODAL: Add Access Rights =================== -->
+<div class="modal-overlay" id="modal-rights" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add access rights</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--n500);font-size:18px;line-height:1;" onclick="closeModal('modal-rights')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px;">
+        <label>Object type</label>
+        <select class="input-field" id="modal-obj-type" onchange="updateModalStatuses(this.value)">
+          <option value="project">Project</option>
+          <option value="task">Task</option>
+          <option value="component">Component</option>
+          <option value="area">Area</option>
+          <option value="region">Region</option>
+          <option value="model">Model / Branch</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--n700);margin-bottom:10px;">Permissions</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label class="status-check"><input type="checkbox" id="perm-create"/> Create</label>
+            <label class="status-check"><input type="checkbox" checked id="perm-read"/> Read</label>
+            <label class="status-check"><input type="checkbox" id="perm-update"/> Update</label>
+            <label class="status-check"><input type="checkbox" id="perm-delete"/> Delete</label>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--n700);margin-bottom:10px;">Statuses</div>
+          <div id="modal-statuses" style="display:flex;flex-direction:column;gap:8px;">
+            <label class="status-check"><input type="checkbox"/> New</label>
+            <label class="status-check"><input type="checkbox"/> Approved</label>
+            <label class="status-check"><input type="checkbox"/> Completed</label>
+            <label class="status-check"><input type="checkbox"/> Closed</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-rights')">Cancel</button>
+      <button class="btn btn-primary" onclick="addRightsRow()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Zone -->
+<div class="modal-overlay" id="modal-zone" style="display:none;">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">
+      <span class="modal-title">Add zone scope</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--n500);font-size:18px;line-height:1;" onclick="closeModal('modal-zone')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px;">Restrict this role to specific zones. Users will only see objects within assigned zones.</div>
+      <div style="border:1px solid var(--border);border-radius:var(--rmd);overflow:hidden;">
+        <div style="padding:6px 10px;background:var(--n100);font-size:11px;font-weight:600;color:var(--n500);border-bottom:1px solid var(--border);">Select zones</div>
+        <div style="max-height:200px;overflow-y:auto;padding:6px 0;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px;cursor:pointer;font-weight:400;color:var(--fg);">
+            <input type="checkbox" style="accent-color:var(--n900);"/> Zone 1.1 — Northern District
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px 5px 28px;cursor:pointer;font-weight:400;color:var(--n600);">
+            <input type="checkbox" style="accent-color:var(--n900);"/> Zone 1.1.A — Coastal Feeder
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px 5px 28px;cursor:pointer;font-weight:400;color:var(--n600);">
+            <input type="checkbox" style="accent-color:var(--n900);"/> Zone 1.1.B — Highland Feeder
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px;cursor:pointer;font-weight:400;color:var(--fg);">
+            <input type="checkbox" style="accent-color:var(--n900);"/> Zone 2 — Southern District
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px 5px 28px;cursor:pointer;font-weight:400;color:var(--n600);">
+            <input type="checkbox" style="accent-color:var(--n900);"/> Zone 2.A — Bay Area
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px;cursor:pointer;font-weight:400;color:var(--fg);">
+            <input type="checkbox" style="accent-color:var(--n900);"/> Zone 3 — Central District
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-zone')">Cancel</button>
+      <button class="btn btn-primary" onclick="addZoneScope()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Role -->
+<div class="modal-overlay" id="modal-add-role" style="display:none;">
+  <div class="modal" style="width:360px;">
+    <div class="modal-header">
+      <span class="modal-title">New role</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--n500);font-size:18px;line-height:1;" onclick="closeModal('modal-add-role')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Role name *</label>
+        <input class="input-field" id="new-role-name" placeholder="e.g. Distr Planning Engineer" type="text"/>
+      </div>
+      <div class="form-group">
+        <label>Group / Category</label>
+        <select class="input-field">
+          <option>Distribution</option>
+          <option>Transmission</option>
+          <option>External</option>
+          <option>Custom</option>
+        </select>
+      </div>
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox"/>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <span style="font-size:13px;color:var(--n700);">Set as default role for new users</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-role')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-add-role')">Create Role</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Data Import preview modal -->
+<div class="overlay" id="import-overlay">
+  <div class="modal modal-lg">
+    <div class="modal-hd" style="display:flex;align-items:flex-start;justify-content:space-between;">
+      <div><div class="modal-title">Import preview</div><div class="modal-step">Dry run — nothing has been written yet</div></div>
+      <button onclick="closeImportModal()" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--n500);">&#10005;</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px 0;">
+      <div class="seed-stat" style="border:1px solid var(--border);border-radius:var(--rmd);margin-bottom:18px;">
+        <div><div class="seed-num" style="color:var(--green);">1,186</div><div class="seed-lbl">Created</div></div>
+        <div><div class="seed-num">42</div><div class="seed-lbl">Updated</div></div>
+        <div><div class="seed-num" style="color:var(--n500);">6</div><div class="seed-lbl">Skipped</div></div>
+        <div><div class="seed-num" style="color:var(--orange);">6</div><div class="seed-lbl">Issues</div></div>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Issues</div>
+      <div style="max-height:228px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rmd);">
+        <table class="perm-table">
+          <tbody>
+            <tr><td style="width:78px;"><span class="sev sev-err">Error</span></td><td class="perm-obj" style="width:78px;">Row 312</td><td>Unknown unit code &quot;kVAr2&quot; — not in Engineering Units</td></tr>
+            <tr><td><span class="sev sev-err">Error</span></td><td class="perm-obj">Row 527</td><td>Missing required field &quot;voltage_class&quot;</td></tr>
+            <tr><td><span class="sev sev-err">Error</span></td><td class="perm-obj">Row 842</td><td>Invalid date in &quot;installation_date&quot; — expected YYYY-MM-DD</td></tr>
+            <tr><td><span class="sev sev-warn">Warning</span></td><td class="perm-obj">Row 1059</td><td>&quot;device_name&quot; exceeded max length — truncated to 50 chars</td></tr>
+            <tr><td><span class="sev sev-warn">Warning</span></td><td class="perm-obj">Row 1678</td><td>Unsupported character &quot;#&quot; in &quot;serial_number&quot; — removed</td></tr>
+            <tr><td><span class="sev sev-warn">Warning</span></td><td class="perm-obj">Row 2114</td><td>Conflicting &quot;min_load&quot; / &quot;max_load&quot; — please verify</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:14px 0 4px;">
+        <button class="btn btn-ghost btn-sm">&#8595; Download report (CSV)</button>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeImportModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="closeImportModal()">Apply import (1,228 records)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Issue Secret modal -->
+<div class="overlay" id="secret-overlay">
+  <div class="modal">
+    <div id="secret-step1">
+      <div class="modal-hd"><div class="modal-title">Issue MCP host secret</div><div class="modal-step">Step 1 of 2 &middot; Configure</div></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Label</label><input class="input-field" placeholder="e.g. grid-sync-bot"/></div>
+        <div class="form-group">
+          <label>Binding</label>
+          <div class="hint" style="margin-top:0;margin-bottom:8px;">The identity this secret acts as — its actions are attributed to and permissioned as this principal</div>
+          <div style="display:flex;gap:18px;margin-bottom:10px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--n700);font-weight:400;cursor:pointer;"><input type="radio" name="bindtype" checked onchange="setBindingType('role')" style="accent-color:var(--n900);"/> Role</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--n700);font-weight:400;cursor:pointer;"><input type="radio" name="bindtype" onchange="setBindingType('user')" style="accent-color:var(--n900);"/> User</label>
+          </div>
+          <select class="input-field" id="bind-role"><option>Admin</option><option selected>Integration</option><option>Editor</option><option>Viewer</option></select>
+          <select class="input-field" id="bind-user" style="display:none;"><option>m.ivlev</option><option>a.petrov</option><option>s.orlova</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;"><label>Expiry</label><input class="input-field" type="date" value="2026-12-31"/></div>
+      </div>
+      <div class="modal-ft"><button class="btn btn-ghost" onclick="closeSecretModal()">Cancel</button><button class="btn btn-primary" onclick="showSecretStep(2)">Issue secret</button></div>
+    </div>
+    <div id="secret-step2" style="display:none;">
+      <div class="modal-hd"><div class="modal-title">Secret issued</div><div class="modal-step">Step 2 of 2 &middot; Copy now</div></div>
+      <div class="modal-body">
+        <div class="warn-banner"><span>&#9888;</span><span>This value is shown once and cannot be retrieved again. Copy and store it now.</span></div>
+        <label>Secret</label>
+        <div style="display:flex;gap:8px;align-items:center;"><div class="secret-box" style="flex:1;">mcps_8f3a1c9e4b7d2056aa91ff34c7e0b1d8</div><button class="btn btn-ghost btn-sm" onclick="copyToClipboard()">Copy</button></div>
+      </div>
+      <div class="modal-ft"><button class="btn btn-primary" onclick="closeSecretModal()">I&rsquo;ve stored it — close</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- File Attachments edit drawer -->
+<div class="drawer-overlay" id="file-overlay" onclick="if(event.target===this)closeFilePanel()">
+  <div class="drawer">
+    <div class="drawer-hd"><span style="font-size:14px;font-weight:600;"><span id="fa-entity">Project</span> attachments</span><button onclick="closeFilePanel()" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--n500);border-radius:var(--rsm);">&#10005;</button></div>
+    <div class="drawer-body">
+      <div class="form-group"><label>File count cap</label><input class="input-field" type="number" value="50"/><div class="hint">Maximum files per object of this type</div></div>
+      <div class="form-group">
+        <label>Document categories</label>
+        <div class="chips"><span class="chip">Plan<button>&#10005;</button></span><span class="chip">Budget<button>&#10005;</button></span><span class="chip">Report<button>&#10005;</button></span></div>
+        <div style="display:flex;gap:8px;"><input class="input-field" placeholder="Type to find or create…"/><button class="btn btn-ghost btn-sm">Add</button></div>
+        <div class="hint">Customer-defined — pick an existing category or create a new one</div>
+      </div>
+      <div class="form-group"><div class="toggle-wrap"><label class="toggle"><input type="checkbox"/><div class="toggle-track"></div><div class="toggle-thumb"></div></label><span style="font-size:13px;color:var(--n700);">Category required on upload</span></div></div>
+      <div class="form-group"><label>Max file size (MB)</label><input class="input-field" type="number" value="50"/></div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Allowed file types</label>
+        <div class="chips"><span class="chip">PDF<button>&#10005;</button></span><span class="chip">DWG<button>&#10005;</button></span><span class="chip">XLSX<button>&#10005;</button></span></div>
+        <div style="display:flex;gap:8px;">
+          <select class="input-field"><option value="">Select a type…</option><option>PNG</option><option>JPG</option><option>SVG</option><option>CSV</option><option>SHP</option><option>GeoJSON</option><option>DXF</option><option>DOCX</option><option>ZIP</option></select>
+          <button class="btn btn-ghost btn-sm">Add</button>
+        </div>
+        <div class="hint">Chosen from supported formats only — no free text</div>
+      </div>
+    </div>
+    <div class="drawer-ft"><button class="btn btn-ghost" onclick="closeFilePanel()">Cancel</button><button class="btn btn-primary" onclick="closeFilePanel()">Save</button></div>
+  </div>
+</div>
+
+<!-- User assignment drawer -->
+<div class="drawer-overlay" id="assign-overlay" onclick="if(event.target===this)closeAssignPanel()">
+  <div class="drawer">
+    <div class="drawer-hd"><span style="font-size:14px;font-weight:600;">Role assignment</span><button onclick="closeAssignPanel()" style="width:28px;height:28px;border:none;background:none;cursor:pointer;color:var(--n500);">&#10005;</button></div>
+    <div class="drawer-body">
+      <div class="form-group" id="assign-identity">
+        <label>User</label>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--n100);border:1px solid var(--border);border-radius:var(--rmd);">
+          <span class="avatar" id="assign-avatar">AP</span>
+          <div><div style="font-size:13px;font-weight:500;color:var(--n800);" id="assign-name">Anton Petrov</div><div class="hint" style="margin-top:0;" id="assign-email">a.petrov@northwindpower.com</div></div>
+        </div>
+        <div class="hint">Provisioned via SSO &mdash; identity is managed by your identity provider</div>
+      </div>
+      <div class="form-group" id="assign-picker" style="display:none;">
+        <label>User</label>
+        <input class="input-field" placeholder="Search users by name or email…"/>
+        <div class="hint">Pick a user who has signed in via SSO or been synced from your identity provider</div>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Roles</label>
+        <div class="chips"><span class="chip">Planning Engineer<button>&#10005;</button></span></div>
+        <div style="display:flex;gap:8px;"><select class="input-field"><option value="">Add role…</option><option>Planning Manager</option><option>Model Manager</option><option>System Administrator</option></select><button class="btn btn-ghost btn-sm">Add</button></div>
+        <div class="hint">Multiple roles allowed &mdash; effective access is their union, each within its own scope</div>
+      </div>
+    </div>
+    <div class="drawer-ft"><button class="btn btn-ghost" onclick="closeAssignPanel()">Cancel</button><button class="btn btn-primary" onclick="closeAssignPanel()">Save</button></div>
+  </div>
+</div>
+
+<div class="save-bar" id="save-bar">
+  <span style="font-size:13px;color:var(--n600);">You have unsaved changes</span>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-ghost" onclick="hideSaveBar()">Cancel</button>
+    <button class="btn btn-primary" onclick="hideSaveBar()">Save changes</button>
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(tab) {
+  window.currentTab=tab; var sb=document.getElementById('save-bar'); if(sb) sb.classList.remove('show');
+  ['company','infra','rbac'].forEach(function(t) {
+    document.getElementById('tab-'+t).classList.remove('active');
+    var v = document.getElementById('view-'+t);
+    if(v) { v.style.display='none'; v.classList.add('section-hidden'); }
+  });
+  document.getElementById('tab-'+tab).classList.add('active');
+  var view = document.getElementById('view-'+tab);
+  if(view) {
+    view.classList.remove('section-hidden');
+    view.style.display = 'block';
+  }
+  // sidebar nav
+  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(b){
+    if(b.textContent.trim().toLowerCase().includes(
+      tab==='infra'?'infrastructure':tab==='rbac'?'rbac':'company'
+    )) b.classList.add('active');
+  });
+}
+
+// VPN toggle
+function toggleVPN(cb) {
+  var body = document.getElementById('vpn-body');
+  var footer = document.getElementById('vpn-footer');
+  var label = document.getElementById('vpn-label');
+  if(cb.checked) {
+    body.style.display='block'; footer.style.display='flex'; label.textContent='Enabled';
+  } else {
+    body.style.display='none'; footer.style.display='none'; label.textContent='Disabled';
+  }
+}
+
+// Custom tile
+function toggleCustomTile(show) {
+  document.getElementById('custom-tile-fields').style.display = show?'block':'none';
+}
+document.querySelectorAll('input[name=maptile]').forEach(function(r){
+  r.addEventListener('change', function(){ toggleCustomTile(this.value==='custom'); });
+});
+
+// RBAC role selection
+var roleData = {
+  'Administrator': {
+    sys: true, users: 1, zoneScope: null, tagScope: null,
+    scopeSummary: ['All zones','All tags','Full object access','All workflow statuses']
+  },
+  'Distr Construction Engineer': {
+    sys: false, users: 3, zoneScope: ['Zone 1.1 — Northern District','Zone 1.1.A — Coastal Feeder'],
+    tagScope: ['#Construction','#Active'],
+    scopeSummary: ['Zone 1.1 (Northern)','Tags: #Construction, #Active','Project, Task, Component','Status: New → Completed']
+  },
+  'Vendor Engineer': {
+    sys: false, users: 8, zoneScope: null, tagScope: ['#Vendor'],
+    scopeSummary: ['All zones','Tag: #Vendor only','Libraries read/write','No workflow access']
+  }
+};
+
+function selectRole(el, name) {
+  document.querySelectorAll('.role-item').forEach(function(r){ r.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('role-name-hd').textContent = name;
+  var data = roleData[name] || {sys:false, users:0, zoneScope:null, tagScope:null, scopeSummary:['Custom scope']};
+  var sysBadge = document.getElementById('role-sys-badge');
+  var delBtn = document.getElementById('role-delete-btn');
+  sysBadge.style.display = data.sys ? 'inline-flex' : 'none';
+  delBtn.style.display = data.sys ? 'none' : 'inline-flex';
+  document.getElementById('users-count').textContent = data.users;
+
+  // Zone scope
+  var zs = document.getElementById('zone-scope');
+  if(data.zoneScope) {
+    zs.innerHTML = data.zoneScope.map(function(z){
+      return '<div class="zone-item" style="padding:4px 10px;font-size:12px;"><span style="color:var(--n400);margin-right:6px;">▸</span>'+z+' <button style="background:none;border:none;cursor:pointer;color:var(--n400);margin-left:auto;font-size:13px;" onclick="event.stopPropagation()">×</button></div>';
+    }).join('');
+  } else {
+    zs.innerHTML='<div style="font-size:12px;color:var(--n400);padding:6px 10px;font-style:italic;">All zones (no restriction)</div>';
+  }
+
+  // Tag scope
+  var ts = document.getElementById('tag-scope');
+  if(data.tagScope) {
+    ts.innerHTML = data.tagScope.map(function(t){
+      return '<span class="status-tag" style="cursor:default;">'+t+' <span style="color:var(--n400);cursor:pointer;" onclick="this.parentElement.remove()">×</span></span>';
+    }).join('');
+  } else {
+    ts.innerHTML='<div style="font-size:12px;color:var(--n400);font-style:italic;">All tags (no restriction)</div>';
+  }
+
+  // Scope summary
+  var sc = document.querySelector('.rbac-right [style*="flex-direction:column;gap:5px"]');
+  if(sc && data.scopeSummary) {
+    sc.innerHTML = data.scopeSummary.map(function(s){
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span style="color:var(--n600);">'+s+'</span></div>';
+    }).join('');
+  }
+
+  // Users
+  var ul = document.getElementById('users-list');
+  if(name==='Distr Construction Engineer') {
+    ul.innerHTML = ['<div class="user-row"><div class="avatar">AK</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">Anna Kowalski</div><div style="font-size:11px;color:var(--n400);">a.kowalski@nwpc.com</div></div><button style="background:none;border:none;cursor:pointer;color:var(--n400);font-size:14px;">×</button></div>',
+    '<div class="user-row"><div class="avatar" style="background:#525252;">BJ</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">Ben Johnson</div><div style="font-size:11px;color:var(--n400);">b.johnson@nwpc.com</div></div><button style="background:none;border:none;cursor:pointer;color:var(--n400);font-size:14px;">×</button></div>',
+    '<div class="user-row"><div class="avatar" style="background:#404040;">TL</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">Tom Lee</div><div style="font-size:11px;color:var(--n400);">t.lee@nwpc.com</div></div><button style="background:none;border:none;cursor:pointer;color:var(--n400);font-size:14px;">×</button></div>'
+    ].join('');
+  } else {
+    ul.innerHTML='<div class="user-row"><div class="avatar">MI</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;">Michael Irving</div><div style="font-size:11px;color:var(--n400);">m.irving@nwpc.com</div></div><button style="background:none;border:none;cursor:pointer;color:var(--n400);font-size:14px;">×</button></div>';
+  }
+}
+
+// Modals
+function openModal(id){ document.getElementById(id).style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+function openAddRights(){ openModal('modal-rights'); }
+function openAddZone(){ openModal('modal-zone'); }
+function openAddRole(){ openModal('modal-add-role'); }
+
+// Status options per object type
+var statusMap = {
+  project: ['New','Approved','Completed','Closed'],
+  task: ['New','In Progress','Completed','Approved'],
+  component: ['Draft','Reviewed','Approved','Locked'],
+  area: [],
+  region: [],
+  model: ['Draft','Active','Archived'],
+};
+function updateModalStatuses(type) {
+  var statuses = statusMap[type] || [];
+  var wrap = document.getElementById('modal-statuses');
+  if(!statuses.length) {
+    wrap.innerHTML='<div style="font-size:12px;color:var(--n400);font-style:italic;">No workflow statuses</div>';
+  } else {
+    wrap.innerHTML = statuses.map(function(s){
+      return '<label class="status-check"><input type="checkbox"/> '+s+'</label>';
+    }).join('');
+  }
+}
+
+function addRightsRow() {
+  var type = document.getElementById('modal-obj-type');
+  var typeName = type.options[type.selectedIndex].text;
+  var perms = [];
+  ['create','read','update','delete'].forEach(function(p){
+    if(document.getElementById('perm-'+p).checked) perms.push(p.charAt(0).toUpperCase()+p.slice(1));
+  });
+  var statusChecks = document.querySelectorAll('#modal-statuses input:checked');
+  var statuses = Array.from(statusChecks).map(function(c){ return c.parentElement.textContent.trim(); });
+
+  var tbody = document.getElementById('perm-rows');
+  var tr = document.createElement('tr');
+  tr.innerHTML = '<td><span class="perm-obj">'+typeName+'</span></td>'
+    + '<td><div class="perm-checks">'+perms.map(function(p){return '<span class="perm-check"><input type="checkbox" checked/> '+p+'</span>';}).join('')+'</div></td>'
+    + '<td>'+(statuses.length ? '<div class="status-tags">'+statuses.map(function(s){return '<span class="status-tag">'+s+'</span>';}).join('')+'</div>' : '<span style="font-size:12px;color:var(--n400);">—</span>')+'</td>'
+    + '<td><button style="background:none;border:none;cursor:pointer;color:var(--n400);font-size:14px;padding:0 2px;" onclick="this.closest(\'tr\').remove()">×</button></td>';
+  tbody.appendChild(tr);
+  closeModal('modal-rights');
+}
+
+function addZoneScope() {
+  var checked = document.querySelectorAll('#modal-zone input:checked');
+  var zs = document.getElementById('zone-scope');
+  if(checked.length) {
+    var zones = Array.from(checked).map(function(c){ return c.parentElement.textContent.trim(); });
+    zs.innerHTML = zones.map(function(z){
+      return '<div class="zone-item" style="padding:4px 10px;font-size:12px;"><span style="color:var(--n400);margin-right:6px;">▸</span>'+z+' <button style="background:none;border:none;cursor:pointer;color:var(--n400);margin-left:auto;font-size:13px;">×</button></div>';
+    }).join('');
+  }
+  closeModal('modal-zone');
+}
+
+// Logo upload mock
+function handleLogoUpload() {
+  var area = document.getElementById('logo-area');
+  area.style.background='#f0fdf4';
+  area.style.borderColor='#16a34a';
+  area.style.color='#16a34a';
+  area.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg><span>Logo uploaded</span>';
+}
+
+function selectSSOProvider(el, name) {
+  document.querySelectorAll('.sso-tab').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('sso-provider-name').textContent = name;
+}
+function openSecretModal(){document.getElementById('secret-overlay').classList.add('open');showSecretStep(1);}
+function closeSecretModal(){document.getElementById('secret-overlay').classList.remove('open');}
+function showSecretStep(n){document.getElementById('secret-step1').style.display=(n===1)?'block':'none';document.getElementById('secret-step2').style.display=(n===2)?'block':'none';}
+function setBindingType(t){document.getElementById('bind-user').style.display=(t==='user')?'block':'none';document.getElementById('bind-role').style.display=(t==='role')?'block':'none';}
+function openFilePanel(name){document.getElementById('fa-entity').textContent=name;document.getElementById('file-overlay').classList.add('open');}
+function closeFilePanel(){document.getElementById('file-overlay').classList.remove('open');}
+function runSeed(){document.getElementById('import-overlay').classList.add('open');}
+function closeImportModal(){document.getElementById('import-overlay').classList.remove('open');}
+function openRoleEditor(name, isSystem, isNew){
+  document.getElementById('role-name-input').value=isNew?'':name;
+  document.getElementById('role-sys-badge').style.display=isSystem?'inline-block':'none';
+  document.getElementById('role-delete-btn').style.display=isSystem?'none':'inline-flex';
+  document.getElementById('role-sys-note').textContent=isSystem?'Built-in role — cannot be deleted; its identity cannot be changed':'Custom role — can be edited and deleted';
+  document.getElementById('rbac-role-editor').classList.add('open');
+}
+function showRoleList(){
+  document.getElementById('rbac-role-editor').classList.remove('open');
+}
+function openAssignPanel(email,name,initials){
+  document.getElementById('assign-identity').style.display='block';
+  document.getElementById('assign-picker').style.display='none';
+  document.getElementById('assign-name').textContent=name;
+  document.getElementById('assign-email').textContent=email;
+  document.getElementById('assign-avatar').textContent=initials;
+  document.getElementById('assign-overlay').classList.add('open');
+}
+function openAddAssignment(){
+  document.getElementById('assign-identity').style.display='none';
+  document.getElementById('assign-picker').style.display='block';
+  document.getElementById('assign-overlay').classList.add('open');
+}
+function closeAssignPanel(){document.getElementById('assign-overlay').classList.remove('open');}
+function toggleExceptions(cb){document.getElementById('exceptions-list').style.display=cb.checked?'block':'none';}
+function showSaveBar(){var t=window.currentTab||'company';if(t==='company'||t==='infra'){var b=document.getElementById('save-bar');if(b)b.classList.add('show');}}
+function hideSaveBar(){var b=document.getElementById('save-bar');if(b)b.classList.remove('show');}
+function openNotifPanel(){document.getElementById('notif-overlay').classList.add('open');}
+function closeNotifPanel(){document.getElementById('notif-overlay').classList.remove('open');}
+document.addEventListener('input',showSaveBar);
+document.addEventListener('change',showSaveBar);
+function addExceptionRow(btn){var b=btn.previousElementSibling;var r=document.createElement('div');r.className='map-row';r.innerHTML='<select class="input-field"><option value="">Select attribute…</option><option>Conductor length</option><option>Cable diameter</option><option>Span length</option><option>Transformer rating</option></select><span class="map-arrow">→</span><select class="input-field"><option value="">Select unit…</option><option>Feet (ft)</option><option>Meters (m)</option><option>Inches (in)</option></select><button class="map-del" title="Remove">✕</button>';b.appendChild(r);}
+function addMappingRow(btn){var b=btn.previousElementSibling;var r=document.createElement('div');r.className='map-row';r.innerHTML='<input class="input-field" type="text" placeholder="provider claim"/><span class="map-arrow">→</span><select class="input-field"><option value="">Select target…</option><option>Role</option><option>Display name</option><option>Email</option><option>Region</option></select><button class="map-del" title="Remove">✕</button>';b.appendChild(r);}
+document.addEventListener('click',function(e){if(e.target&&e.target.classList&&e.target.classList.contains('map-del')){var r=e.target.closest('.map-row');if(r)r.remove();}});
+var ssoTestCount=0;
+function testConnection(){var r=document.getElementById('ssotest-result');r.innerHTML='<div class="test-row test-loading">Testing connection…</div>';ssoTestCount++;var ok=(ssoTestCount%2===1);setTimeout(function(){if(ok){r.innerHTML='<div class="test-row test-ok"><span>✓</span><span><b>Connection successful</b> — provider responded in 240 ms, redirect URI verified, 4 claims received</span></div>';}else{r.innerHTML='<div class="test-row test-err"><span>✕</span><span><b>Connection failed</b> — provider returned 401: invalid client secret. Check the Client secret and try again.</span></div>';}},700);}
+function checkVpnIp(){var ta=document.getElementById('vpn-cidr');if(!ta)return;var v=ta.value;var inside=v.indexOf('203.0.113')!==-1||v.indexOf('0.0.0.0/0')!==-1;var el=document.getElementById('vpn-ip-status');if(inside){el.innerHTML='<div class="ipstat ok"><span class="dot"></span><div>Your current IP <strong style="font-weight:500;">203.0.113.42</strong> — inside the allowed ranges</div></div>';}else{el.innerHTML='<div class="ipstat bad"><span class="dot"></span><div style="flex:1;">Your current IP <strong style="font-weight:500;">203.0.113.42</strong> — not covered by these ranges<div style="margin-top:3px;color:var(--n500);">Saving now could lock you out of the admin app from this network.</div></div><button class="btn btn-ghost btn-sm" style="flex-shrink:0;" onclick="addMyIp()">Add my IP</button></div>';}}
+function addMyIp(){var ta=document.getElementById('vpn-cidr');if(!ta)return;ta.value=ta.value.replace(/\s*$/,'')+'\n203.0.113.42/32';checkVpnIp();}
+function ntfPk(el){var on=el.classList.contains('pk-on')||el.classList.contains('pk-ind');el.className='pk '+(on?'pk-off':'pk-on');el.textContent=on?'':'\u2713';}
+function applyNtf2Row(tr){var a=tr.querySelector('.ntf2-active input').checked;var tds=tr.children;for(var i=2;i<=5;i++){tds[i].style.opacity=a?'1':'0.4';tds[i].style.pointerEvents=a?'auto':'none';var inp=tds[i].querySelector('input');if(inp)inp.disabled=!a;}}
+function initNtf2(){document.querySelectorAll('.ntf2 tbody tr').forEach(applyNtf2Row);}
+document.addEventListener('change',function(e){if(e.target.closest&&e.target.closest('.ntf2-active')){applyNtf2Row(e.target.closest('tr'));}});
+var OP={objects:[
+  {name:'Project',data:true,exp:true,base:{C:1,R:1,U:1,D:1},
+    zones:{exp:true,items:{'Northern District':{C:1,R:1,U:1,D:0},'Coastal Feeder':{C:1,R:1,U:0,D:0}}},
+    tags:{exp:false,items:{'#HV':{C:0,R:0,U:0,D:0}}}},
+  {name:'Component',data:true,exp:false,base:{C:0,R:0,U:0,D:0},
+    zones:{exp:false,items:{'Northern District':{C:0,R:0,U:0,D:0},'Coastal Feeder':{C:0,R:0,U:0,D:0}}},
+    tags:{exp:false,items:{'#HV':{C:0,R:0,U:0,D:0}}}},
+  {name:'Connection',data:true,exp:false,base:{C:0,R:0,U:0,D:0},
+    zones:{exp:false,items:{'Northern District':{C:0,R:0,U:0,D:0},'Coastal Feeder':{C:0,R:0,U:0,D:0}}},
+    tags:{exp:false,items:{'#HV':{C:0,R:0,U:0,D:0}}}},
+  {name:'Verification',data:true,exp:false,base:{C:0,R:0,U:0,D:0},
+    zones:{exp:false,items:{'Northern District':{C:0,R:0,U:0,D:0},'Coastal Feeder':{C:0,R:0,U:0,D:0}}},
+    tags:{exp:false,items:{'#HV':{C:0,R:0,U:0,D:0}}}},
+  {name:'File Attachment',data:true,exp:false,base:{C:0,R:0,U:0,D:0},
+    zones:{exp:false,items:{'Northern District':{C:0,R:0,U:0,D:0},'Coastal Feeder':{C:0,R:0,U:0,D:0}}},
+    tags:{exp:false,items:{'#HV':{C:0,R:0,U:0,D:0}}}},
+  {name:'Model',data:false,base:{C:0,R:1,U:0,D:0}},
+  {name:'Library',data:false,base:{C:0,R:1,U:0,D:0}},
+  {name:'User',data:false,base:{C:0,R:1,U:0,D:0}},
+  {name:'Role',data:false,base:{C:0,R:1,U:0,D:0}},
+  {name:'Zone',data:false,base:{C:0,R:1,U:0,D:0}},
+  {name:'Tag',data:false,base:{C:0,R:1,U:0,D:0}}
+]};
+var OPP=['C','R','U','D'];
+function opRollup(grp,p){var ks=Object.keys(grp.items);if(!ks.length)return'off';var on=0,off=0;ks.forEach(function(k){grp.items[k][p]?on++:off++;});if(on&&off)return'ind';return on?'on':'off';}
+function opPk(state,attrs){var g=state==='on'?'\u2713':(state==='ind'?'\u2013':'');return '<td style="text-align:center;"><span class="pk pk-'+state+'" '+attrs+' onclick="opClick(this)">'+g+'</span></td>';}
+function renderObjPerm(){
+  var h='<table class="matrix2 optree"><thead><tr><th class="objcol">Object type</th><th>Create</th><th>Read</th><th>Update</th><th>Delete</th></tr></thead><tbody>';
+  OP.objects.forEach(function(o,oi){
+    var chev=o.data?'<span class="optw" onclick="opExp('+oi+',\'obj\')">'+(o.exp?'\u25be':'\u25b8')+'</span>':'<span class="optw-spacer"></span>';
+    h+='<tr><td class="opname" style="padding-left:14px;">'+chev+' '+o.name+'</td>';
+    OPP.forEach(function(p){h+=opPk(o.base[p]?'on':'off','data-k="obj" data-o="'+oi+'" data-p="'+p+'"');});
+    h+='</tr>';
+    if(o.data&&o.exp){
+      ['zones','tags'].forEach(function(sc){
+        var grp=o[sc],label=sc==='zones'?'Zones':'Tags';
+        var gchev='<span class="optw" onclick="opExp('+oi+',\''+sc+'\')">'+(grp.exp?'\u25be':'\u25b8')+'</span>';
+        h+='<tr class="opgrp"><td class="opname" style="padding-left:36px;">'+gchev+' '+label+'</td>';
+        OPP.forEach(function(p){h+=opPk(opRollup(grp,p),'data-k="grp" data-o="'+oi+'" data-s="'+sc+'" data-p="'+p+'"');});
+        h+='</tr>';
+        if(grp.exp){Object.keys(grp.items).forEach(function(it){
+          h+='<tr class="opleaf"><td class="opname" style="padding-left:62px;">'+it+'</td>';
+          OPP.forEach(function(p){h+=opPk(grp.items[it][p]?'on':'off','data-k="leaf" data-o="'+oi+'" data-s="'+sc+'" data-i="'+it+'" data-p="'+p+'"');});
+          h+='</tr>';
+        });}
+      });
+    }
+  });
+  h+='</tbody></table>';
+  document.getElementById('objperm').innerHTML=h;
+}
+function opClick(el){
+  var k=el.getAttribute('data-k'),oi=+el.getAttribute('data-o'),p=el.getAttribute('data-p'),o=OP.objects[oi];
+  if(k==='obj'){o.base[p]=o.base[p]?0:1;}
+  else{var grp=o[el.getAttribute('data-s')];
+    if(k==='grp'){var t=opRollup(grp,p)==='on'?0:1;Object.keys(grp.items).forEach(function(it){grp.items[it][p]=t;});}
+    else{var it=el.getAttribute('data-i');grp.items[it][p]=grp.items[it][p]?0:1;}
+  }
+  renderObjPerm();
+}
+function opExp(oi,what){var o=OP.objects[oi];if(what==='obj')o.exp=!o.exp;else o[what].exp=!o[what].exp;renderObjPerm();}
+function copyToClipboard() {
+  navigator.clipboard && navigator.clipboard.writeText('https://gridmodel.northwindpower.com/auth/callback');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if(e.target === overlay) overlay.style.display='none';
+  });
+});
+switchTab('company');
+checkVpnIp();
+initNtf2();
+renderObjPerm();
+</script>
+</body>
+</html>
